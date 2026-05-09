@@ -7,6 +7,10 @@ const progressText = document.querySelector("#progressText");
 const youtubeLink = document.querySelector("#youtubeLink");
 const bumpPlayer = document.querySelector("#bumpPlayer");
 const bumpAudio = document.querySelector("#bumpAudio");
+const youtubeMask = document.querySelector("#youtubeMask");
+const volumeSlider = document.querySelector("#volumeSlider");
+const volumeValue = document.querySelector("#volumeValue");
+const fullscreenButton = document.querySelector("#fullscreenButton");
 const shell = document.querySelector(".shell");
 const adminToggle = document.querySelector("#adminToggle");
 const loginPopover = document.querySelector("#loginPopover");
@@ -51,16 +55,20 @@ const sourceForm = document.querySelector("#sourceForm");
 const scheduleForm = document.querySelector("#scheduleForm");
 const scheduledModeButton = document.querySelector("#scheduledModeButton");
 const queueModeButton = document.querySelector("#queueModeButton");
+const scheduleLibraryButton = document.querySelector("#scheduleLibraryButton");
 const addQueueButton = document.querySelector("#addQueueButton");
+const queueLibraryButton = document.querySelector("#queueLibraryButton");
 const playNowButton = document.querySelector("#playNowButton");
 const sourceFolderMessage = document.querySelector("#sourceFolderMessage");
 const playlistImportMessage = document.querySelector("#playlistImportMessage");
 const sourceMessage = document.querySelector("#sourceMessage");
 const scheduleMessage = document.querySelector("#scheduleMessage");
+const scheduleFolderSelect = scheduleForm.elements.folderId;
 const sourceSelect = scheduleForm.elements.sourceId;
 const sourcesList = document.querySelector("#sourcesList");
 const scheduleList = document.querySelector("#scheduleList");
 const queueList = document.querySelector("#queueList");
+const clearQueueButton = document.querySelector("#clearQueueButton");
 const sourceTypeSelect = sourceForm.elements.type;
 const sourceFolderSelect = sourceForm.elements.folderId;
 const sourceTitleInput = sourceForm.elements.title;
@@ -79,6 +87,8 @@ const youtubeMetadataReadyPromise = new Promise((resolve) => {
   resolveYoutubeMetadataReady = resolve;
 });
 let currentProgramId = "";
+let loadedYouTubeProgramId = "";
+let youtubeMaskTimer;
 let currentProgram = null;
 let clockDelta = 0;
 let adminAuthenticated = false;
@@ -88,6 +98,11 @@ let youtubeAutofillTimer;
 let broadcastMode = "scheduled";
 let adminRailView = "broadcast";
 let adminDataCache = { sourceFolders: [], sources: [] };
+const expandedSourceFolders = new Set(JSON.parse(localStorage.getItem("doink_expanded_source_folders") || "[]"));
+let audioUnlocked = false;
+let viewerVolume = Number(localStorage.getItem("doink_volume") || 70);
+if (!Number.isFinite(viewerVolume)) viewerVolume = 70;
+viewerVolume = Math.max(0, Math.min(100, viewerVolume));
 
 window.onYouTubeIframeAPIReady = () => {
   youtubePlayer = new YT.Player("youtubePlayer", {
@@ -95,19 +110,30 @@ window.onYouTubeIframeAPIReady = () => {
     height: "100%",
     playerVars: {
       autoplay: 1,
+      cc_load_policy: 0,
       controls: 0,
       disablekb: 1,
       fs: 0,
+      iv_load_policy: 3,
       modestbranding: 1,
+      origin: location.origin,
       playsinline: 1,
-      rel: 0
+      rel: 0,
+      showinfo: 0
     },
     events: {
       onReady: () => {
         youtubeReady = true;
+        applyViewerVolume();
         syncProgram(currentProgram);
       },
-      onStateChange: () => enforcePlayback()
+      onStateChange: (event) => {
+        if (event.data === YT.PlayerState.PLAYING) {
+          frame.classList.add("youtube-clean");
+          setYouTubeMask(true, 900);
+        }
+        enforcePlayback();
+      }
     }
   });
 
@@ -179,6 +205,7 @@ function setUserState(user) {
     adminPanel.classList.add("hidden");
     bumpPanel.classList.add("hidden");
     chatPanel.classList.remove("hidden");
+    shell.classList.remove("bump-workspace");
   }
 }
 
@@ -200,6 +227,7 @@ function setAdminRailView(view) {
   chatPanel.classList.toggle("hidden", showingBroadcast || showingBump);
   chatPanel.classList.remove("collapsed");
   shell.classList.remove("chat-collapsed");
+  shell.classList.toggle("bump-workspace", showingBump);
   showBroadcastPanelButtons.forEach((button) => button.classList.toggle("active", showingBroadcast));
   showBumpPanelButtons.forEach((button) => button.classList.toggle("active", showingBump));
   showChatPanelButtons.forEach((button) => button.classList.toggle("active", adminRailView === "chat"));
@@ -287,15 +315,46 @@ function setMode(mode) {
   } else {
     delete frame.dataset.mode;
   }
+  if (mode !== "youtube") frame.classList.remove("youtube-clean");
+}
+
+function setYouTubeMask(active, holdMs = 0) {
+  clearTimeout(youtubeMaskTimer);
+  youtubeMask.classList.toggle("active", active);
+  if (active && holdMs) {
+    youtubeMaskTimer = setTimeout(() => youtubeMask.classList.remove("active"), holdMs);
+  }
+}
+
+function applyViewerVolume({ unlock = false } = {}) {
+  if (unlock) audioUnlocked = true;
+  const volume = Math.max(0, Math.min(1, viewerVolume / 100));
+  const muted = !audioUnlocked || volume <= 0;
+
+  localPlayer.volume = volume;
+  localPlayer.muted = muted;
+  bumpAudio.volume = volume;
+  bumpAudio.muted = muted;
+  volumeSlider.value = Math.round(viewerVolume);
+  volumeValue.textContent = `${Math.round(viewerVolume)}%`;
+
+  if (youtubeReady) {
+    youtubePlayer.setVolume?.(Math.round(viewerVolume));
+    if (muted) {
+      youtubePlayer.mute?.();
+    } else {
+      youtubePlayer.unMute?.();
+    }
+  }
 }
 
 function syncLocal(live) {
   if (localPlayer.src !== new URL(live.source.path, location.origin).href) {
     localPlayer.src = live.source.path;
   }
-  localPlayer.muted = true;
   localPlayer.controls = false;
   localPlayer.playbackRate = 1;
+  applyViewerVolume();
   const offset = activeOffset();
   if (Number.isFinite(offset) && Math.abs(localPlayer.currentTime - offset) > 0.75) {
     localPlayer.currentTime = Math.min(offset, live.duration - 0.2);
@@ -306,22 +365,38 @@ function syncLocal(live) {
 function syncYouTube(live) {
   if (!youtubeReady) return;
   const offset = Math.min(activeOffset(), live.duration - 0.2);
-  if (currentProgramId !== live.id) {
+  if (loadedYouTubeProgramId !== live.id) {
+    frame.classList.remove("youtube-clean");
+    setYouTubeMask(true);
     youtubePlayer.loadVideoById({ videoId: live.source.youtubeId, startSeconds: Math.max(0, offset) });
+    loadedYouTubeProgramId = live.id;
   } else {
     const ytTime = youtubePlayer.getCurrentTime?.() || 0;
     if (Math.abs(ytTime - offset) > 1.25) {
+      setYouTubeMask(true, 650);
       youtubePlayer.seekTo(Math.max(0, offset), true);
     }
     youtubePlayer.playVideo();
   }
-  youtubePlayer.mute();
+  applyViewerVolume();
 }
 
 function renderBump(live) {
   const bump = live.source.bump || { heading: "coming up", lines: [] };
+  const wallpaper = bump.wallpaper || {};
+  const effects = Array.isArray(bump.effects) ? bump.effects : [];
+  const effectIntensity = Math.max(0, Math.min(100, Number(bump.effectIntensity) || 0));
+  const classes = [
+    "bump-card",
+    `placement-${cssToken(bump.placement || "middle")}`,
+    `tone-${cssToken(bump.tone || "classic")}`,
+    `wallpaper-${cssToken(wallpaper.shapes || "mixed")}`,
+    `scheme-${cssToken(wallpaper.scheme || "midnight")}`,
+    ...effects.map((effect) => `effect-${cssToken(effect)}`)
+  ].join(" ");
+  const spacing = Math.max(34, Math.min(170, Number(wallpaper.spacing) || 86));
   bumpPlayer.innerHTML = `
-    <div class="bump-card">
+    <div class="${classes}" style="--wallpaper-spacing: ${spacing}px; --effect-intensity: ${effectIntensity / 100};">
       <h2>${escapeHtml(bump.heading || live.title || "coming up")}</h2>
       <ul>
         ${(bump.lines || [])
@@ -341,7 +416,7 @@ function renderBump(live) {
   }
   if (audioPath) {
     bumpAudio.currentTime = Math.min(activeOffset(), 1);
-    bumpAudio.volume = 0.82;
+    applyViewerVolume();
     bumpAudio.play().catch(() => {});
   }
 }
@@ -376,6 +451,9 @@ function syncProgram(program) {
     localPlayer.pause();
     bumpAudio.pause();
     if (youtubeReady) youtubePlayer.stopVideo();
+    frame.classList.remove("youtube-clean");
+    setYouTubeMask(false);
+    loadedYouTubeProgramId = "";
     return;
   }
 
@@ -389,6 +467,8 @@ function syncProgram(program) {
   if (live.source.type === "local") {
     bumpAudio.pause();
     if (youtubeReady) youtubePlayer.stopVideo();
+    setYouTubeMask(false);
+    loadedYouTubeProgramId = "";
     syncLocal(live);
   } else if (live.source.type === "youtube") {
     bumpAudio.pause();
@@ -397,6 +477,8 @@ function syncProgram(program) {
   } else if (live.source.type === "bump") {
     localPlayer.pause();
     if (youtubeReady) youtubePlayer.stopVideo();
+    setYouTubeMask(false);
+    loadedYouTubeProgramId = "";
     renderBump(live);
   }
 
@@ -420,13 +502,7 @@ function renderAdmin(data) {
     ...folders.map((folder) => `<option value="${folder.id}">${escapeHtml(folder.name)}</option>`)
   ].join("");
 
-  sourceSelect.innerHTML = librarySources
-    .map((source) => {
-      const folder = folders.find((item) => item.id === (source.folderId || ""));
-      const folderName = folder?.name || "Unfiled";
-      return `<option value="${source.id}">${escapeHtml(folderName)} / ${escapeHtml(source.title)} (${source.type})</option>`;
-    })
-    .join("");
+  renderTimingSourcePicker(data);
 
   const folderGroups = [
     { id: "", name: "Unfiled sources" },
@@ -457,10 +533,14 @@ function renderAdmin(data) {
                 )
                 .join("")
             : `<p class="message">No sources in this folder.</p>`;
+          const folderCollapsed = isSourceFolderCollapsed(folder.id);
           return `
-            <div class="folder-group">
+            <div class="folder-group${folderCollapsed ? " collapsed" : ""}">
               <div class="folder-heading">
-                <strong>${escapeHtml(folder.name)}</strong>
+                <button class="folder-toggle" data-toggle-folder="${escapeHtml(folder.id)}" type="button" aria-expanded="${!folderCollapsed}">
+                  <span>${folderCollapsed ? "+" : "-"}</span>
+                  <strong>${escapeHtml(folder.name)}</strong>
+                </button>
                 <span class="folder-count">${folder.sources.length}</span>
                 ${folder.id ? `<button class="danger" data-delete-folder="${folder.id}" type="button">Remove</button>` : ""}
               </div>
@@ -496,15 +576,22 @@ function renderAdmin(data) {
 
   queueList.innerHTML = liveQueue.length
     ? liveQueue
-        .map((entry) => {
+        .map((entry, index) => {
           const source = data.sources.find((item) => item.id === entry.sourceId);
+          const isBump = source?.type === "bump";
+          const isCurrent = Date.now() >= entry.startAt && Date.now() < entry.startAt + entry.duration * 1000;
+          const canMove = !isBump && !isCurrent;
           return `
-            <div class="item">
+            <div class="item queue-item">
               <div>
                 <strong>${escapeHtml(entry.title || source?.title || "Queued source")}</strong>
-                <small>${new Date(entry.startAt).toLocaleTimeString()} &middot; ${formatDuration(entry.duration)}</small>
+                <small>${new Date(entry.startAt).toLocaleTimeString()} &middot; ${formatDuration(entry.duration)}${isCurrent ? " &middot; On air" : ""}${isBump ? " &middot; Auto bump" : ""}</small>
               </div>
-              <button class="danger" data-delete-queue="${entry.id}" type="button">Remove</button>
+              <div class="queue-actions">
+                <button class="secondary compact" data-move-queue="${entry.id}" data-direction="up" type="button"${!canMove || index === 0 ? " disabled" : ""}>Up</button>
+                <button class="secondary compact" data-move-queue="${entry.id}" data-direction="down" type="button"${!canMove || index === liveQueue.length - 1 ? " disabled" : ""}>Down</button>
+                <button class="danger compact" data-delete-queue="${entry.id}" type="button">Delete</button>
+              </div>
             </div>`;
         })
         .join("")
@@ -517,6 +604,10 @@ function escapeHtml(value) {
   });
 }
 
+function cssToken(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+}
+
 function folderOptions(selectedId = "") {
   return [
     `<option value="">Unfiled sources</option>`,
@@ -525,6 +616,56 @@ function folderOptions(selectedId = "") {
       return `<option value="${folder.id}"${selected}>${escapeHtml(folder.name)}</option>`;
     })
   ].join("");
+}
+
+function libraryLabel(folderId, folders) {
+  if (!folderId) return "Unfiled sources";
+  return folders.find((folder) => folder.id === folderId)?.name || "Unknown library";
+}
+
+function sourceFolderStorageId(folderId) {
+  return folderId || "__unfiled__";
+}
+
+function isSourceFolderCollapsed(folderId) {
+  return !expandedSourceFolders.has(sourceFolderStorageId(folderId));
+}
+
+function persistSourceFolderState() {
+  localStorage.setItem("doink_expanded_source_folders", JSON.stringify([...expandedSourceFolders]));
+}
+
+function renderTimingSourcePicker(data) {
+  const folders = data.sourceFolders || [];
+  const sources = data.sources.filter((source) => source.type !== "bump");
+  const groups = [
+    { id: "", name: "Unfiled sources" },
+    ...folders
+  ].map((folder) => ({
+    ...folder,
+    sources: sources.filter((source) => (source.folderId || "") === folder.id)
+  }));
+
+  const currentFolder = scheduleFolderSelect.value;
+  scheduleFolderSelect.innerHTML = groups
+    .map((group) => {
+      const selected = group.id === currentFolder ? " selected" : "";
+      return `<option value="${group.id}"${selected}>${escapeHtml(group.name)} (${group.sources.length})</option>`;
+    })
+    .join("");
+
+  if (![...scheduleFolderSelect.options].some((option) => option.value === currentFolder)) {
+    scheduleFolderSelect.value = groups.find((group) => group.sources.length)?.id || "";
+  }
+
+  const selectedGroup = groups.find((group) => group.id === scheduleFolderSelect.value) || groups[0];
+  const currentSource = sourceSelect.value;
+  sourceSelect.innerHTML = selectedGroup.sources
+    .map((source) => {
+      const selected = source.id === currentSource ? " selected" : "";
+      return `<option value="${source.id}"${selected}>${escapeHtml(source.title)} (${source.type})</option>`;
+    })
+    .join("");
 }
 
 function renderSourceEditor(sourceId) {
@@ -594,6 +735,7 @@ adminToggle.addEventListener("click", () => {
     adminPanel.classList.toggle("hidden", railOpen || adminRailView !== "broadcast");
     bumpPanel.classList.toggle("hidden", railOpen || adminRailView !== "bump");
     chatPanel.classList.toggle("hidden", railOpen || adminRailView !== "chat");
+    shell.classList.toggle("bump-workspace", !railOpen && adminRailView === "bump");
     return;
   }
   if (currentUser) {
@@ -648,6 +790,7 @@ sourceYoutubeInput.addEventListener("blur", () => {
 });
 
 sourceDurationInput.addEventListener("input", updateSourceDurationDisplay);
+scheduleFolderSelect.addEventListener("change", () => renderTimingSourcePicker(adminDataCache));
 
 chatForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -763,6 +906,17 @@ scheduleForm.addEventListener("submit", async (event) => {
   }
 });
 
+scheduleLibraryButton.addEventListener("click", async () => {
+  try {
+    const body = Object.fromEntries(new FormData(scheduleForm));
+    await api("/api/schedule-library", { method: "POST", body: JSON.stringify(body) });
+    setMessage(scheduleMessage, "Library scheduled.");
+    await loadAdmin();
+  } catch (error) {
+    setMessage(scheduleMessage, error.message, true);
+  }
+});
+
 addQueueButton.addEventListener("click", async () => {
   try {
     const body = Object.fromEntries(new FormData(scheduleForm));
@@ -774,11 +928,61 @@ addQueueButton.addEventListener("click", async () => {
   }
 });
 
+queueLibraryButton.addEventListener("click", async () => {
+  try {
+    const body = Object.fromEntries(new FormData(scheduleForm));
+    await api("/api/queue-library", { method: "POST", body: JSON.stringify(body) });
+    setMessage(scheduleMessage, "Library added to live queue.");
+    await loadAdmin();
+  } catch (error) {
+    setMessage(scheduleMessage, error.message, true);
+  }
+});
+
 playNowButton.addEventListener("click", async () => {
   try {
     const body = Object.fromEntries(new FormData(scheduleForm));
     await api("/api/play-now", { method: "POST", body: JSON.stringify(body) });
-    setMessage(scheduleMessage, "Broadcast updated.");
+    setMessage(scheduleMessage, "Live queue started.");
+    await loadAdmin();
+  } catch (error) {
+    setMessage(scheduleMessage, error.message, true);
+  }
+});
+
+volumeSlider.addEventListener("input", () => {
+  viewerVolume = Number(volumeSlider.value);
+  localStorage.setItem("doink_volume", String(viewerVolume));
+  applyViewerVolume({ unlock: true });
+  if (currentProgram?.live?.source.type === "local") {
+    localPlayer.play().catch(() => {});
+  } else if (currentProgram?.live?.source.type === "bump") {
+    bumpAudio.play().catch(() => {});
+  } else if (currentProgram?.live?.source.type === "youtube" && youtubeReady) {
+    youtubePlayer.playVideo?.();
+  }
+});
+
+fullscreenButton.addEventListener("click", async () => {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await frame.requestFullscreen();
+    }
+  } catch {
+    fullscreenButton.blur();
+  }
+});
+
+document.addEventListener("fullscreenchange", () => {
+  fullscreenButton.textContent = document.fullscreenElement ? "Exit fullscreen" : "Fullscreen";
+});
+
+clearQueueButton?.addEventListener("click", async () => {
+  try {
+    await api("/api/queue", { method: "DELETE" });
+    setMessage(scheduleMessage, "Queue cleared.");
     await loadAdmin();
   } catch (error) {
     setMessage(scheduleMessage, error.message, true);
@@ -786,6 +990,33 @@ playNowButton.addEventListener("click", async () => {
 });
 
 document.addEventListener("click", async (event) => {
+  const toggleFolderId = event.target.closest("[data-toggle-folder]")?.dataset.toggleFolder;
+  if (toggleFolderId !== undefined) {
+    const storageId = sourceFolderStorageId(toggleFolderId);
+    if (expandedSourceFolders.has(storageId)) {
+      expandedSourceFolders.delete(storageId);
+    } else {
+      expandedSourceFolders.add(storageId);
+    }
+    persistSourceFolderState();
+    renderAdmin(adminDataCache);
+    return;
+  }
+
+  const moveQueueButton = event.target.closest("[data-move-queue]");
+  if (moveQueueButton && !moveQueueButton.disabled) {
+    try {
+      await api(`/api/queue/${moveQueueButton.dataset.moveQueue}/move`, {
+        method: "PATCH",
+        body: JSON.stringify({ direction: moveQueueButton.dataset.direction })
+      });
+      await loadAdmin();
+    } catch (error) {
+      setMessage(scheduleMessage, error.message, true);
+    }
+    return;
+  }
+
   const editSourceId = event.target.dataset.editSource;
   if (editSourceId) {
     renderSourceEditor(editSourceId);
@@ -837,6 +1068,7 @@ localPlayer.addEventListener("pause", () => setTimeout(enforcePlayback, 100));
 localPlayer.addEventListener("seeking", () => setTimeout(enforcePlayback, 100));
 setInterval(tickProgress, 1000);
 setChatCollapsed(false);
+applyViewerVolume();
 syncSourceFields();
 updateSourceDurationDisplay();
 refreshSession().catch(() => setUserState(null));

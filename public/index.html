@@ -59,24 +59,19 @@
           <video id="localPlayer" playsinline muted autoplay></video>
           <audio id="bumpAudio" preload="auto"></audio>
           <div id="youtubePlayer" class="youtube-player"></div>
+          <div id="youtubeMask" class="youtube-mask" aria-hidden="true"></div>
           <div id="bumpPlayer" class="bump-player"></div>
           <div class="shield" aria-hidden="true"></div>
+          <a id="youtubeLink" class="youtube-link hidden" href="#" target="_blank" rel="noopener noreferrer">Open original on YouTube</a>
         </div>
-        <div class="broadcast-meta">
-          <div>
-            <span class="label">Now</span>
-            <strong id="nowTitle">No active program</strong>
-          </div>
-          <div>
-            <span class="label">Next</span>
-            <strong id="nextTitle">Unscheduled</strong>
-          </div>
-          <div>
-            <span class="label">Progress</span>
-            <strong id="progressText">00:00 / 00:00</strong>
-          </div>
+        <div class="viewer-controls" aria-label="Playback controls">
+          <label class="volume-control">
+            <span>Volume</span>
+            <input id="volumeSlider" type="range" min="0" max="100" value="70">
+            <output id="volumeValue">70%</output>
+          </label>
+          <button id="fullscreenButton" class="secondary" type="button">Fullscreen</button>
         </div>
-        <a id="youtubeLink" class="youtube-link hidden" href="#" target="_blank" rel="noopener noreferrer">Open original on YouTube</a>
       </section>
 
       <aside id="chatPanel" class="chat-panel" aria-label="Global chat">
@@ -99,6 +94,20 @@
             <button id="chatSendButton" type="submit" disabled>Send</button>
           </form>
           <p id="chatMessage" class="message"></p>
+          <div class="broadcast-meta">
+            <div>
+              <span class="label">Now</span>
+              <strong id="nowTitle">No active program</strong>
+            </div>
+            <div>
+              <span class="label">Next</span>
+              <strong id="nextTitle">Unscheduled</strong>
+            </div>
+            <div>
+              <span class="label">Progress</span>
+              <strong id="progressText">00:00 / 00:00</strong>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -164,11 +173,14 @@
               <button id="scheduledModeButton" class="auth-tab active" type="button">Scheduled</button>
               <button id="queueModeButton" class="auth-tab" type="button">Live queue</button>
             </div>
+            <select name="folderId"></select>
             <select name="sourceId" required></select>
             <input name="startAt" type="datetime-local" required>
             <input name="duration" type="number" min="5" step="1" placeholder="Override duration">
-            <button type="submit">Add hard time</button>
-            <button id="addQueueButton" type="button" class="secondary">Add to queue</button>
+            <button type="submit">Schedule source</button>
+            <button id="scheduleLibraryButton" type="button" class="secondary">Schedule library</button>
+            <button id="addQueueButton" type="button" class="secondary">Queue source</button>
+            <button id="queueLibraryButton" type="button" class="secondary">Queue library</button>
             <button id="playNowButton" type="button" class="secondary">Play immediately</button>
             <p id="scheduleMessage" class="message"></p>
           </form>
@@ -183,7 +195,10 @@
               <div id="scheduleList" class="item-list"></div>
             </section>
             <section>
-              <h3>Live queue</h3>
+              <div class="section-heading">
+                <h3>Live queue</h3>
+                <button id="clearQueueButton" class="danger compact" type="button">Clear queue</button>
+              </div>
               <div id="queueList" class="item-list"></div>
             </section>
           </div>

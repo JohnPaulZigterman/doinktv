@@ -405,6 +405,64 @@ function upcomingNormalQueueItems(startAt, count = 3) {
     .slice(0, count);
 }
 
+function sample(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+function sampleMany(array, count) {
+  const choices = [...array];
+  const selected = [];
+  while (selected.length < count && choices.length) {
+    const index = Math.floor(Math.random() * choices.length);
+    selected.push(choices.splice(index, 1)[0]);
+  }
+  return selected;
+}
+
+function randomAutoBumpVisuals() {
+  const effectCount = Math.floor(Math.random() * 3);
+  return {
+    wallpaper: {
+      shapes: sample([
+        "mixed",
+        "circles",
+        "diamonds",
+        "triangles",
+        "lines",
+        "stripes",
+        "polka",
+        "plaid",
+        "tartan",
+        "argyle",
+        "mondrian",
+        "checkerboard",
+        "terrazzo",
+        "memphis",
+        "starburst"
+      ]),
+      scheme: sample([
+        "midnight",
+        "pool",
+        "candy",
+        "paper",
+        "mono",
+        "arcade",
+        "warning",
+        "citrus",
+        "broadcast",
+        "miami",
+        "mint",
+        "ruby",
+        "blueprint"
+      ]),
+      spacing: 34 + Math.floor(Math.random() * 137),
+      seed: Math.floor(Math.random() * 100000)
+    },
+    effects: sampleMany(["noise", "vhs", "dvd", "warp", "fisheye", "scanlines", "chromatic", "flicker", "letterbox"], effectCount),
+    effectIntensity: 25 + Math.floor(Math.random() * 51)
+  };
+}
+
 function createAutoBumpSource(afterEntryEnd) {
   const upcoming = upcomingNormalQueueItems(afterEntryEnd, 3);
   const lines = upcoming.length
@@ -413,6 +471,7 @@ function createAutoBumpSource(afterEntryEnd) {
         time: formatEstTime(entry.startAt)
       }))
     : [{ title: "More DoinkTV shortly", time: formatEstTime(afterEntryEnd) }];
+  const visuals = randomAutoBumpVisuals();
 
   const source = {
     id: crypto.randomUUID(),
@@ -426,7 +485,10 @@ function createAutoBumpSource(afterEntryEnd) {
       alignment: "left",
       placement: ["top", "middle", "bottom"][Math.floor(Math.random() * 3)],
       tone: ["classic", "caption", "washed"][Math.floor(Math.random() * 3)],
-      seed: Math.floor(Math.random() * 100000),
+      seed: visuals.wallpaper.seed,
+      wallpaper: visuals.wallpaper,
+      effects: visuals.effects,
+      effectIntensity: visuals.effectIntensity,
       audio: randomBumpMusicPath()
     },
     generatedAt: Date.now()
@@ -499,11 +561,17 @@ function rebuildLiveQueueTimings({ insertAutoBumps = true } = {}) {
   }
 
   state.liveQueue = rebuilt;
+  pruneUnusedBumpSources();
 }
 
 function stripQueueSource(entry) {
   const { source, ...rest } = entry;
   return rest;
+}
+
+function pruneUnusedBumpSources() {
+  const queuedSourceIds = new Set(state.liveQueue.map((entry) => entry.sourceId));
+  state.sources = state.sources.filter((source) => !isBumpSource(source) || queuedSourceIds.has(source.id));
 }
 
 function activeBroadcastEntries() {
@@ -697,6 +765,41 @@ async function createScheduleEntry(body, immediate = false) {
   return entry;
 }
 
+function librarySources(folderId) {
+  const id = String(folderId || "").trim();
+  if (id && !state.sourceFolders.some((folder) => folder.id === id)) throw new Error("Unknown source folder.");
+  return state.sources
+    .filter((source) => source.type !== "bump" && (source.folderId || "") === id)
+    .sort((a, b) => state.sources.indexOf(a) - state.sources.indexOf(b));
+}
+
+async function createScheduleLibrary(body) {
+  const sources = librarySources(body.folderId);
+  if (!sources.length) throw new Error("That source library is empty.");
+
+  let startAt = Date.parse(body.startAt);
+  if (!Number.isFinite(startAt)) throw new Error("Enter a valid start time.");
+
+  const entries = [];
+  for (const source of sources) {
+    const entry = {
+      id: crypto.randomUUID(),
+      sourceId: source.id,
+      title: "",
+      startAt,
+      duration: source.duration
+    };
+    entries.push(entry);
+    state.schedule.push(entry);
+    startAt += source.duration * 1000;
+  }
+  state.schedule.sort((a, b) => a.startAt - b.startAt);
+  cleanSchedule();
+  await saveState();
+  broadcastProgram();
+  return { entries };
+}
+
 async function createQueueEntry(body, immediate = false) {
   const source = state.sources.find((item) => item.id === body.sourceId);
   if (!source) throw new Error("Unknown source.");
@@ -730,6 +833,69 @@ async function createQueueEntry(body, immediate = false) {
   await saveState();
   broadcastProgram();
   return entry;
+}
+
+async function createQueueLibrary(body) {
+  const sources = librarySources(body.folderId);
+  if (!sources.length) throw new Error("That source library is empty.");
+
+  const entries = [];
+  for (const source of sources) {
+    entries.push(await createQueueEntry({ sourceId: source.id, duration: source.duration }, false));
+  }
+  return { entries };
+}
+
+async function clearLiveQueue() {
+  state.liveQueue = [];
+  pruneUnusedBumpSources();
+  await saveState();
+  broadcastProgram();
+  return { ok: true };
+}
+
+async function moveQueueEntry(id, direction) {
+  const now = Date.now();
+  const current = state.liveQueue.find((entry) => now >= entry.startAt && now < entry.startAt + entry.duration * 1000);
+  const pending = state.liveQueue
+    .filter((entry) => (!current || entry.id !== current.id) && entry.startAt + entry.duration * 1000 > now)
+    .map((entry) => ({
+      ...entry,
+      source: state.sources.find((source) => source.id === entry.sourceId)
+    }))
+    .filter((entry) => entry.source && !isBumpSource(entry.source))
+    .sort((a, b) => a.startAt - b.startAt);
+
+  const index = pending.findIndex((entry) => entry.id === id);
+  if (index === -1) throw new Error("That queue item cannot be moved.");
+
+  const offset = direction === "up" ? -1 : direction === "down" ? 1 : 0;
+  const targetIndex = index + offset;
+  if (!offset || targetIndex < 0 || targetIndex >= pending.length) {
+    return { ok: true, moved: false };
+  }
+
+  [pending[index], pending[targetIndex]] = [pending[targetIndex], pending[index]];
+
+  let cursor = current ? current.startAt + current.duration * 1000 : now;
+  const reordered = current ? [current] : [];
+  for (const item of pending) {
+    reordered.push({
+      id: item.id,
+      sourceId: item.sourceId,
+      title: item.title || "",
+      startAt: cursor,
+      duration: item.duration,
+      queuedAt: item.queuedAt || now
+    });
+    cursor += item.duration * 1000;
+  }
+
+  state.liveQueue = reordered;
+  rebuildLiveQueueTimings();
+  await saveState();
+  broadcastProgram();
+  return { ok: true, moved: true };
 }
 
 async function setBroadcastMode(body) {
@@ -925,10 +1091,17 @@ async function handleApi(req, res, pathname) {
       return;
     }
 
+    if (req.method === "POST" && pathname === "/api/schedule-library") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 201, await createScheduleLibrary(await readJson(req)));
+      return;
+    }
+
     if (req.method === "POST" && pathname === "/api/play-now") {
       if (!requireAdmin(req, res)) return;
       const body = await readJson(req);
-      const entry = state.broadcastMode === "queue" ? await createQueueEntry(body, true) : await createScheduleEntry(body, true);
+      state.broadcastMode = "queue";
+      const entry = await createQueueEntry(body, true);
       sendJson(res, 201, entry);
       return;
     }
@@ -937,6 +1110,25 @@ async function handleApi(req, res, pathname) {
       if (!requireAdmin(req, res)) return;
       const entry = await createQueueEntry(await readJson(req), false);
       sendJson(res, 201, entry);
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/queue-library") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 201, await createQueueLibrary(await readJson(req)));
+      return;
+    }
+
+    if (req.method === "DELETE" && pathname === "/api/queue") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await clearLiveQueue());
+      return;
+    }
+
+    const moveQueueMatch = pathname.match(/^\/api\/queue\/([^/]+)\/move$/);
+    if (req.method === "PATCH" && moveQueueMatch) {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await moveQueueEntry(moveQueueMatch[1], (await readJson(req)).direction));
       return;
     }
 

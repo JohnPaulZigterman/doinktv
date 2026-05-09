@@ -1,11 +1,382 @@
 {
-  "sources": [],
-  "sourceFolders": [],
+  "sources": [
+    {
+      "id": "0a60c6f0-20f6-4bdc-83f1-7b77b8747726",
+      "type": "youtube",
+      "title": "Monkey Wrench Ep1 - The Ghost Egg",
+      "folderId": "8b445361-e174-47ac-b9de-9ab953ab7f2b",
+      "duration": 1618,
+      "youtubeId": "8i18HXAa1uY",
+      "url": "https://www.youtube.com/watch?v=8i18HXAa1uY"
+    },
+    {
+      "id": "7db79d51-efb3-4072-b873-fabb729dc5ae",
+      "type": "youtube",
+      "title": "Monkey Wrench ep 1.5 - Soup (April fools)",
+      "folderId": "8b445361-e174-47ac-b9de-9ab953ab7f2b",
+      "duration": 68,
+      "youtubeId": "GvqTnoq8jYg",
+      "url": "https://www.youtube.com/watch?v=GvqTnoq8jYg"
+    },
+    {
+      "id": "ca510b82-3d58-4abc-832a-1dec09802665",
+      "type": "youtube",
+      "title": "Monkey Wrench Ep2 - Lythop Liberation",
+      "folderId": "8b445361-e174-47ac-b9de-9ab953ab7f2b",
+      "duration": 1023,
+      "youtubeId": "zCqxkKXLtz8",
+      "url": "https://www.youtube.com/watch?v=zCqxkKXLtz8"
+    },
+    {
+      "id": "8177b3b1-beb1-42ba-a503-c601ab9576d0",
+      "type": "youtube",
+      "title": "Monkey Wrench Ep3 - Us & Them",
+      "folderId": "8b445361-e174-47ac-b9de-9ab953ab7f2b",
+      "duration": 1874,
+      "youtubeId": "eOg6HD0NXok",
+      "url": "https://www.youtube.com/watch?v=eOg6HD0NXok"
+    },
+    {
+      "id": "e3331280-cef2-4760-88f7-72f43fe7fc20",
+      "type": "youtube",
+      "title": "Monkey Wrench Ep 3.5 - The Tape",
+      "folderId": "8b445361-e174-47ac-b9de-9ab953ab7f2b",
+      "duration": 73,
+      "youtubeId": "8dIqOfbN8mA",
+      "url": "https://www.youtube.com/watch?v=8dIqOfbN8mA"
+    },
+    {
+      "id": "f21ba8b8-aed2-44e8-a871-95aefa5ef4c0",
+      "type": "youtube",
+      "title": "Monkey Wrench Ep4 - Plague Walker",
+      "folderId": "8b445361-e174-47ac-b9de-9ab953ab7f2b",
+      "duration": 2007,
+      "youtubeId": "cCAJ7DOVIL0",
+      "url": "https://www.youtube.com/watch?v=cCAJ7DOVIL0"
+    },
+    {
+      "id": "6a15c8ba-6ee9-4ec9-a5e0-66b7734c2974",
+      "type": "youtube",
+      "title": "Monkey Wrench Ep 4.5 - The Collector",
+      "folderId": "8b445361-e174-47ac-b9de-9ab953ab7f2b",
+      "duration": 15,
+      "youtubeId": "PDFhz3tBFRU",
+      "url": "https://www.youtube.com/watch?v=PDFhz3tBFRU"
+    },
+    {
+      "id": "c1bf25b8-8ec7-4257-b4b5-2f07b69fea6f",
+      "type": "youtube",
+      "title": "Monkey Wrench Ep 5 - Interloper",
+      "folderId": "8b445361-e174-47ac-b9de-9ab953ab7f2b",
+      "duration": 1835,
+      "youtubeId": "m2nZKiK9Xlw",
+      "url": "https://www.youtube.com/watch?v=m2nZKiK9Xlw"
+    },
+    {
+      "id": "21151b06-8f81-499f-9b93-4fec41190001",
+      "type": "youtube",
+      "title": "Baman Piderman - Find Da Sandwich (Ep #1)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 34,
+      "youtubeId": "F7-TQdN40Dk",
+      "url": "https://www.youtube.com/watch?v=F7-TQdN40Dk"
+    },
+    {
+      "id": "67779a8a-96b1-4c95-ad09-bd49f227a810",
+      "type": "youtube",
+      "title": "Baman Piderman - Hab Da Pumkin (Ep #2)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 44,
+      "youtubeId": "kYPkHmKg-Y0",
+      "url": "https://www.youtube.com/watch?v=kYPkHmKg-Y0"
+    },
+    {
+      "id": "2ffc17de-8bdb-4eff-a805-37a601faa162",
+      "type": "youtube",
+      "title": "Baman Piderman - Make Da Band (Ep #3)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 66,
+      "youtubeId": "gVolqamEQy4",
+      "url": "https://www.youtube.com/watch?v=gVolqamEQy4"
+    },
+    {
+      "id": "edae82f8-0529-4cc2-9013-e15749b67b7f",
+      "type": "youtube",
+      "title": "Baman Piderman - Pwactice Da Counting (Ep #4)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 89,
+      "youtubeId": "G18jhC3b53A",
+      "url": "https://www.youtube.com/watch?v=G18jhC3b53A"
+    },
+    {
+      "id": "5eba4ad8-4067-41c4-a7e2-bbf8629f41c5",
+      "type": "youtube",
+      "title": "Baman Piderman - Escape Da Cakes (Ep #5)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 72,
+      "youtubeId": "byX57OQniAA",
+      "url": "https://www.youtube.com/watch?v=byX57OQniAA"
+    },
+    {
+      "id": "50525bb2-3dbe-483d-93fc-176a84463a62",
+      "type": "youtube",
+      "title": "Baman Piderman - Make Da Cards (Ep #6)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 84,
+      "youtubeId": "2V5hkZsQiFE",
+      "url": "https://www.youtube.com/watch?v=2V5hkZsQiFE"
+    },
+    {
+      "id": "8dc14929-78da-4eb7-9189-d9a80d9674d3",
+      "type": "youtube",
+      "title": "Baman Piderman - Guess Da Number (Ep #7)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 94,
+      "youtubeId": "DZCxlus8hMg",
+      "url": "https://www.youtube.com/watch?v=DZCxlus8hMg"
+    },
+    {
+      "id": "06afb348-43cd-40a9-b604-69d26867c9b1",
+      "type": "youtube",
+      "title": "Baman Piderman - Hab Da Sleepover (Ep #8)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 132,
+      "youtubeId": "1g0W1wdK8-0",
+      "url": "https://www.youtube.com/watch?v=1g0W1wdK8-0"
+    },
+    {
+      "id": "78ea8b67-73fa-4199-8a5f-27d190194d1e",
+      "type": "youtube",
+      "title": "Baman Piderman - Tell Da Joke (Ep #9)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 139,
+      "youtubeId": "TzwDgz053PI",
+      "url": "https://www.youtube.com/watch?v=TzwDgz053PI"
+    },
+    {
+      "id": "a86ba37e-4bc4-440a-b191-b2c2ac16fb0e",
+      "type": "youtube",
+      "title": "Baman Piderman - Happy Winter Friends Part 1 (Ep #10)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 139,
+      "youtubeId": "LDLHqUA1aeU",
+      "url": "https://www.youtube.com/watch?v=LDLHqUA1aeU"
+    },
+    {
+      "id": "d6f0d3b7-8e1e-444b-bf94-14c4b6d8970e",
+      "type": "youtube",
+      "title": "Baman Piderman - Happy Winter Friends Part 2 (Ep #11)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 197,
+      "youtubeId": "3L712O4dIxA",
+      "url": "https://www.youtube.com/watch?v=3L712O4dIxA"
+    },
+    {
+      "id": "7c514973-4056-4718-a695-4891c229aadf",
+      "type": "youtube",
+      "title": "Baman Piderman - Frow Da Party (Ep #12)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 193,
+      "youtubeId": "dYCitKWZ5JE",
+      "url": "https://www.youtube.com/watch?v=dYCitKWZ5JE"
+    },
+    {
+      "id": "9bb38f26-69a0-46ba-8e9e-256a4e57fadc",
+      "type": "youtube",
+      "title": "Baman Piderman - Dis is Season 2 Opener",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 104,
+      "youtubeId": "W9IHaZqAFa0",
+      "url": "https://www.youtube.com/watch?v=W9IHaZqAFa0"
+    },
+    {
+      "id": "6873ca9c-ad5b-4cd6-9230-ca87ff016607",
+      "type": "youtube",
+      "title": "Baman Piderman - Fimd Da Jobs (Ep #13)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 238,
+      "youtubeId": "yhpC3uq6M7E",
+      "url": "https://www.youtube.com/watch?v=yhpC3uq6M7E"
+    },
+    {
+      "id": "1885b5ab-ed60-474b-bdd6-4fbcb1dbbe78",
+      "type": "youtube",
+      "title": "Baman Piderman - Revealations (Ep #14)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 166,
+      "youtubeId": "ntvNyI5NDFs",
+      "url": "https://www.youtube.com/watch?v=ntvNyI5NDFs"
+    },
+    {
+      "id": "c30f7c2f-0cce-4316-bad6-66d3269cc94d",
+      "type": "youtube",
+      "title": "Baman Piderman - Revealations Part 2 (Ep #15)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 236,
+      "youtubeId": "GEXzcyo4seQ",
+      "url": "https://www.youtube.com/watch?v=GEXzcyo4seQ"
+    },
+    {
+      "id": "cd3577bc-5198-4b29-978c-b9bec1b5af0b",
+      "type": "youtube",
+      "title": "Baman Piderman - Play Da Song (Ep #16)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 283,
+      "youtubeId": "qUBjHp-_Szc",
+      "url": "https://www.youtube.com/watch?v=qUBjHp-_Szc"
+    },
+    {
+      "id": "d7e21c89-47e2-4e89-b7d5-544679422462",
+      "type": "youtube",
+      "title": "Baman Piderman - In Da Basement (#17)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 111,
+      "youtubeId": "I_GvI3Aa57I",
+      "url": "https://www.youtube.com/watch?v=I_GvI3Aa57I"
+    },
+    {
+      "id": "b2c172e6-5a36-48ad-a186-34e7e577d450",
+      "type": "youtube",
+      "title": "Baman Piderman - Weirdy Feeling (Ep #18)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 218,
+      "youtubeId": "qlhX4gGikEA",
+      "url": "https://www.youtube.com/watch?v=qlhX4gGikEA"
+    },
+    {
+      "id": "b638e694-2cca-4ad8-93e3-88963b481eea",
+      "type": "youtube",
+      "title": "Baman Piderman - Squib Week (Ep 19)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 194,
+      "youtubeId": "HeJdjBiRDSA",
+      "url": "https://www.youtube.com/watch?v=HeJdjBiRDSA"
+    },
+    {
+      "id": "45669915-fe9b-4a76-87d9-3c41c4679134",
+      "type": "youtube",
+      "title": "Baman Piderman - Drawing Song (Ep 20)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 112,
+      "youtubeId": "b_17FYjndOo",
+      "url": "https://www.youtube.com/watch?v=b_17FYjndOo"
+    },
+    {
+      "id": "581025a4-eb90-443f-bb94-2d2f4be701f8",
+      "type": "youtube",
+      "title": "Baman Piderman - Ghost Night (Ep #21)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 420,
+      "youtubeId": "08vocOVZcTY",
+      "url": "https://www.youtube.com/watch?v=08vocOVZcTY"
+    },
+    {
+      "id": "30fe56ef-e0f6-4beb-ab2c-fb3e4006efd3",
+      "type": "youtube",
+      "title": "Baman Piderman - Drink Da Tee (Ep 22)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 142,
+      "youtubeId": "-SsJvaZboYw",
+      "url": "https://www.youtube.com/watch?v=-SsJvaZboYw"
+    },
+    {
+      "id": "98304928-273c-4b1c-be10-84ac3a4adf4b",
+      "type": "youtube",
+      "title": "Baman Piderman - Play Da Concert (Ep #23)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 349,
+      "youtubeId": "GAYGord2rGo",
+      "url": "https://www.youtube.com/watch?v=GAYGord2rGo"
+    },
+    {
+      "id": "4dcf24e3-6dbd-452b-b953-b81d8680ca57",
+      "type": "youtube",
+      "title": "Baman Piderman Season 3 Opener",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 171,
+      "youtubeId": "MvfTEgvExZ8",
+      "url": "https://www.youtube.com/watch?v=MvfTEgvExZ8"
+    },
+    {
+      "id": "5e6e38b9-f2e3-4715-9572-0a71b0c0f935",
+      "type": "youtube",
+      "title": "Baman Piderman - Happy Winter Friends Mini-Sode",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 72,
+      "youtubeId": "15Xu0NMFjq8",
+      "url": "https://www.youtube.com/watch?v=15Xu0NMFjq8"
+    },
+    {
+      "id": "79851dce-b1ec-419f-8e5c-2f8282199039",
+      "type": "youtube",
+      "title": "Baman Piderman - Paint Da House (Ep #24)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 381,
+      "youtubeId": "got5nOXb4zE",
+      "url": "https://www.youtube.com/watch?v=got5nOXb4zE"
+    },
+    {
+      "id": "a66ceca1-65b5-433c-81c6-1da2520bd603",
+      "type": "youtube",
+      "title": "Baman Piderman - We Hab Da Problem (Ep #25)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 302,
+      "youtubeId": "J8GydgdkO5c",
+      "url": "https://www.youtube.com/watch?v=J8GydgdkO5c"
+    },
+    {
+      "id": "59865b51-6d08-4cad-b214-f8b44a34040f",
+      "type": "youtube",
+      "title": "Baman Piderman - Ghost Night 2 (Ep #26)",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 873,
+      "youtubeId": "2ux8OjG0s3M",
+      "url": "https://www.youtube.com/watch?v=2ux8OjG0s3M"
+    },
+    {
+      "id": "8f9b6c8f-c8cf-4790-9abe-1a381a5d60ed",
+      "type": "youtube",
+      "title": "Baman Piderman - Noir Detective",
+      "folderId": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "duration": 144,
+      "youtubeId": "B4_HENO5M5E",
+      "url": "https://www.youtube.com/watch?v=B4_HENO5M5E"
+    }
+  ],
+  "sourceFolders": [
+    {
+      "id": "9fd62ddc-bf33-4472-a36e-209a49b9f7af",
+      "name": "Baman Piderman",
+      "createdAt": 1778323501629
+    },
+    {
+      "id": "8b445361-e174-47ac-b9de-9ab953ab7f2b",
+      "name": "Monkey Wrench S1",
+      "createdAt": 1778323079399
+    }
+  ],
   "schedule": [],
   "liveQueue": [],
-  "broadcastMode": "scheduled",
+  "broadcastMode": "queue",
   "lastAutoBumpAt": 0,
-  "bumpMusic": [],
+  "bumpMusic": [
+    {
+      "name": "Bag Walk [CL]",
+      "path": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3"
+    },
+    {
+      "name": "Sambattle [CL]",
+      "path": "/media/bump-music/Sambattle%20%5BCL%5D.mp3"
+    },
+    {
+      "name": "Special Sauce [CL]",
+      "path": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3"
+    },
+    {
+      "name": "Upriver [CL]",
+      "path": "/media/bump-music/Upriver%20%5BCL%5D.mp3"
+    }
+  ],
   "users": [],
   "chat": [],
   "nowPlaying": null
