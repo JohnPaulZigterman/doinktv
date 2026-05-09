@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { readFile, writeFile, mkdir, stat } from "node:fs/promises";
+import { readFile, writeFile, mkdir, stat, readdir } from "node:fs/promises";
 import { createReadStream, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,8 +9,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
 const DATA_DIR = path.join(__dirname, "data");
 const MEDIA_DIR = path.join(__dirname, "media");
+const BUMP_MUSIC_DIR = path.join(MEDIA_DIR, "bump-music");
 const PUBLIC_DIR = path.join(__dirname, "public");
+const BUMP_GENERATOR_DIR = path.join(__dirname, "..", "BumpGenerator");
 const STATE_PATH = path.join(DATA_DIR, "state.json");
+const AUTO_BUMP_INTERVAL_MS = 1000 * 60 * 3;
+const AUTO_BUMP_DURATION = 10;
 
 const ADMIN_USER = process.env.ADMIN_USER || "DoinkWizard";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ChipTanaka12!@";
@@ -21,7 +25,12 @@ const sseClients = new Set();
 const chatClients = new Set();
 let state = {
   sources: [],
+  sourceFolders: [],
   schedule: [],
+  liveQueue: [],
+  broadcastMode: "scheduled",
+  lastAutoBumpAt: 0,
+  bumpMusic: [],
   users: [],
   chat: [],
   nowPlaying: null
@@ -47,7 +56,12 @@ async function ensureState() {
   } else {
     state = JSON.parse(await readFile(STATE_PATH, "utf8"));
     state.sources ||= [];
+    state.sourceFolders ||= [];
     state.schedule ||= [];
+    state.liveQueue ||= [];
+    state.broadcastMode = state.broadcastMode === "queue" ? "queue" : "scheduled";
+    state.lastAutoBumpAt ||= 0;
+    state.bumpMusic ||= [];
     state.users ||= [];
     state.chat ||= [];
     state.nowPlaying ||= null;
@@ -197,9 +211,141 @@ function normalizeYouTubeId(input) {
   return "";
 }
 
+function normalizeYouTubePlaylistId(input) {
+  const value = String(input || "").trim();
+  if (/^[a-zA-Z0-9_-]{10,}$/.test(value) && !value.includes("http")) return value;
+  try {
+    const url = new URL(value);
+    return url.searchParams.get("list") || "";
+  } catch {
+    return "";
+  }
+}
+
+function parseDurationText(text) {
+  const parts = String(text || "")
+    .trim()
+    .split(":")
+    .map((part) => Number(part));
+  if (!parts.length || parts.some((part) => !Number.isFinite(part))) return 0;
+  return parts.reduce((total, part) => total * 60 + part, 0);
+}
+
+function extractInitialData(html) {
+  const marker = "var ytInitialData = ";
+  const start = html.indexOf(marker);
+  if (start === -1) throw new Error("Could not read playlist metadata from YouTube.");
+  const jsonStart = start + marker.length;
+  const end = html.indexOf(";</script>", jsonStart);
+  if (end === -1) throw new Error("Could not read playlist metadata from YouTube.");
+  return JSON.parse(html.slice(jsonStart, end));
+}
+
+function collectPlaylistVideos(node, videos = []) {
+  if (!node || typeof node !== "object") return videos;
+  if (node.playlistVideoRenderer?.videoId) {
+    const item = node.playlistVideoRenderer;
+    const title = item.title?.runs?.map((run) => run.text).join("") || item.title?.simpleText || "Untitled YouTube video";
+    const duration =
+      Number(item.lengthSeconds) ||
+      parseDurationText(item.lengthText?.simpleText || item.lengthText?.runs?.map((run) => run.text).join(""));
+    videos.push({
+      youtubeId: item.videoId,
+      title,
+      duration: Math.max(5, Math.round(duration || 300))
+    });
+  }
+  for (const value of Object.values(node)) {
+    if (Array.isArray(value)) value.forEach((item) => collectPlaylistVideos(item, videos));
+    else if (value && typeof value === "object") collectPlaylistVideos(value, videos);
+  }
+  return videos;
+}
+
+function findPlaylistTitle(node) {
+  if (!node || typeof node !== "object") return "";
+  if (node.playlistMetadataRenderer?.title) return String(node.playlistMetadataRenderer.title).trim();
+  if (node.title?.simpleText && node.playlistHeaderRenderer) return String(node.title.simpleText).trim();
+  for (const value of Object.values(node)) {
+    const title = Array.isArray(value)
+      ? value.map(findPlaylistTitle).find(Boolean)
+      : value && typeof value === "object"
+        ? findPlaylistTitle(value)
+        : "";
+    if (title) return title;
+  }
+  return "";
+}
+
+async function importYouTubePlaylist(body) {
+  const playlistId = normalizeYouTubePlaylistId(body.url || body.playlist || body.playlistId);
+  if (!playlistId) throw new Error("Enter a valid YouTube playlist URL.");
+
+  const playlistUrl = `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId)}`;
+  const response = await fetch(playlistUrl, {
+    headers: {
+      "accept-language": "en-US,en;q=0.9",
+      "user-agent": "Mozilla/5.0 DoinkTV Playlist Importer"
+    }
+  });
+  if (!response.ok) throw new Error("Could not load that YouTube playlist.");
+
+  const html = await response.text();
+  const initialData = extractInitialData(html);
+  const title = String(body.folderName || "").trim() || findPlaylistTitle(initialData) || `YouTube playlist ${playlistId}`;
+  const videos = collectPlaylistVideos(initialData);
+  const uniqueVideos = [...new Map(videos.map((video) => [video.youtubeId, video])).values()];
+  if (!uniqueVideos.length) throw new Error("No public videos were found in that playlist.");
+
+  const folder = await createUniqueSourceFolder(title);
+  let imported = 0;
+  let skipped = 0;
+
+  for (const video of uniqueVideos) {
+    const alreadyExists = state.sources.some((source) => source.youtubeId === video.youtubeId && source.folderId === folder.id);
+    if (alreadyExists) {
+      skipped += 1;
+      continue;
+    }
+    state.sources.push({
+      id: crypto.randomUUID(),
+      type: "youtube",
+      title: video.title,
+      folderId: folder.id,
+      duration: video.duration,
+      youtubeId: video.youtubeId,
+      url: `https://www.youtube.com/watch?v=${video.youtubeId}`
+    });
+    imported += 1;
+  }
+
+  await saveState();
+  broadcastProgram();
+  return { folder, imported, skipped };
+}
+
+async function getYouTubeInfo(input) {
+  const youtubeId = normalizeYouTubeId(input);
+  if (!youtubeId) throw new Error("Enter a valid YouTube URL or video ID.");
+
+  const url = `https://www.youtube.com/watch?v=${youtubeId}`;
+  let title = "";
+  try {
+    const response = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+    if (response.ok) {
+      const data = await response.json();
+      title = String(data.title || "").trim();
+    }
+  } catch {
+    title = "";
+  }
+
+  return { youtubeId, url, title };
+}
+
 function publicProgram() {
   const now = Date.now();
-  const entries = [...state.schedule]
+  const entries = activeBroadcastEntries()
     .map((entry) => ({
       ...entry,
       source: state.sources.find((source) => source.id === entry.sourceId)
@@ -212,14 +358,15 @@ function publicProgram() {
 
   return {
     serverTime: now,
+    mode: state.broadcastMode,
     live: live
       ? {
           id: live.id,
           title: live.title || live.source.title,
-          startAt: live.startAt,
-          duration: live.duration,
-          offset: Math.max(0, (now - live.startAt) / 1000),
-          source: live.source
+        startAt: live.startAt,
+        duration: live.duration,
+        offset: Math.max(0, (now - live.startAt) / 1000),
+        source: live.source
         }
       : null,
     next: next
@@ -232,6 +379,135 @@ function publicProgram() {
         }
       : null
   };
+}
+
+function isBumpSource(source) {
+  return source?.type === "bump";
+}
+
+function formatEstTime(timestamp) {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    hour: "numeric",
+    minute: "2-digit"
+  }).format(new Date(timestamp));
+}
+
+function upcomingNormalQueueItems(startAt, count = 3) {
+  return state.liveQueue
+    .filter((entry) => entry.startAt >= startAt)
+    .map((entry) => ({
+      ...entry,
+      source: state.sources.find((source) => source.id === entry.sourceId)
+    }))
+    .filter((entry) => entry.source && !isBumpSource(entry.source))
+    .sort((a, b) => a.startAt - b.startAt)
+    .slice(0, count);
+}
+
+function createAutoBumpSource(afterEntryEnd) {
+  const upcoming = upcomingNormalQueueItems(afterEntryEnd, 3);
+  const lines = upcoming.length
+    ? upcoming.map((entry) => ({
+        title: entry.title || entry.source.title,
+        time: formatEstTime(entry.startAt)
+      }))
+    : [{ title: "More DoinkTV shortly", time: formatEstTime(afterEntryEnd) }];
+
+  const source = {
+    id: crypto.randomUUID(),
+    type: "bump",
+    title: "Schedule bump",
+    folderId: "",
+    duration: AUTO_BUMP_DURATION,
+    bump: {
+      heading: "coming up",
+      lines,
+      alignment: "left",
+      placement: ["top", "middle", "bottom"][Math.floor(Math.random() * 3)],
+      tone: ["classic", "caption", "washed"][Math.floor(Math.random() * 3)],
+      seed: Math.floor(Math.random() * 100000),
+      audio: randomBumpMusicPath()
+    },
+    generatedAt: Date.now()
+  };
+  state.sources.push(source);
+  return source;
+}
+
+function randomBumpMusicPath() {
+  return state.bumpMusic?.length ? state.bumpMusic[Math.floor(Math.random() * state.bumpMusic.length)].path : "";
+}
+
+async function refreshBumpMusic() {
+  await mkdir(BUMP_MUSIC_DIR, { recursive: true });
+  const files = await readdir(BUMP_MUSIC_DIR, { withFileTypes: true });
+  state.bumpMusic = files
+    .filter((file) => file.isFile() && /\.(mp3|wav|ogg|m4a)$/i.test(file.name))
+    .map((file) => ({
+      name: file.name.replace(/\.[^/.]+$/, ""),
+      path: `/media/bump-music/${encodeURIComponent(file.name).replace(/%2F/g, "/")}`
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function rebuildLiveQueueTimings({ insertAutoBumps = true } = {}) {
+  const now = Date.now();
+  const queue = state.liveQueue
+    .filter((entry) => entry.startAt + entry.duration * 1000 > now || entry.startAt >= now)
+    .map((entry) => ({
+      ...entry,
+      source: state.sources.find((source) => source.id === entry.sourceId)
+    }))
+    .filter((entry) => entry.source)
+    .sort((a, b) => a.startAt - b.startAt);
+
+  const current = queue.find((entry) => now >= entry.startAt && now < entry.startAt + entry.duration * 1000);
+  let cursor = current ? current.startAt + current.duration * 1000 : now;
+  let normalSecondsSinceBump = current && !isBumpSource(current.source) ? Math.max(0, (now - current.startAt) / 1000) : 0;
+  const rebuilt = current ? [stripQueueSource(current)] : [];
+  const pending = queue.filter((entry) => !current || entry.id !== current.id).filter((entry) => entry.startAt + entry.duration * 1000 > now);
+
+  for (const item of pending) {
+    if (isBumpSource(item.source)) continue;
+    const normalEntry = {
+      id: item.id,
+      sourceId: item.sourceId,
+      title: item.title || "",
+      startAt: cursor,
+      duration: item.duration,
+      queuedAt: item.queuedAt || now
+    };
+    rebuilt.push(normalEntry);
+    cursor += item.duration * 1000;
+    normalSecondsSinceBump += item.duration;
+
+    if (insertAutoBumps && normalSecondsSinceBump >= AUTO_BUMP_INTERVAL_MS / 1000) {
+      const bumpSource = createAutoBumpSource(cursor);
+      rebuilt.push({
+        id: crypto.randomUUID(),
+        sourceId: bumpSource.id,
+        title: bumpSource.title,
+        startAt: cursor,
+        duration: AUTO_BUMP_DURATION,
+        queuedAt: now,
+        autoBump: true
+      });
+      cursor += AUTO_BUMP_DURATION * 1000;
+      normalSecondsSinceBump = 0;
+    }
+  }
+
+  state.liveQueue = rebuilt;
+}
+
+function stripQueueSource(entry) {
+  const { source, ...rest } = entry;
+  return rest;
+}
+
+function activeBroadcastEntries() {
+  return state.broadcastMode === "queue" ? state.liveQueue : state.schedule;
 }
 
 function broadcastProgram() {
@@ -279,6 +555,7 @@ async function createChatMessage(req, body) {
 function cleanSchedule() {
   const cutoff = Date.now() - 1000 * 60 * 60 * 12;
   state.schedule = state.schedule.filter((entry) => entry.startAt + entry.duration * 1000 > cutoff);
+  state.liveQueue = state.liveQueue.filter((entry) => entry.startAt + entry.duration * 1000 > cutoff);
 }
 
 async function createSource(body) {
@@ -293,6 +570,7 @@ async function createSource(body) {
     id: crypto.randomUUID(),
     type,
     title,
+    folderId: normalizeFolderId(body.folderId),
     duration: Math.round(duration)
   };
 
@@ -313,6 +591,77 @@ async function createSource(body) {
 
   state.sources.push(source);
   await saveState();
+  return source;
+}
+
+function normalizeFolderId(folderId) {
+  const id = String(folderId || "").trim();
+  if (!id) return "";
+  if (!state.sourceFolders.some((folder) => folder.id === id)) {
+    throw new Error("Unknown source folder.");
+  }
+  return id;
+}
+
+async function createSourceFolder(body) {
+  const name = String(body.name || "").replace(/\s+/g, " ").trim();
+  if (name.length < 2) throw new Error("Folder names must be at least 2 characters.");
+  if (name.length > 48) throw new Error("Folder names must be 48 characters or less.");
+  if (state.sourceFolders.some((folder) => folder.name.toLowerCase() === name.toLowerCase())) {
+    throw new Error("A source folder with that name already exists.");
+  }
+
+  const folder = {
+    id: crypto.randomUUID(),
+    name,
+    createdAt: Date.now()
+  };
+  state.sourceFolders.push(folder);
+  state.sourceFolders.sort((a, b) => a.name.localeCompare(b.name));
+  await saveState();
+  return folder;
+}
+
+async function createUniqueSourceFolder(baseName) {
+  let name = String(baseName || "Imported playlist").replace(/\s+/g, " ").trim().slice(0, 48);
+  if (name.length < 2) name = "Imported playlist";
+  const original = name;
+  let suffix = 2;
+  while (state.sourceFolders.some((folder) => folder.name.toLowerCase() === name.toLowerCase())) {
+    const tail = ` ${suffix}`;
+    name = `${original.slice(0, 48 - tail.length)}${tail}`;
+    suffix += 1;
+  }
+  const folder = {
+    id: crypto.randomUUID(),
+    name,
+    createdAt: Date.now()
+  };
+  state.sourceFolders.push(folder);
+  state.sourceFolders.sort((a, b) => a.name.localeCompare(b.name));
+  return folder;
+}
+
+async function updateSource(id, body) {
+  const source = state.sources.find((item) => item.id === id);
+  if (!source) throw new Error("Unknown source.");
+
+  if ("title" in body) {
+    const title = String(body.title || "").trim();
+    if (!title) throw new Error("Title is required.");
+    source.title = title;
+  }
+  if ("duration" in body) {
+    const duration = Number(body.duration);
+    if (!Number.isFinite(duration) || duration < 5) throw new Error("Duration must be at least 5 seconds.");
+    source.duration = Math.round(duration);
+  }
+  if ("folderId" in body) {
+    source.folderId = normalizeFolderId(body.folderId);
+  }
+
+  await saveState();
+  broadcastProgram();
   return source;
 }
 
@@ -348,9 +697,58 @@ async function createScheduleEntry(body, immediate = false) {
   return entry;
 }
 
+async function createQueueEntry(body, immediate = false) {
+  const source = state.sources.find((item) => item.id === body.sourceId);
+  if (!source) throw new Error("Unknown source.");
+
+  const duration = Number(body.duration || source.duration);
+  if (!Number.isFinite(duration) || duration < 5) {
+    throw new Error("Duration must be at least 5 seconds.");
+  }
+
+  const now = Date.now();
+  const activeOrFuture = state.liveQueue
+    .filter((item) => item.startAt + item.duration * 1000 > now)
+    .sort((a, b) => a.startAt - b.startAt);
+  const tailEnd = activeOrFuture.reduce((latest, item) => {
+    return Math.max(latest, item.startAt + item.duration * 1000);
+  }, now);
+
+  const entry = {
+    id: crypto.randomUUID(),
+    sourceId: source.id,
+    title: String(body.title || "").trim(),
+    startAt: immediate ? now : tailEnd,
+    duration: Math.round(duration),
+    queuedAt: now
+  };
+
+  state.liveQueue = immediate ? [] : activeOrFuture;
+  state.liveQueue.push(entry);
+  state.liveQueue.sort((a, b) => a.startAt - b.startAt);
+  rebuildLiveQueueTimings();
+  await saveState();
+  broadcastProgram();
+  return entry;
+}
+
+async function setBroadcastMode(body) {
+  const mode = body.mode === "queue" ? "queue" : "scheduled";
+  state.broadcastMode = mode;
+  await saveState();
+  broadcastProgram();
+  return { mode };
+}
+
 async function removeItem(collection, id) {
   const before = state[collection].length;
   state[collection] = state[collection].filter((item) => item.id !== id);
+  if (collection === "sourceFolders") {
+    state.sources = state.sources.map((source) => (source.folderId === id ? { ...source, folderId: "" } : source));
+  }
+  if (collection === "liveQueue") {
+    rebuildLiveQueueTimings();
+  }
   await saveState();
   broadcastProgram();
   return before !== state[collection].length;
@@ -389,6 +787,12 @@ async function handleApi(req, res, pathname) {
   try {
     if (req.method === "GET" && pathname === "/api/program") {
       sendJson(res, 200, publicProgram());
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/youtube-info") {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      sendJson(res, 200, await getYouTubeInfo(url.searchParams.get("url")));
       return;
     }
 
@@ -476,9 +880,26 @@ async function handleApi(req, res, pathname) {
       if (!requireAdmin(req, res)) return;
       sendJson(res, 200, {
         user: publicUser(getSession(req)),
+        sourceFolders: state.sourceFolders,
         sources: state.sources,
-        schedule: state.schedule
+        schedule: state.schedule,
+        liveQueue: state.liveQueue,
+        broadcastMode: state.broadcastMode,
+        bumpMusic: state.bumpMusic
       });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/source-folders") {
+      if (!requireAdmin(req, res)) return;
+      const folder = await createSourceFolder(await readJson(req));
+      sendJson(res, 201, folder);
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/import-youtube-playlist") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 201, await importYouTubePlaylist(await readJson(req)));
       return;
     }
 
@@ -487,6 +908,13 @@ async function handleApi(req, res, pathname) {
       const source = await createSource(await readJson(req));
       broadcastProgram();
       sendJson(res, 201, source);
+      return;
+    }
+
+    const updateSourceMatch = pathname.match(/^\/api\/sources\/([^/]+)$/);
+    if (req.method === "PATCH" && updateSourceMatch) {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await updateSource(updateSourceMatch[1], await readJson(req)));
       return;
     }
 
@@ -499,16 +927,31 @@ async function handleApi(req, res, pathname) {
 
     if (req.method === "POST" && pathname === "/api/play-now") {
       if (!requireAdmin(req, res)) return;
-      const entry = await createScheduleEntry(await readJson(req), true);
+      const body = await readJson(req);
+      const entry = state.broadcastMode === "queue" ? await createQueueEntry(body, true) : await createScheduleEntry(body, true);
       sendJson(res, 201, entry);
       return;
     }
 
-    const deleteMatch = pathname.match(/^\/api\/(sources|schedule)\/([^/]+)$/);
+    if (req.method === "POST" && pathname === "/api/queue") {
+      if (!requireAdmin(req, res)) return;
+      const entry = await createQueueEntry(await readJson(req), false);
+      sendJson(res, 201, entry);
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/broadcast-mode") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await setBroadcastMode(await readJson(req)));
+      return;
+    }
+
+    const deleteMatch = pathname.match(/^\/api\/(sources|schedule|queue|source-folders)\/([^/]+)$/);
     if (req.method === "DELETE" && deleteMatch) {
       if (!requireAdmin(req, res)) return;
       const [, type, id] = deleteMatch;
-      const removed = await removeItem(type, id);
+      const collection = type === "source-folders" ? "sourceFolders" : type === "queue" ? "liveQueue" : type;
+      const removed = await removeItem(collection, id);
       sendJson(res, removed ? 200 : 404, { ok: removed });
       return;
     }
@@ -520,6 +963,7 @@ async function handleApi(req, res, pathname) {
 }
 
 await ensureState();
+await refreshBumpMusic();
 setInterval(broadcastProgram, 1000);
 setInterval(async () => {
   cleanSchedule();
@@ -530,6 +974,10 @@ createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (url.pathname.startsWith("/api/")) {
     await handleApi(req, res, url.pathname);
+    return;
+  }
+  if (url.pathname.startsWith("/bumpgenerator")) {
+    await serveFile(req, res, BUMP_GENERATOR_DIR, "/bumpgenerator");
     return;
   }
   if (url.pathname.startsWith("/media/")) {

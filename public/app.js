@@ -5,12 +5,31 @@ const nowTitle = document.querySelector("#nowTitle");
 const nextTitle = document.querySelector("#nextTitle");
 const progressText = document.querySelector("#progressText");
 const youtubeLink = document.querySelector("#youtubeLink");
+const bumpPlayer = document.querySelector("#bumpPlayer");
+const bumpAudio = document.querySelector("#bumpAudio");
 const shell = document.querySelector(".shell");
 const adminToggle = document.querySelector("#adminToggle");
 const loginPopover = document.querySelector("#loginPopover");
 const adminPanel = document.querySelector("#adminPanel");
 const chatPanel = document.querySelector("#chatPanel");
+const bumpPanel = document.querySelector("#bumpPanel");
 const chatToggle = document.querySelector("#chatToggle");
+const adminRailTabs = document.querySelectorAll("[data-admin-rail-tabs]");
+const showBroadcastPanelButtons = [
+  document.querySelector("#showBroadcastPanelButton"),
+  document.querySelector("#showBroadcastPanelButtonAlt"),
+  document.querySelector("#showBroadcastPanelButtonBump")
+];
+const showBumpPanelButtons = [
+  document.querySelector("#showBumpPanelButton"),
+  document.querySelector("#showBumpPanelButtonAlt"),
+  document.querySelector("#showBumpPanelButtonBump")
+];
+const showChatPanelButtons = [
+  document.querySelector("#showChatPanelButton"),
+  document.querySelector("#showChatPanelButtonAlt"),
+  document.querySelector("#showChatPanelButtonBump")
+];
 const chatStatus = document.querySelector("#chatStatus");
 const chatMessages = document.querySelector("#chatMessages");
 const chatForm = document.querySelector("#chatForm");
@@ -26,23 +45,49 @@ const registerMessage = document.querySelector("#registerMessage");
 const logoutButton = document.querySelector("#logoutButton");
 const adminIdentity = document.querySelector("#adminIdentity");
 const adminTools = document.querySelector("#adminTools");
+const sourceFolderForm = document.querySelector("#sourceFolderForm");
+const playlistImportForm = document.querySelector("#playlistImportForm");
 const sourceForm = document.querySelector("#sourceForm");
 const scheduleForm = document.querySelector("#scheduleForm");
+const scheduledModeButton = document.querySelector("#scheduledModeButton");
+const queueModeButton = document.querySelector("#queueModeButton");
+const addQueueButton = document.querySelector("#addQueueButton");
 const playNowButton = document.querySelector("#playNowButton");
+const sourceFolderMessage = document.querySelector("#sourceFolderMessage");
+const playlistImportMessage = document.querySelector("#playlistImportMessage");
 const sourceMessage = document.querySelector("#sourceMessage");
 const scheduleMessage = document.querySelector("#scheduleMessage");
 const sourceSelect = scheduleForm.elements.sourceId;
 const sourcesList = document.querySelector("#sourcesList");
 const scheduleList = document.querySelector("#scheduleList");
+const queueList = document.querySelector("#queueList");
+const sourceTypeSelect = sourceForm.elements.type;
+const sourceFolderSelect = sourceForm.elements.folderId;
+const sourceTitleInput = sourceForm.elements.title;
+const sourceDurationInput = sourceForm.elements.duration;
+const sourceDurationDisplay = document.querySelector("#sourceDurationDisplay");
+const sourceYoutubeInput = sourceForm.elements.youtube;
+const sourcePathInput = sourceForm.elements.path;
+const sourceFieldGroups = document.querySelectorAll("[data-source-field]");
 
 let youtubePlayer;
 let youtubeReady = false;
+let youtubeMetadataPlayer;
+let youtubeMetadataReady = false;
+let resolveYoutubeMetadataReady;
+const youtubeMetadataReadyPromise = new Promise((resolve) => {
+  resolveYoutubeMetadataReady = resolve;
+});
 let currentProgramId = "";
 let currentProgram = null;
 let clockDelta = 0;
 let adminAuthenticated = false;
 let currentUser = null;
 let chatCollapsed = false;
+let youtubeAutofillTimer;
+let broadcastMode = "scheduled";
+let adminRailView = "broadcast";
+let adminDataCache = { sourceFolders: [], sources: [] };
 
 window.onYouTubeIframeAPIReady = () => {
   youtubePlayer = new YT.Player("youtubePlayer", {
@@ -65,13 +110,33 @@ window.onYouTubeIframeAPIReady = () => {
       onStateChange: () => enforcePlayback()
     }
   });
+
+  youtubeMetadataPlayer = new YT.Player("youtubeMetadataPlayer", {
+    width: "1",
+    height: "1",
+    playerVars: {
+      controls: 0,
+      disablekb: 1,
+      playsinline: 1
+    },
+    events: {
+      onReady: () => {
+        youtubeMetadataReady = true;
+        resolveYoutubeMetadataReady();
+      }
+    }
+  });
 };
 
 function formatDuration(seconds) {
   const safeSeconds = Math.max(0, Math.floor(seconds || 0));
-  const mins = String(Math.floor(safeSeconds / 60)).padStart(2, "0");
+  const mins = String(Math.floor(safeSeconds / 60));
   const secs = String(safeSeconds % 60).padStart(2, "0");
   return `${mins}:${secs}`;
+}
+
+function updateSourceDurationDisplay() {
+  sourceDurationDisplay.value = formatDuration(Number(sourceDurationInput.value));
 }
 
 function setMessage(node, text, isError = false) {
@@ -98,23 +163,107 @@ function setUserState(user) {
   currentUser = user;
   adminAuthenticated = user?.role === "admin";
   setLoginOpen(false);
-  adminPanel.classList.toggle("hidden", !adminAuthenticated);
   adminTools.classList.toggle("hidden", !adminAuthenticated);
   shell.classList.toggle("admin-open", adminAuthenticated);
+  adminRailTabs.forEach((tabs) => tabs.classList.toggle("hidden", !adminAuthenticated));
+  chatPanel.classList.toggle("admin-rail", adminAuthenticated);
   adminToggle.textContent = adminAuthenticated ? "Controls" : user ? "Log Out" : "Log In";
   if (user) adminIdentity.textContent = `Signed in as ${user.username}`;
   chatInput.disabled = !user;
   chatSendButton.disabled = !user;
   chatInput.placeholder = user ? "Message global chat" : "Log in to chat";
   chatStatus.textContent = user ? `Chatting as ${user.username}` : "Log in to join";
+  if (adminAuthenticated) {
+    setAdminRailView(adminRailView || "broadcast");
+  } else {
+    adminPanel.classList.add("hidden");
+    bumpPanel.classList.add("hidden");
+    chatPanel.classList.remove("hidden");
+  }
 }
 
 function setChatCollapsed(isCollapsed) {
+  if (adminAuthenticated) return;
   chatCollapsed = isCollapsed;
   chatPanel.classList.toggle("collapsed", isCollapsed);
   shell.classList.toggle("chat-collapsed", isCollapsed);
   chatToggle.textContent = isCollapsed ? "Chat" : "Minimize";
   chatToggle.setAttribute("aria-expanded", String(!isCollapsed));
+}
+
+function setAdminRailView(view) {
+  adminRailView = ["broadcast", "bump", "chat"].includes(view) ? view : "broadcast";
+  const showingBroadcast = adminRailView === "broadcast";
+  const showingBump = adminRailView === "bump";
+  adminPanel.classList.toggle("hidden", !showingBroadcast);
+  bumpPanel.classList.toggle("hidden", !showingBump);
+  chatPanel.classList.toggle("hidden", showingBroadcast || showingBump);
+  chatPanel.classList.remove("collapsed");
+  shell.classList.remove("chat-collapsed");
+  showBroadcastPanelButtons.forEach((button) => button.classList.toggle("active", showingBroadcast));
+  showBumpPanelButtons.forEach((button) => button.classList.toggle("active", showingBump));
+  showChatPanelButtons.forEach((button) => button.classList.toggle("active", adminRailView === "chat"));
+}
+
+function setBroadcastModeUI(mode) {
+  broadcastMode = mode === "queue" ? "queue" : "scheduled";
+  scheduledModeButton.classList.toggle("active", broadcastMode === "scheduled");
+  queueModeButton.classList.toggle("active", broadcastMode === "queue");
+}
+
+function syncSourceFields(shouldFocus = false) {
+  const type = sourceTypeSelect.value;
+  sourceFieldGroups.forEach((group) => {
+    group.classList.toggle("hidden", group.dataset.sourceField !== type);
+  });
+  sourceYoutubeInput.required = type === "youtube";
+  sourcePathInput.required = type === "local";
+  if (!shouldFocus) return;
+  if (type === "youtube") {
+    sourceYoutubeInput.focus();
+  } else {
+    sourcePathInput.focus();
+  }
+}
+
+async function readYouTubeDuration(youtubeId) {
+  if (!youtubeMetadataReady) await youtubeMetadataReadyPromise;
+  youtubeMetadataPlayer.cueVideoById({ videoId: youtubeId });
+
+  return await new Promise((resolve, reject) => {
+    let attempts = 0;
+    const timer = setInterval(() => {
+      attempts += 1;
+      const duration = youtubeMetadataPlayer.getDuration?.() || 0;
+      if (Number.isFinite(duration) && duration >= 5) {
+        clearInterval(timer);
+        resolve(Math.round(duration));
+      } else if (attempts > 30) {
+        clearInterval(timer);
+        reject(new Error("Could not detect the YouTube duration."));
+      }
+    }, 250);
+  });
+}
+
+async function autofillYouTubeSource() {
+  const value = sourceYoutubeInput.value.trim();
+  if (!value || sourceTypeSelect.value !== "youtube") return;
+
+  try {
+    setMessage(sourceMessage, "Looking up YouTube video...");
+    const info = await api(`/api/youtube-info?url=${encodeURIComponent(value)}`);
+    if (info.title) {
+      sourceTitleInput.value = info.title;
+      sourceTitleInput.dataset.autoTitle = info.title;
+    }
+    const duration = await readYouTubeDuration(info.youtubeId);
+    sourceDurationInput.value = String(duration);
+    updateSourceDurationDisplay();
+    setMessage(sourceMessage, "YouTube title and duration autofilled.");
+  } catch (error) {
+    setMessage(sourceMessage, error.message, true);
+  }
 }
 
 async function api(path, options = {}) {
@@ -169,11 +318,39 @@ function syncYouTube(live) {
   youtubePlayer.mute();
 }
 
+function renderBump(live) {
+  const bump = live.source.bump || { heading: "coming up", lines: [] };
+  bumpPlayer.innerHTML = `
+    <div class="bump-card">
+      <h2>${escapeHtml(bump.heading || live.title || "coming up")}</h2>
+      <ul>
+        ${(bump.lines || [])
+          .map(
+            (line) => `
+              <li>
+                <time>${escapeHtml(line.time || "")}</time>
+                <span>${escapeHtml(line.title || "")}</span>
+              </li>`
+          )
+          .join("")}
+      </ul>
+    </div>`;
+  const audioPath = bump.audio || "";
+  if (audioPath && bumpAudio.src !== new URL(audioPath, location.origin).href) {
+    bumpAudio.src = audioPath;
+  }
+  if (audioPath) {
+    bumpAudio.currentTime = Math.min(activeOffset(), 1);
+    bumpAudio.volume = 0.82;
+    bumpAudio.play().catch(() => {});
+  }
+}
+
 function enforcePlayback() {
   if (!currentProgram?.live) return;
   if (currentProgram.live.source.type === "local") {
     syncLocal(currentProgram.live);
-  } else {
+  } else if (currentProgram.live.source.type === "youtube") {
     syncYouTube(currentProgram.live);
   }
 }
@@ -197,6 +374,7 @@ function syncProgram(program) {
     liveBadge.textContent = "Waiting";
     liveBadge.classList.add("off");
     localPlayer.pause();
+    bumpAudio.pause();
     if (youtubeReady) youtubePlayer.stopVideo();
     return;
   }
@@ -209,11 +387,17 @@ function syncProgram(program) {
   youtubeLink.href = live.source.type === "youtube" ? live.source.url : "#";
 
   if (live.source.type === "local") {
+    bumpAudio.pause();
     if (youtubeReady) youtubePlayer.stopVideo();
     syncLocal(live);
-  } else {
+  } else if (live.source.type === "youtube") {
+    bumpAudio.pause();
     localPlayer.pause();
     syncYouTube(live);
+  } else if (live.source.type === "bump") {
+    localPlayer.pause();
+    if (youtubeReady) youtubePlayer.stopVideo();
+    renderBump(live);
   }
 
   currentProgramId = live.id;
@@ -227,22 +411,62 @@ function tickProgress() {
 }
 
 function renderAdmin(data) {
-  sourceSelect.innerHTML = data.sources
-    .map((source) => `<option value="${source.id}">${escapeHtml(source.title)} (${source.type})</option>`)
+  adminDataCache = data;
+  const folders = data.sourceFolders || [];
+  setBroadcastModeUI(data.broadcastMode);
+  const librarySources = data.sources.filter((source) => source.type !== "bump");
+  sourceFolderSelect.innerHTML = [
+    `<option value="">Unfiled sources</option>`,
+    ...folders.map((folder) => `<option value="${folder.id}">${escapeHtml(folder.name)}</option>`)
+  ].join("");
+
+  sourceSelect.innerHTML = librarySources
+    .map((source) => {
+      const folder = folders.find((item) => item.id === (source.folderId || ""));
+      const folderName = folder?.name || "Unfiled";
+      return `<option value="${source.id}">${escapeHtml(folderName)} / ${escapeHtml(source.title)} (${source.type})</option>`;
+    })
     .join("");
 
-  sourcesList.innerHTML = data.sources.length
-    ? data.sources
-        .map(
-          (source) => `
+  const folderGroups = [
+    { id: "", name: "Unfiled sources" },
+    ...folders
+  ].map((folder) => ({
+    ...folder,
+    sources: librarySources.filter((source) => (source.folderId || "") === folder.id)
+  }));
+
+  sourcesList.innerHTML = librarySources.length || folders.length
+    ? folderGroups
+        .filter((folder) => folder.sources.length || folder.id)
+        .map((folder) => {
+          const folderSources = folder.sources.length
+            ? folder.sources
+                .map(
+                  (source) => `
             <div class="item">
               <div>
                 <strong>${escapeHtml(source.title)}</strong>
                 <small>${escapeHtml(source.type === "youtube" ? source.url : source.path)} &middot; ${formatDuration(source.duration)}</small>
               </div>
-              <button class="danger" data-delete-source="${source.id}" type="button">Remove</button>
+              <div class="edit-actions">
+                <button class="secondary compact" data-edit-source="${source.id}" type="button">Edit</button>
+                <button class="danger" data-delete-source="${source.id}" type="button">Remove</button>
+              </div>
             </div>`
-        )
+                )
+                .join("")
+            : `<p class="message">No sources in this folder.</p>`;
+          return `
+            <div class="folder-group">
+              <div class="folder-heading">
+                <strong>${escapeHtml(folder.name)}</strong>
+                <span class="folder-count">${folder.sources.length}</span>
+                ${folder.id ? `<button class="danger" data-delete-folder="${folder.id}" type="button">Remove</button>` : ""}
+              </div>
+              <div class="item-list">${folderSources}</div>
+            </div>`;
+        })
         .join("")
     : `<p class="message">No sources yet.</p>`;
 
@@ -265,12 +489,63 @@ function renderAdmin(data) {
         })
         .join("")
     : `<p class="message">No upcoming entries.</p>`;
+
+  const liveQueue = (data.liveQueue || [])
+    .filter((entry) => entry.startAt + entry.duration * 1000 > Date.now() - 1000)
+    .sort((a, b) => a.startAt - b.startAt);
+
+  queueList.innerHTML = liveQueue.length
+    ? liveQueue
+        .map((entry) => {
+          const source = data.sources.find((item) => item.id === entry.sourceId);
+          return `
+            <div class="item">
+              <div>
+                <strong>${escapeHtml(entry.title || source?.title || "Queued source")}</strong>
+                <small>${new Date(entry.startAt).toLocaleTimeString()} &middot; ${formatDuration(entry.duration)}</small>
+              </div>
+              <button class="danger" data-delete-queue="${entry.id}" type="button">Remove</button>
+            </div>`;
+        })
+        .join("")
+    : `<p class="message">Queue is empty.</p>`;
 }
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => {
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char];
   });
+}
+
+function folderOptions(selectedId = "") {
+  return [
+    `<option value="">Unfiled sources</option>`,
+    ...(adminDataCache.sourceFolders || []).map((folder) => {
+      const selected = folder.id === selectedId ? " selected" : "";
+      return `<option value="${folder.id}"${selected}>${escapeHtml(folder.name)}</option>`;
+    })
+  ].join("");
+}
+
+function renderSourceEditor(sourceId) {
+  const source = (adminDataCache.sources || []).find((item) => item.id === sourceId);
+  if (!source) return;
+  const button = document.querySelector(`[data-edit-source="${sourceId}"]`);
+  const item = button?.closest(".item");
+  if (!item) return;
+
+  item.innerHTML = `
+    <form class="source-edit-form" data-source-edit-form="${source.id}">
+      <div class="edit-grid">
+        <input name="title" value="${escapeHtml(source.title)}" required>
+        <input name="duration" type="number" min="5" step="1" value="${source.duration}" required>
+      </div>
+      <select name="folderId">${folderOptions(source.folderId || "")}</select>
+      <div class="edit-actions">
+        <button type="submit">Save</button>
+        <button class="secondary" data-cancel-source-edit type="button">Cancel</button>
+      </div>
+    </form>`;
 }
 
 function renderChat(data) {
@@ -314,8 +589,11 @@ async function refreshSession() {
 
 adminToggle.addEventListener("click", () => {
   if (adminAuthenticated) {
-    adminPanel.classList.toggle("hidden");
-    shell.classList.toggle("admin-open", !adminPanel.classList.contains("hidden"));
+    const railOpen = shell.classList.contains("admin-open");
+    shell.classList.toggle("admin-open", !railOpen);
+    adminPanel.classList.toggle("hidden", railOpen || adminRailView !== "broadcast");
+    bumpPanel.classList.toggle("hidden", railOpen || adminRailView !== "bump");
+    chatPanel.classList.toggle("hidden", railOpen || adminRailView !== "chat");
     return;
   }
   if (currentUser) {
@@ -330,7 +608,46 @@ adminToggle.addEventListener("click", () => {
 
 showLoginButton.addEventListener("click", () => setAuthMode("login"));
 showRegisterButton.addEventListener("click", () => setAuthMode("register"));
+showBroadcastPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("broadcast")));
+showBumpPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("bump")));
+showChatPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("chat")));
 chatToggle.addEventListener("click", () => setChatCollapsed(!chatCollapsed));
+scheduledModeButton.addEventListener("click", async () => {
+  try {
+    await api("/api/broadcast-mode", { method: "POST", body: JSON.stringify({ mode: "scheduled" }) });
+    setMessage(scheduleMessage, "Broadcast priority set to scheduled.");
+    await loadAdmin();
+  } catch (error) {
+    setMessage(scheduleMessage, error.message, true);
+  }
+});
+
+queueModeButton.addEventListener("click", async () => {
+  try {
+    await api("/api/broadcast-mode", { method: "POST", body: JSON.stringify({ mode: "queue" }) });
+    setMessage(scheduleMessage, "Broadcast priority set to live queue.");
+    await loadAdmin();
+  } catch (error) {
+    setMessage(scheduleMessage, error.message, true);
+  }
+});
+
+sourceTypeSelect.addEventListener("change", () => {
+  setMessage(sourceMessage, "");
+  syncSourceFields(true);
+});
+
+sourceYoutubeInput.addEventListener("input", () => {
+  clearTimeout(youtubeAutofillTimer);
+  youtubeAutofillTimer = setTimeout(autofillYouTubeSource, 650);
+});
+
+sourceYoutubeInput.addEventListener("blur", () => {
+  clearTimeout(youtubeAutofillTimer);
+  autofillYouTubeSource();
+});
+
+sourceDurationInput.addEventListener("input", updateSourceDurationDisplay);
 
 chatForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -392,12 +709,41 @@ logoutButton.addEventListener("click", async () => {
   setUserState(null);
 });
 
+sourceFolderForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const body = Object.fromEntries(new FormData(sourceFolderForm));
+    await api("/api/source-folders", { method: "POST", body: JSON.stringify(body) });
+    sourceFolderForm.reset();
+    setMessage(sourceFolderMessage, "Folder created.");
+    await loadAdmin();
+  } catch (error) {
+    setMessage(sourceFolderMessage, error.message, true);
+  }
+});
+
+playlistImportForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const body = Object.fromEntries(new FormData(playlistImportForm));
+    setMessage(playlistImportMessage, "Importing playlist...");
+    const result = await api("/api/import-youtube-playlist", { method: "POST", body: JSON.stringify(body) });
+    playlistImportForm.reset();
+    setMessage(playlistImportMessage, `Imported ${result.imported} videos into ${result.folder.name}.`);
+    await loadAdmin();
+  } catch (error) {
+    setMessage(playlistImportMessage, error.message, true);
+  }
+});
+
 sourceForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
     const body = Object.fromEntries(new FormData(sourceForm));
     await api("/api/sources", { method: "POST", body: JSON.stringify(body) });
     sourceForm.reset();
+    syncSourceFields();
+    updateSourceDurationDisplay();
     setMessage(sourceMessage, "Source added.");
     await loadAdmin();
   } catch (error) {
@@ -417,6 +763,17 @@ scheduleForm.addEventListener("submit", async (event) => {
   }
 });
 
+addQueueButton.addEventListener("click", async () => {
+  try {
+    const body = Object.fromEntries(new FormData(scheduleForm));
+    await api("/api/queue", { method: "POST", body: JSON.stringify(body) });
+    setMessage(scheduleMessage, "Added to live queue.");
+    await loadAdmin();
+  } catch (error) {
+    setMessage(scheduleMessage, error.message, true);
+  }
+});
+
 playNowButton.addEventListener("click", async () => {
   try {
     const body = Object.fromEntries(new FormData(scheduleForm));
@@ -429,14 +786,42 @@ playNowButton.addEventListener("click", async () => {
 });
 
 document.addEventListener("click", async (event) => {
+  const editSourceId = event.target.dataset.editSource;
+  if (editSourceId) {
+    renderSourceEditor(editSourceId);
+    return;
+  }
+  if (event.target.dataset.cancelSourceEdit !== undefined) {
+    await loadAdmin();
+    return;
+  }
+
   const sourceId = event.target.dataset.deleteSource;
   const scheduleId = event.target.dataset.deleteSchedule;
+  const queueId = event.target.dataset.deleteQueue;
+  const folderId = event.target.dataset.deleteFolder;
   try {
     if (sourceId) await api(`/api/sources/${sourceId}`, { method: "DELETE" });
     if (scheduleId) await api(`/api/schedule/${scheduleId}`, { method: "DELETE" });
-    if (sourceId || scheduleId) await loadAdmin();
+    if (queueId) await api(`/api/queue/${queueId}`, { method: "DELETE" });
+    if (folderId) await api(`/api/source-folders/${folderId}`, { method: "DELETE" });
+    if (sourceId || scheduleId || queueId || folderId) await loadAdmin();
   } catch (error) {
     setMessage(scheduleMessage, error.message, true);
+  }
+});
+
+document.addEventListener("submit", async (event) => {
+  const form = event.target.closest("[data-source-edit-form]");
+  if (!form) return;
+  event.preventDefault();
+  try {
+    const body = Object.fromEntries(new FormData(form));
+    await api(`/api/sources/${form.dataset.sourceEditForm}`, { method: "PATCH", body: JSON.stringify(body) });
+    setMessage(sourceMessage, "Source updated.");
+    await loadAdmin();
+  } catch (error) {
+    setMessage(sourceMessage, error.message, true);
   }
 });
 
@@ -452,4 +837,6 @@ localPlayer.addEventListener("pause", () => setTimeout(enforcePlayback, 100));
 localPlayer.addEventListener("seeking", () => setTimeout(enforcePlayback, 100));
 setInterval(tickProgress, 1000);
 setChatCollapsed(false);
+syncSourceFields();
+updateSourceDurationDisplay();
 refreshSession().catch(() => setUserState(null));

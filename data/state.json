@@ -1,6 +1,11 @@
 {
   "sources": [],
+  "sourceFolders": [],
   "schedule": [],
+  "liveQueue": [],
+  "broadcastMode": "scheduled",
+  "lastAutoBumpAt": 0,
+  "bumpMusic": [],
   "users": [],
   "chat": [],
   "nowPlaying": null

@@ -57,7 +57,9 @@
             <p>The broadcast schedule is empty. The next source will appear here automatically.</p>
           </div>
           <video id="localPlayer" playsinline muted autoplay></video>
+          <audio id="bumpAudio" preload="auto"></audio>
           <div id="youtubePlayer" class="youtube-player"></div>
+          <div id="bumpPlayer" class="bump-player"></div>
           <div class="shield" aria-hidden="true"></div>
         </div>
         <div class="broadcast-meta">
@@ -78,6 +80,11 @@
       </section>
 
       <aside id="chatPanel" class="chat-panel" aria-label="Global chat">
+        <div class="rail-tabs hidden" data-admin-rail-tabs>
+          <button id="showBroadcastPanelButton" class="auth-tab" type="button">Broadcast</button>
+          <button id="showBumpPanelButton" class="auth-tab" type="button">Bumps</button>
+          <button id="showChatPanelButton" class="auth-tab active" type="button">Chat</button>
+        </div>
         <div class="chat-top">
           <div>
             <h2>Global Chat</h2>
@@ -96,6 +103,11 @@
       </aside>
 
       <aside id="adminPanel" class="admin-panel hidden" aria-label="Admin controls">
+        <div class="rail-tabs hidden" data-admin-rail-tabs>
+          <button id="showBroadcastPanelButtonAlt" class="auth-tab active" type="button">Broadcast</button>
+          <button id="showBumpPanelButtonAlt" class="auth-tab" type="button">Bumps</button>
+          <button id="showChatPanelButtonAlt" class="auth-tab" type="button">Chat</button>
+        </div>
         <div class="panel-top">
           <div>
             <h2>Broadcast Control</h2>
@@ -105,27 +117,59 @@
         </div>
 
         <div id="adminTools" class="admin-tools hidden">
+          <form id="sourceFolderForm" class="stack compact-stack">
+            <h3>Source folders</h3>
+            <div class="inline-form">
+              <input name="name" placeholder="New folder name" required>
+              <button type="submit">Create</button>
+            </div>
+            <p id="sourceFolderMessage" class="message"></p>
+          </form>
+
+          <form id="playlistImportForm" class="stack compact-stack">
+            <h3>Import YouTube playlist</h3>
+            <input name="url" placeholder="YouTube playlist URL" required>
+            <input name="folderName" placeholder="Folder name (optional)">
+            <button type="submit">Import playlist</button>
+            <p id="playlistImportMessage" class="message"></p>
+          </form>
+
           <form id="sourceForm" class="stack">
             <h3>Add source</h3>
-            <input name="title" placeholder="Title" required>
-            <input name="duration" type="number" min="5" step="1" placeholder="Duration in seconds" required>
             <select name="type">
               <option value="youtube">YouTube</option>
               <option value="local">Server file</option>
             </select>
-            <input name="youtube" placeholder="YouTube URL or ID">
-            <input name="path" placeholder="media/example.mp4">
+            <select name="folderId">
+              <option value="">Unfiled sources</option>
+            </select>
+            <div class="source-field" data-source-field="youtube">
+              <input name="youtube" placeholder="YouTube URL or ID">
+            </div>
+            <div class="source-field hidden" data-source-field="local">
+              <input name="path" placeholder="media/example.mp4">
+            </div>
+            <input name="title" placeholder="Title" required>
+            <div class="duration-row">
+              <input name="duration" type="number" min="5" step="1" placeholder="Duration in seconds" required>
+              <output id="sourceDurationDisplay" for="duration">0:00</output>
+            </div>
             <button type="submit">Add source</button>
             <p id="sourceMessage" class="message"></p>
           </form>
 
           <form id="scheduleForm" class="stack">
-            <h3>Schedule</h3>
+            <h3>Broadcast timing</h3>
+            <div class="mode-toggle" role="group" aria-label="Broadcast priority">
+              <button id="scheduledModeButton" class="auth-tab active" type="button">Scheduled</button>
+              <button id="queueModeButton" class="auth-tab" type="button">Live queue</button>
+            </div>
             <select name="sourceId" required></select>
             <input name="startAt" type="datetime-local" required>
             <input name="duration" type="number" min="5" step="1" placeholder="Override duration">
-            <button type="submit">Add to schedule</button>
-            <button id="playNowButton" type="button" class="secondary">Play now</button>
+            <button type="submit">Add hard time</button>
+            <button id="addQueueButton" type="button" class="secondary">Add to queue</button>
+            <button id="playNowButton" type="button" class="secondary">Play immediately</button>
             <p id="scheduleMessage" class="message"></p>
           </form>
 
@@ -138,10 +182,30 @@
               <h3>Upcoming</h3>
               <div id="scheduleList" class="item-list"></div>
             </section>
+            <section>
+              <h3>Live queue</h3>
+              <div id="queueList" class="item-list"></div>
+            </section>
           </div>
         </div>
       </aside>
+
+      <aside id="bumpPanel" class="admin-panel hidden" aria-label="Bump generator">
+        <div class="rail-tabs hidden" data-admin-rail-tabs>
+          <button id="showBroadcastPanelButtonBump" class="auth-tab" type="button">Broadcast</button>
+          <button id="showBumpPanelButtonBump" class="auth-tab active" type="button">Bumps</button>
+          <button id="showChatPanelButtonBump" class="auth-tab" type="button">Chat</button>
+        </div>
+        <div class="panel-top">
+          <div>
+            <h2>Bump Generator</h2>
+            <p>Manual bump tools</p>
+          </div>
+        </div>
+        <iframe class="bump-frame" src="/bumpgenerator/" title="Bump Generator"></iframe>
+      </aside>
     </main>
+    <div id="youtubeMetadataPlayer" class="metadata-player" aria-hidden="true"></div>
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="/app.js"></script>
   </body>
