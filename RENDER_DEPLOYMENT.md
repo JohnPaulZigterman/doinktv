@@ -1,13 +1,14 @@
 # Render Deployment
 
-DoinkTV is a single Node web service. Render should run it with:
+DoinkTV is a single Docker web service. Render should build it from `Dockerfile` so FFmpeg is available for HLS playout.
 
-- Build command: `npm ci`
-- Start command: `npm start`
+- Runtime: Docker
+- Dockerfile path: `./Dockerfile`
+- Docker context: `.`
 - Health check path: `/api/health`
 - Node version: `22.16.0`
 
-The app reads `process.env.PORT`, which Render provides automatically.
+The app reads `process.env.PORT`, which Render provides automatically. The Docker image installs FFmpeg for `/stream/live.m3u8` generation.
 
 ## First Test Deploy
 
@@ -23,3 +24,4 @@ The app reads `process.env.PORT`, which Render provides automatically.
 - `data/state.json` is committed as starter state. Without a Render disk, edits made in admin mode can reset on redeploy or service restart.
 - For a longer-running test, add a Render persistent disk and set `DOINK_DATA_DIR` to the mounted data directory.
 - The BumpGenerator is vendored in `vendor/BumpGenerator` so `/bumpgenerator` works on Render without needing the sibling project directory.
+- Viewers consume a single HLS feed at `/stream/live.m3u8`. YouTube sources must be ingested as server media before they can appear in that shared feed.

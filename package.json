@@ -10,5 +10,8 @@
   },
   "engines": {
     "node": ">=20 <25"
+  },
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0"
   }
 }

@@ -1,12 +1,11 @@
 const frame = document.querySelector("#playerFrame");
-const localPlayer = document.querySelector("#localPlayer");
+const streamPlayer = document.querySelector("#streamPlayer");
+const playOverlayButton = document.querySelector("#playOverlayButton");
 const liveBadge = document.querySelector("#liveBadge");
 const nowTitle = document.querySelector("#nowTitle");
 const nextTitle = document.querySelector("#nextTitle");
 const progressText = document.querySelector("#progressText");
 const youtubeLink = document.querySelector("#youtubeLink");
-const bumpPlayer = document.querySelector("#bumpPlayer");
-const bumpAudio = document.querySelector("#bumpAudio");
 const crtBrand = document.querySelector(".crt-brand");
 const volumeSlider = document.querySelector("#volumeSlider");
 const volumeValue = document.querySelector("#volumeValue");
@@ -71,12 +70,14 @@ const playNowButton = document.querySelector("#playNowButton");
 const sourceFolderMessage = document.querySelector("#sourceFolderMessage");
 const playlistImportMessage = document.querySelector("#playlistImportMessage");
 const sourceMessage = document.querySelector("#sourceMessage");
+const sourceIngestMessage = document.querySelector("#sourceIngestMessage");
 const scheduleMessage = document.querySelector("#scheduleMessage");
 const queueMessage = document.querySelector("#queueMessage");
 const scheduleFolderSelect = scheduleForm.elements.folderId;
 const sourceSelect = scheduleForm.elements.sourceId;
 const timingDurationInput = scheduleForm.elements.duration;
 const sourcesList = document.querySelector("#sourcesList");
+const ingestAllSourcesButton = document.querySelector("#ingestAllSourcesButton");
 const scheduleList = document.querySelector("#scheduleList");
 const queueList = document.querySelector("#queueList");
 const clearQueueButton = document.querySelector("#clearQueueButton");
@@ -98,10 +99,11 @@ const youtubeMetadataReadyPromise = new Promise((resolve) => {
   resolveYoutubeMetadataReady = resolve;
 });
 let currentProgramId = "";
-let loadedYouTubeProgramId = "";
-let youtubePlaybackRetryTimer;
 let currentProgram = null;
 let clockDelta = 0;
+let loadedYouTubeProgramId = "";
+let youtubeSyncTimer = 0;
+let lastYouTubeSeekAt = 0;
 let adminAuthenticated = false;
 let currentUser = null;
 let chatCollapsed = false;
@@ -114,9 +116,14 @@ let draggedSourceId = "";
 let adminDataCache = { sourceFolders: [], sources: [] };
 const expandedSourceFolders = new Set(JSON.parse(localStorage.getItem("doink_expanded_source_folders") || "[]"));
 let audioUnlocked = true;
+let playbackUnlocked = false;
+let pendingPlaybackUnlock = false;
 let viewerVolume = Number(localStorage.getItem("doink_volume") || 70);
 if (!Number.isFinite(viewerVolume)) viewerVolume = 70;
 viewerVolume = Math.max(0, Math.min(100, viewerVolume));
+let hlsPlayer = null;
+let hlsLoaded = false;
+let hlsLoading = false;
 
 window.onYouTubeIframeAPIReady = () => {
   youtubePlayer = new YT.Player("youtubePlayer", {
@@ -125,23 +132,25 @@ window.onYouTubeIframeAPIReady = () => {
     playerVars: {
       autoplay: 1,
       cc_load_policy: 0,
-      controls: 0,
+      controls: 1,
       disablekb: 1,
       fs: 0,
       iv_load_policy: 3,
       modestbranding: 1,
       origin: location.origin,
       playsinline: 1,
-      rel: 0,
-      showinfo: 0
+      rel: 0
     },
     events: {
       onReady: () => {
         youtubeReady = true;
         applyViewerVolume();
-        syncProgram(currentProgram);
+        if (currentProgram?.live?.source?.type === "youtube") syncYouTube(currentProgram.live, { force: true });
+        if (pendingPlaybackUnlock) unlockPlayback();
       },
-      onStateChange: () => enforcePlayback()
+      onStateChange: () => {
+        if (currentProgram?.live?.source?.type === "youtube") syncYouTube(currentProgram.live);
+      }
     }
   });
 
@@ -337,15 +346,84 @@ function setMode(mode) {
   }
 }
 
+function setPlayOverlay(visible, label = "Play broadcast") {
+  playOverlayButton.classList.toggle("hidden", !visible);
+  playOverlayButton.querySelector("span").textContent = label;
+}
+
+function loadHlsStream() {
+  if (hlsLoaded || hlsLoading) return;
+  hlsLoading = true;
+  waitForStreamManifest()
+    .then(attachHlsStream)
+    .catch(() => {
+      hlsLoading = false;
+      setTimeout(loadHlsStream, 1000);
+    });
+}
+
+async function waitForStreamManifest() {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const response = await fetch(`/stream/live.m3u8?wait=${Date.now()}`, { cache: "no-store" }).catch(() => null);
+    if (response?.ok) return;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  throw new Error("Stream playlist is not ready.");
+}
+
+function attachHlsStream() {
+  hlsLoading = false;
+  hlsLoaded = true;
+  const streamUrl = `/stream/live.m3u8?live=${Date.now()}`;
+  if (streamPlayer.canPlayType("application/vnd.apple.mpegurl")) {
+    streamPlayer.src = streamUrl;
+    streamPlayer.addEventListener("loadedmetadata", () => streamPlayer.play().catch(() => {}), { once: true });
+  } else if (window.Hls?.isSupported()) {
+    hlsPlayer = new Hls({
+      liveSyncDurationCount: 2,
+      liveMaxLatencyDurationCount: 5,
+      enableWorker: true
+    });
+    hlsPlayer.loadSource(streamUrl);
+    hlsPlayer.attachMedia(streamPlayer);
+    hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => streamPlayer.play().catch(() => {}));
+    hlsPlayer.on(Hls.Events.ERROR, (_event, data) => {
+      if (data?.fatal) {
+        if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+          hlsPlayer.recoverMediaError();
+          return;
+        }
+        hlsPlayer.destroy();
+        hlsLoaded = false;
+        hlsLoading = false;
+        hlsPlayer = null;
+        setTimeout(loadHlsStream, 1000);
+      }
+    });
+  } else {
+    nowTitle.textContent = "This browser cannot play the HLS stream.";
+  }
+}
+
+function pauseHlsStream() {
+  streamPlayer.pause();
+}
+
+function resumeHlsStream() {
+  loadHlsStream();
+  streamPlayer.play().catch(() => {});
+}
+
 function applyViewerVolume({ unlock = false } = {}) {
-  if (unlock) audioUnlocked = true;
+  if (unlock) {
+    audioUnlocked = true;
+    playbackUnlocked = true;
+  }
   const volume = Math.max(0, Math.min(1, viewerVolume / 100));
   const muted = !audioUnlocked || volume <= 0;
 
-  localPlayer.volume = volume;
-  localPlayer.muted = muted;
-  bumpAudio.volume = volume;
-  bumpAudio.muted = muted;
+  streamPlayer.volume = volume;
+  streamPlayer.muted = muted;
   volumeSlider.value = Math.round(viewerVolume);
   volumeSlider.style.setProperty("--volume-fill", `${Math.round(viewerVolume)}%`);
   volumeValue.textContent = `${Math.round(viewerVolume)}%`;
@@ -360,111 +438,124 @@ function applyViewerVolume({ unlock = false } = {}) {
   }
 }
 
-function syncLocal(live) {
-  if (localPlayer.src !== new URL(live.source.path, location.origin).href) {
-    localPlayer.src = live.source.path;
+function unlockPlayback() {
+  pendingPlaybackUnlock = true;
+  playbackUnlocked = true;
+  audioUnlocked = true;
+  setPlayOverlay(false);
+  applyViewerVolume({ unlock: true });
+  if (!currentProgram?.live) {
+    api("/api/program")
+      .then((program) => {
+        syncProgram(program);
+        unlockPlayback();
+      })
+      .catch(() => setPlayOverlay(true, "Play broadcast"));
+    return;
   }
-  localPlayer.controls = false;
-  localPlayer.playbackRate = 1;
-  applyViewerVolume();
-  const offset = activeOffset();
-  if (Number.isFinite(offset) && Math.abs(localPlayer.currentTime - offset) > 0.75) {
-    localPlayer.currentTime = Math.min(offset, live.duration - 0.2);
-  }
-  localPlayer.play().catch(() => {});
-}
-
-function forceYouTubePlayback({ allowMuteFallback = false } = {}) {
-  if (!youtubeReady) return;
-  youtubePlayer.playVideo?.();
-  clearTimeout(youtubePlaybackRetryTimer);
-  youtubePlaybackRetryTimer = setTimeout(() => {
-    const state = youtubePlayer.getPlayerState?.();
-    const notPlaying = [YT.PlayerState.UNSTARTED, YT.PlayerState.CUED, YT.PlayerState.PAUSED].includes(state);
-    if (!notPlaying) return;
-    if (allowMuteFallback) youtubePlayer.mute?.();
-    youtubePlayer.playVideo?.();
-  }, 500);
-}
-
-function syncYouTube(live) {
-  if (!youtubeReady) return;
-  const offset = Math.min(activeOffset(), live.duration - 0.2);
-  if (loadedYouTubeProgramId !== live.id) {
-    youtubePlayer.loadVideoById({ videoId: live.source.youtubeId, startSeconds: Math.max(0, offset) });
-    loadedYouTubeProgramId = live.id;
-    forceYouTubePlayback({ allowMuteFallback: true });
+  if (currentProgram.live.source.type === "youtube") {
+    if (!youtubeReady) {
+      setPlayOverlay(true, "Loading player");
+      return;
+    }
+    syncYouTube(currentProgram.live, { force: true, fromGesture: true });
+    attemptYouTubePlay(0);
   } else {
-    const ytTime = youtubePlayer.getCurrentTime?.() || 0;
-    if (Math.abs(ytTime - offset) > 1.25) {
-      youtubePlayer.seekTo(Math.max(0, offset), true);
-    }
-    forceYouTubePlayback({ allowMuteFallback: true });
-  }
-  applyViewerVolume();
-}
-
-function renderBump(live) {
-  const bump = live.source.bump || { heading: "coming up", lines: [] };
-  const isNewBump = currentProgramId !== live.id;
-  const wallpaper = bump.wallpaper || {};
-  const effects = Array.isArray(bump.effects) ? bump.effects : [];
-  const effectIntensity = Math.max(0, Math.min(100, Number(bump.effectIntensity) || 0));
-  const classes = [
-    "bump-card",
-    `placement-${cssToken(bump.placement || "middle")}`,
-    `tone-${cssToken(bump.tone || "classic")}`,
-    `wallpaper-${cssToken(wallpaper.shapes || "mixed")}`,
-    `scheme-${cssToken(wallpaper.scheme || "midnight")}`,
-    ...effects.map((effect) => `effect-${cssToken(effect)}`)
-  ].join(" ");
-  const spacing = Math.max(34, Math.min(170, Number(wallpaper.spacing) || 86));
-  bumpPlayer.innerHTML = `
-    <div class="${classes}" style="--wallpaper-spacing: ${spacing}px; --effect-intensity: ${effectIntensity / 100};">
-      <h2>${escapeHtml(bump.heading || live.title || "coming up")}</h2>
-      <ul>
-        ${(bump.lines || [])
-          .map(
-            (line) => `
-              <li>
-                <time>${escapeHtml(line.time || "")}</time>
-                <span>${escapeHtml(line.title || "")}</span>
-              </li>`
-          )
-          .join("")}
-      </ul>
-    </div>`;
-  const audioPath = bump.audio || "";
-  const audioStart = Math.max(0, Number(bump.audioStart) || 0);
-  const targetTime = audioStart + Math.max(0, activeOffset());
-  const audioChanged = audioPath && bumpAudio.src !== new URL(audioPath, location.origin).href;
-  if (audioChanged) {
-    bumpAudio.src = audioPath;
-  }
-  if (audioPath) {
-    if (isNewBump || audioChanged || Math.abs((bumpAudio.currentTime || 0) - targetTime) > 2.5) {
-      const seekAudio = () => {
-        const maxSeek = Number.isFinite(bumpAudio.duration) ? Math.max(0, bumpAudio.duration - 0.25) : targetTime;
-        bumpAudio.currentTime = Math.min(targetTime, maxSeek);
-      };
-      if (bumpAudio.readyState >= 1) {
-        seekAudio();
-      } else {
-        bumpAudio.addEventListener("loadedmetadata", seekAudio, { once: true });
-      }
-    }
-    applyViewerVolume();
-    bumpAudio.play().catch(() => {});
+    resumeHlsStream();
   }
 }
 
 function enforcePlayback() {
-  if (!currentProgram?.live) return;
-  if (currentProgram.live.source.type === "local") {
-    syncLocal(currentProgram.live);
-  } else if (currentProgram.live.source.type === "youtube") {
+  applyViewerVolume();
+  if (currentProgram?.live?.source?.type === "youtube") {
     syncYouTube(currentProgram.live);
+  } else {
+    resumeHlsStream();
   }
+}
+
+function syncYouTube(live, { force = false, fromGesture = false } = {}) {
+  if (!youtubeReady || !live?.source?.youtubeId) return;
+  const offset = Math.max(0, Math.min(activeOffset(), live.duration - 0.25));
+  const now = Date.now();
+
+  if (force || loadedYouTubeProgramId !== live.id) {
+    loadedYouTubeProgramId = live.id;
+    lastYouTubeSeekAt = now;
+    youtubePlayer.loadVideoById({ videoId: live.source.youtubeId, startSeconds: offset });
+    applyViewerVolume();
+    attemptYouTubePlay(fromGesture ? 0 : 250);
+    if (!playbackUnlocked) {
+      setTimeout(() => {
+        const state = youtubePlayer.getPlayerState?.();
+        if ([YT.PlayerState.UNSTARTED, YT.PlayerState.CUED, YT.PlayerState.PAUSED].includes(state)) {
+          youtubePlayer.mute?.();
+          youtubePlayer.playVideo?.();
+        }
+      }, 350);
+    }
+    setTimeout(checkYouTubeBlocked, 900);
+    return;
+  }
+
+  const playerState = youtubePlayer.getPlayerState?.();
+  const playerTime = Number(youtubePlayer.getCurrentTime?.() || 0);
+  const drift = Math.abs(playerTime - offset);
+  if (drift > 2.5 && now - lastYouTubeSeekAt > 3500) {
+    lastYouTubeSeekAt = now;
+    youtubePlayer.seekTo(offset, true);
+  }
+  if ([YT.PlayerState.UNSTARTED, YT.PlayerState.CUED, YT.PlayerState.PAUSED].includes(playerState)) {
+    attemptYouTubePlay(fromGesture ? 0 : 250);
+    setTimeout(checkYouTubeBlocked, 900);
+  }
+  applyViewerVolume();
+}
+
+function attemptYouTubePlay(delayMs = 0) {
+  if (!youtubeReady) return;
+  const play = () => {
+    youtubePlayer.playVideo?.();
+    setTimeout(checkYouTubeBlocked, 900);
+  };
+  if (delayMs > 0) {
+    setTimeout(play, delayMs);
+  } else {
+    play();
+  }
+}
+
+function checkYouTubeBlocked() {
+  if (currentProgram?.live?.source?.type !== "youtube" || !youtubeReady) return;
+  const state = youtubePlayer.getPlayerState?.();
+  if ([YT.PlayerState.UNSTARTED, YT.PlayerState.CUED, YT.PlayerState.PAUSED].includes(state)) {
+    setPlayOverlay(true, "Play broadcast");
+  } else {
+    setPlayOverlay(!playbackUnlocked && youtubePlayer.isMuted?.(), "Tap for sound");
+  }
+}
+
+function enterYouTubeMode(live) {
+  setMode("youtube");
+  pauseHlsStream();
+  youtubeLink.classList.remove("hidden");
+  crtBrand.classList.add("hidden");
+  youtubeLink.href = live.source.url || `https://www.youtube.com/watch?v=${live.source.youtubeId}`;
+  syncYouTube(live, { force: loadedYouTubeProgramId !== live.id });
+  checkYouTubeBlocked();
+}
+
+function enterStreamMode() {
+  setMode("stream");
+  youtubeLink.classList.add("hidden");
+  youtubeLink.href = "#";
+  crtBrand.classList.remove("hidden");
+  loadedYouTubeProgramId = "";
+  clearInterval(youtubeSyncTimer);
+  youtubeSyncTimer = 0;
+  if (youtubeReady && currentProgram?.live?.source?.type !== "youtube") youtubePlayer.stopVideo?.();
+  setPlayOverlay(false);
+  resumeHlsStream();
 }
 
 function syncProgram(program) {
@@ -477,47 +568,25 @@ function syncProgram(program) {
   nextTitle.textContent = next ? `${next.title} at ${new Date(next.startAt).toLocaleTimeString()}` : "Unscheduled";
 
   if (!live) {
-    setMode("");
     currentProgramId = "";
     nowTitle.textContent = "No active program";
     progressText.textContent = "00:00 / 00:00";
-    youtubeLink.classList.add("hidden");
-    youtubeLink.href = "#";
-    crtBrand.classList.remove("hidden");
     liveBadge.textContent = "Waiting";
     liveBadge.classList.add("off");
-    localPlayer.pause();
-    bumpAudio.pause();
-    clearTimeout(youtubePlaybackRetryTimer);
-    if (youtubeReady) youtubePlayer.stopVideo();
-    loadedYouTubeProgramId = "";
+    enterStreamMode();
     return;
   }
 
   liveBadge.textContent = "Live";
   liveBadge.classList.remove("off");
   nowTitle.textContent = live.title;
-  setMode(live.source.type);
-  youtubeLink.classList.toggle("hidden", live.source.type !== "youtube");
-  crtBrand.classList.toggle("hidden", live.source.type === "youtube");
-  youtubeLink.href = live.source.type === "youtube" ? live.source.url : "#";
-
-  if (live.source.type === "local") {
-    bumpAudio.pause();
-    clearTimeout(youtubePlaybackRetryTimer);
-    if (youtubeReady) youtubePlayer.stopVideo();
-    loadedYouTubeProgramId = "";
-    syncLocal(live);
-  } else if (live.source.type === "youtube") {
-    bumpAudio.pause();
-    localPlayer.pause();
-    syncYouTube(live);
-  } else if (live.source.type === "bump") {
-    localPlayer.pause();
-    clearTimeout(youtubePlaybackRetryTimer);
-    if (youtubeReady) youtubePlayer.stopVideo();
-    loadedYouTubeProgramId = "";
-    renderBump(live);
+  if (live.source.type === "youtube") {
+    enterYouTubeMode(live);
+    if (!youtubeSyncTimer) youtubeSyncTimer = setInterval(() => {
+      if (currentProgram?.live?.source?.type === "youtube") syncYouTube(currentProgram.live);
+    }, 2500);
+  } else {
+    enterStreamMode();
   }
 
   currentProgramId = live.id;
@@ -527,7 +596,11 @@ function tickProgress() {
   if (!currentProgram?.live) return;
   const offset = Math.min(activeOffset(), currentProgram.live.duration);
   progressText.textContent = `${formatDuration(offset)} / ${formatDuration(currentProgram.live.duration)}`;
-  enforcePlayback();
+  if (currentProgram.live.source.type === "youtube") {
+    syncYouTube(currentProgram.live);
+  } else {
+    enforcePlayback();
+  }
 }
 
 function renderAdmin(data) {
@@ -557,18 +630,37 @@ function renderAdmin(data) {
           const folderSources = folder.sources.length
             ? folder.sources
                 .map(
-                  (source) => `
+                  (source) => {
+                    const ingest = source.ingest || {};
+                    const ingestStatus = ingest.status ? ingest.status.replace("_", " ") : "not ingested";
+                    const candidates = Array.isArray(ingest.candidates) ? ingest.candidates : [];
+                    const candidateList = candidates.length
+                      ? `<div class="candidate-list">
+                          ${candidates
+                            .map((candidate) => `
+                              <a href="${escapeHtml(candidate.detailUrl || candidate.mediaUrl)}" target="_blank" rel="noopener noreferrer">
+                                <strong>${escapeHtml(candidate.title || candidate.fileName || "Media candidate")}</strong>
+                                <span>${escapeHtml(candidate.repository || "Repository")}${candidate.licenseUrl ? " &middot; license noted" : ""}</span>
+                              </a>`)
+                            .join("")}
+                        </div>`
+                      : "";
+                    return `
             <div class="item source-item" data-source-item="${source.id}" data-source-folder="${folder.id}" draggable="true">
               <span class="drag-handle" aria-hidden="true">Drag</span>
               <div>
                 <strong>${escapeHtml(source.title)}</strong>
                 <small>${escapeHtml(source.type === "youtube" ? source.url : source.path)} &middot; ${formatDuration(source.duration)}</small>
+                <small class="ingest-status" data-status="${escapeHtml(ingest.status || "pending")}">Ingest: ${escapeHtml(ingestStatus)}${ingest.message ? ` &middot; ${escapeHtml(ingest.message)}` : ""}</small>
+                ${candidateList}
               </div>
               <div class="edit-actions">
+                <button class="secondary compact" data-ingest-source="${source.id}" type="button">Ingest</button>
                 <button class="secondary compact" data-edit-source="${source.id}" type="button">Edit</button>
                 <button class="danger" data-delete-source="${source.id}" type="button">Remove</button>
               </div>
-            </div>`
+            </div>`;
+                  }
                 )
                 .join("")
             : `<p class="message">No sources in this folder.</p>`;
@@ -581,6 +673,7 @@ function renderAdmin(data) {
                   <strong>${escapeHtml(folder.name)}</strong>
                 </button>
                 <span class="folder-count">${folder.sources.length}</span>
+                <button class="secondary compact" data-ingest-folder="${escapeHtml(folder.id)}" type="button">Ingest library</button>
                 ${folder.id ? `<button class="danger" data-delete-folder="${folder.id}" type="button">Remove</button>` : ""}
               </div>
               <div class="item-list">${folderSources}</div>
@@ -671,6 +764,13 @@ function isSourceFolderCollapsed(folderId) {
 
 function persistSourceFolderState() {
   localStorage.setItem("doink_expanded_source_folders", JSON.stringify([...expandedSourceFolders]));
+}
+
+function ingestSummaryText(result) {
+  if ("total" in result) {
+    return `Ingest checked ${result.total} source${result.total === 1 ? "" : "s"}: ${result.ready} ready, ${result.candidatesFound || 0} with candidates, ${result.needsMedia} need media, ${result.missing} missing.`;
+  }
+  return `${result.title || "Source"}: ${String(result.status || "checked").replace("_", " ")}. ${result.message || ""}`.trim();
 }
 
 function renderTimingSourcePicker(data) {
@@ -972,17 +1072,34 @@ playNowButton.addEventListener("click", async () => {
   }
 });
 
+playOverlayButton.addEventListener("click", () => {
+  unlockPlayback();
+});
+playOverlayButton.addEventListener("pointerdown", () => {
+  pendingPlaybackUnlock = true;
+});
+playOverlayButton.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    unlockPlayback();
+  }
+});
+
+ingestAllSourcesButton?.addEventListener("click", async () => {
+  try {
+    const result = await api("/api/ingest/all", { method: "POST", body: "{}" });
+    setMessage(sourceIngestMessage, ingestSummaryText(result));
+    await loadAdmin();
+  } catch (error) {
+    setMessage(sourceIngestMessage, error.message, true);
+  }
+});
+
 volumeSlider.addEventListener("input", () => {
   viewerVolume = Number(volumeSlider.value);
   localStorage.setItem("doink_volume", String(viewerVolume));
   applyViewerVolume({ unlock: true });
-  if (currentProgram?.live?.source.type === "local") {
-    localPlayer.play().catch(() => {});
-  } else if (currentProgram?.live?.source.type === "bump") {
-    bumpAudio.play().catch(() => {});
-  } else if (currentProgram?.live?.source.type === "youtube" && youtubeReady) {
-    youtubePlayer.playVideo?.();
-  }
+  streamPlayer.play().catch(() => {});
 });
 
 fullscreenButton.addEventListener("click", async () => {
@@ -1098,6 +1215,21 @@ sourcesList.addEventListener("dragend", () => {
 });
 
 document.addEventListener("click", async (event) => {
+  const ingestSourceId = event.target.closest("[data-ingest-source]")?.dataset.ingestSource;
+  const ingestFolderId = event.target.closest("[data-ingest-folder]")?.dataset.ingestFolder;
+  if (ingestSourceId || ingestFolderId !== undefined) {
+    try {
+      const result = ingestSourceId
+        ? await api(`/api/ingest/sources/${ingestSourceId}`, { method: "POST", body: "{}" })
+        : await api("/api/ingest/library", { method: "POST", body: JSON.stringify({ folderId: ingestFolderId }) });
+      setMessage(sourceIngestMessage, ingestSummaryText(result));
+      await loadAdmin();
+    } catch (error) {
+      setMessage(sourceIngestMessage, error.message, true);
+    }
+    return;
+  }
+
   const toggleFolderId = event.target.closest("[data-toggle-folder]")?.dataset.toggleFolder;
   if (toggleFolderId !== undefined) {
     const storageId = sourceFolderStorageId(toggleFolderId);
@@ -1190,11 +1322,19 @@ window.addEventListener("message", async (event) => {
   }
 });
 
-localPlayer.addEventListener("pause", () => setTimeout(enforcePlayback, 100));
-localPlayer.addEventListener("seeking", () => setTimeout(enforcePlayback, 100));
+streamPlayer.addEventListener("pause", () => setTimeout(enforcePlayback, 100));
+streamPlayer.addEventListener("stalled", () => setTimeout(enforcePlayback, 500));
+streamPlayer.addEventListener("error", () => {
+  hlsPlayer?.destroy();
+  hlsPlayer = null;
+  hlsLoaded = false;
+  hlsLoading = false;
+  setTimeout(loadHlsStream, 1000);
+});
 setInterval(tickProgress, 1000);
 setChatCollapsed(false);
 applyViewerVolume();
+loadHlsStream();
 setSchedulePickMode(schedulePickMode);
 syncSourceFields();
 updateSourceDurationDisplay();

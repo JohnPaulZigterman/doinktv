@@ -56,10 +56,11 @@
             <h1>Stand by</h1>
             <p>The broadcast schedule is empty. The next source will appear here automatically.</p>
           </div>
-          <video id="localPlayer" playsinline autoplay></video>
-          <audio id="bumpAudio" preload="auto"></audio>
+          <video id="streamPlayer" playsinline autoplay></video>
           <div id="youtubePlayer" class="youtube-player"></div>
-          <div id="bumpPlayer" class="bump-player"></div>
+          <button id="playOverlayButton" class="play-overlay hidden" type="button">
+            <span>Play broadcast</span>
+          </button>
           <div class="shield" aria-hidden="true"></div>
           <a id="youtubeLink" class="youtube-link hidden" href="#" target="_blank" rel="noopener noreferrer">Open original on YouTube</a>
         </div>
@@ -190,7 +191,11 @@
 
           <div class="lists">
             <section>
-              <h3>Sources</h3>
+              <div class="section-heading">
+                <h3>Sources</h3>
+                <button id="ingestAllSourcesButton" class="secondary compact" type="button">Ingest all</button>
+              </div>
+              <p id="sourceIngestMessage" class="message"></p>
               <div id="sourcesList" class="item-list"></div>
             </section>
             <section>
@@ -237,6 +242,7 @@
     </main>
     <div id="youtubeMetadataPlayer" class="metadata-player" aria-hidden="true"></div>
     <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
     <script src="/app.js"></script>
   </body>
 </html>

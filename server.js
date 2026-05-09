@@ -1,15 +1,18 @@
 import { createServer } from "node:http";
-import { readFile, writeFile, mkdir, stat, readdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, stat, readdir, rm } from "node:fs/promises";
 import { createReadStream, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
+import { spawn } from "node:child_process";
+import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
 const DATA_DIR = process.env.DOINK_DATA_DIR || path.join(__dirname, "data");
 const MEDIA_DIR = process.env.DOINK_MEDIA_DIR || path.join(__dirname, "media");
 const BUMP_MUSIC_DIR = path.join(MEDIA_DIR, "bump-music");
+const HLS_DIR = process.env.DOINK_HLS_DIR || path.join(DATA_DIR, "hls");
 const PUBLIC_DIR = path.join(__dirname, "public");
 const VENDORED_BUMP_GENERATOR_DIR = path.join(__dirname, "vendor", "BumpGenerator");
 const BUMP_GENERATOR_DIR = process.env.BUMP_GENERATOR_DIR
@@ -30,6 +33,14 @@ const sessions = new Map();
 const sseClients = new Set();
 const chatClients = new Set();
 let timelineSaveNeeded = false;
+const ffmpegPath = process.env.FFMPEG_PATH || ffmpegInstaller.path || "ffmpeg";
+let hlsPlayout = {
+  id: "",
+  process: null,
+  startedAt: 0,
+  status: "starting",
+  error: ""
+};
 let state = {
   sources: [],
   sourceFolders: [],
@@ -48,6 +59,8 @@ const mimeTypes = {
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
+  ".m3u8": "application/vnd.apple.mpegurl",
+  ".ts": "video/mp2t",
   ".mp4": "video/mp4",
   ".webm": "video/webm",
   ".ogg": "video/ogg",
@@ -58,6 +71,7 @@ const mimeTypes = {
 async function ensureState() {
   await mkdir(DATA_DIR, { recursive: true });
   await mkdir(MEDIA_DIR, { recursive: true });
+  await mkdir(HLS_DIR, { recursive: true });
   if (!existsSync(STATE_PATH)) {
     await saveState();
   } else {
@@ -231,6 +245,17 @@ function normalizeYouTubePlaylistId(input) {
   }
 }
 
+function normalizeSearchQuery(value) {
+  return String(value || "")
+    .replace(/https?:\/\/\S+/gi, " ")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\b(ep|episode|official|video|youtube|yt|hd|hq|full|clip)\b/gi, " ")
+    .replace(/[#()[\]{}"']/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+}
+
 function parseDurationText(text) {
   const parts = String(text || "")
     .trim()
@@ -354,6 +379,18 @@ async function getYouTubeInfo(input) {
 
 function publicProgram() {
   maintainBroadcastTimeline();
+  const program = programSnapshot();
+  return {
+    ...program,
+    stream: {
+      url: "/stream/live.m3u8",
+      status: hlsPlayout.status,
+      error: hlsPlayout.error
+    }
+  };
+}
+
+function programSnapshot() {
   const now = Date.now();
   const entries = activeBroadcastEntries()
     .map((entry) => ({
@@ -364,7 +401,7 @@ function publicProgram() {
     .sort((a, b) => a.startAt - b.startAt);
 
   const live = entries.find((entry) => now >= entry.startAt && now < entry.startAt + entry.duration * 1000);
-  const next = entries.find((entry) => entry.startAt > now);
+  const next = entries.find((entry) => entry.startAt > now && isAudienceScheduleEntry(entry));
 
   return {
     serverTime: now,
@@ -389,6 +426,10 @@ function publicProgram() {
         }
       : null
   };
+}
+
+function isAudienceScheduleEntry(entry) {
+  return entry?.source && !entry.autoBump && !isBumpSource(entry.source);
 }
 
 function isBumpSource(source) {
@@ -549,10 +590,6 @@ function createManualBumpSource(body = {}) {
   };
   state.sources.push(source);
   return source;
-}
-
-function randomBumpMusicPath() {
-  return state.bumpMusic?.length ? state.bumpMusic[Math.floor(Math.random() * state.bumpMusic.length)].path : "";
 }
 
 function randomBumpMusic(requiredSeconds = AUTO_BUMP_DURATION) {
@@ -779,10 +816,240 @@ async function flushTimelineSave() {
   await saveState();
 }
 
+async function syncHlsPlayout() {
+  const program = publicProgram();
+  const live = program.live || standbyProgram(program.serverTime);
+  if (hlsPlayout.id === live.id && hlsPlayout.status === "running" && hlsPlayout.process && !hlsPlayout.process.killed) return;
+
+  await startHlsPlayout(live);
+}
+
+function standbyProgram(now = Date.now()) {
+  return {
+    id: "standby",
+    title: "Stand by",
+    startAt: now,
+    duration: 3600,
+    offset: 0,
+    source: {
+      id: "standby",
+      type: "slate",
+      title: "Stand by"
+    }
+  };
+}
+
+async function startHlsPlayout(live) {
+  stopHlsPlayout();
+  hlsPlayout.id = live.id;
+  hlsPlayout.startedAt = Date.now();
+  hlsPlayout.status = "starting";
+  hlsPlayout.error = "";
+  await mkdir(HLS_DIR, { recursive: true });
+  await rm(HLS_DIR, { recursive: true, force: true });
+  await mkdir(HLS_DIR, { recursive: true });
+
+  const args = hlsArgsForProgram(live);
+  const child = spawn(ffmpegPath, args, { windowsHide: true });
+  hlsPlayout.process = child;
+  hlsPlayout.status = "running";
+  child.stderr.on("data", (chunk) => {
+    const text = chunk.toString().trim();
+    if (text) hlsPlayout.error = text.slice(-800);
+  });
+  child.on("error", (error) => {
+    if (hlsPlayout.process === child) hlsPlayout.process = null;
+    hlsPlayout.status = "error";
+    hlsPlayout.error = `FFmpeg failed: ${error.message}`;
+  });
+  child.on("exit", (code) => {
+    if (hlsPlayout.process === child) {
+      hlsPlayout.process = null;
+      hlsPlayout.status = code === 0 ? "ended" : "error";
+      if (code !== 0 && !hlsPlayout.error) hlsPlayout.error = `FFmpeg exited with code ${code}.`;
+    }
+  });
+}
+
+function stopHlsPlayout() {
+  if (!hlsPlayout.process) return;
+  const child = hlsPlayout.process;
+  hlsPlayout.process = null;
+  child.kill("SIGTERM");
+}
+
+function hlsArgsForProgram(live) {
+  const id = live.id.replace(/[^a-zA-Z0-9_-]/g, "");
+  const remaining = Math.max(1, Math.ceil((live.duration || 3600) - (live.offset || 0)));
+  const segmentPattern = path.join(HLS_DIR, `${id}_%05d.ts`);
+  const playlist = path.join(HLS_DIR, "live.m3u8");
+
+  const source = live.source || {};
+  if (source.type === "local") {
+    const filePath = mediaPathFromSource(source.path);
+    if (filePath && existsSync(filePath)) {
+      return [
+        "-hide_banner",
+        "-loglevel", "warning",
+        "-re",
+        "-ss", String(Math.max(0, live.offset || 0)),
+        "-i", filePath,
+        "-t", String(remaining),
+        "-map", "0:v:0",
+        "-map", "0:a:0?",
+        "-vf", videoFilter(),
+        "-c:v", "libx264",
+        "-preset", "veryfast",
+        "-tune", "zerolatency",
+        "-pix_fmt", "yuv420p",
+        "-r", "30",
+        "-g", "60",
+        "-sc_threshold", "0",
+        "-c:a", "aac",
+        "-ar", "48000",
+        "-b:a", "128k",
+        "-f", "hls",
+        "-hls_time", "2",
+        "-hls_list_size", "6",
+        "-hls_flags", "delete_segments+omit_endlist+independent_segments",
+        "-hls_segment_filename", segmentPattern,
+        playlist
+      ];
+    }
+  }
+
+  if (source.type === "bump") {
+    return hlsSlateArgs(live, remaining, segmentPattern, playlist);
+  }
+
+  const title = source.type === "youtube"
+    ? "YouTube source queued"
+    : live.title || "Stand by";
+  const subtitle = source.type === "youtube"
+    ? "Ingest this video as a server file to include it in the shared broadcast feed."
+    : "The broadcast will continue shortly.";
+  return hlsSlateArgs({ ...live, title, slateSubtitle: subtitle }, remaining, segmentPattern, playlist);
+}
+
+function hlsSlateArgs(live, remaining, segmentPattern, playlist) {
+  const source = live.source || {};
+  const bump = source.bump || {};
+  const audioPath = bump.audio ? mediaPathFromSource(bump.audio) : "";
+  const audioArgs = audioPath && existsSync(audioPath)
+    ? ["-stream_loop", "-1", "-ss", String(Math.max(0, Number(bump.audioStart) || 0)), "-i", audioPath]
+    : ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000"];
+  const lines = Array.isArray(bump.lines) && bump.lines.length
+    ? bump.lines.map((line) => `${line.time ? `${line.time}  ` : ""}${line.title}`).slice(0, 4)
+    : [live.slateSubtitle || ""].filter(Boolean);
+  const filter = slateVideoFilter(live.title || source.title || "DoinkTV", lines);
+  return [
+    "-hide_banner",
+    "-loglevel", "warning",
+    "-f", "lavfi",
+    "-re",
+    "-i", "color=c=0x090b10:s=1280x720:r=30",
+    ...audioArgs,
+    "-t", String(remaining),
+    "-map", "0:v:0",
+    "-map", "1:a:0",
+    "-vf", filter,
+    "-c:v", "libx264",
+    "-preset", "veryfast",
+    "-tune", "zerolatency",
+    "-pix_fmt", "yuv420p",
+    "-r", "30",
+    "-g", "60",
+    "-sc_threshold", "0",
+    "-c:a", "aac",
+    "-ar", "48000",
+    "-b:a", "128k",
+    "-f", "hls",
+    "-hls_time", "2",
+    "-hls_list_size", "6",
+    "-hls_flags", "delete_segments+omit_endlist+independent_segments",
+    "-hls_segment_filename", segmentPattern,
+    playlist
+  ];
+}
+
+function mediaPathFromSource(sourcePath = "") {
+  const relativePath = decodeURIComponent(String(sourcePath).replace(/^\/?media\//, ""));
+  if (!relativePath || relativePath.includes("..")) return "";
+  return path.join(MEDIA_DIR, relativePath);
+}
+
+function videoFilter() {
+  return "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p";
+}
+
+function slateVideoFilter(title, lines = []) {
+  const font = drawTextEscape(fontFilePath());
+  const filters = [
+    "format=yuv420p",
+    "drawbox=x=34:y=34:w=1212:h=652:color=0x37d5ff@0.18:t=4",
+    `drawtext=fontfile='${font}':text='${drawTextEscape(title)}':fontcolor=0xffe066:fontsize=54:x=72:y=110`
+  ];
+  lines.forEach((line, index) => {
+    filters.push(`drawtext=fontfile='${font}':text='${drawTextEscape(line)}':fontcolor=white:fontsize=34:x=76:y=${220 + index * 58}`);
+  });
+  return filters.join(",");
+}
+
+function fontFilePath() {
+  const candidates = [
+    process.env.DOINK_FONT_FILE,
+    "C:/Windows/Fonts/arial.ttf",
+    "C:/Windows/Fonts/segoeui.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf"
+  ].filter(Boolean);
+  return candidates.find((candidate) => existsSync(candidate)) || candidates[0];
+}
+
+function drawTextEscape(value) {
+  return String(value || "")
+    .replaceAll("\\", "\\\\")
+    .replaceAll(":", "\\:")
+    .replaceAll("'", "\\'")
+    .replaceAll("%", "\\%")
+    .replace(/[\r\n]+/g, " ")
+    .slice(0, 96);
+}
+
 function publicChat() {
   return {
     serverTime: Date.now(),
     messages: state.chat.slice(-80)
+  };
+}
+
+async function streamDebug() {
+  const files = existsSync(HLS_DIR)
+    ? await Promise.all((await readdir(HLS_DIR, { withFileTypes: true }))
+        .filter((entry) => entry.isFile())
+        .map(async (entry) => {
+          const filePath = path.join(HLS_DIR, entry.name);
+          const fileStat = await stat(filePath);
+          return {
+            name: entry.name,
+            size: fileStat.size,
+            modifiedAt: fileStat.mtimeMs
+          };
+        }))
+    : [];
+  const playlistPath = path.join(HLS_DIR, "live.m3u8");
+  return {
+    serverTime: Date.now(),
+    hlsDir: HLS_DIR,
+    playout: {
+      id: hlsPlayout.id,
+      status: hlsPlayout.status,
+      startedAt: hlsPlayout.startedAt,
+      running: Boolean(hlsPlayout.process),
+      error: hlsPlayout.error
+    },
+    files: files.sort((a, b) => a.name.localeCompare(b.name)),
+    playlist: existsSync(playlistPath) ? await readFile(playlistPath, "utf8") : ""
   };
 }
 
@@ -989,6 +1256,133 @@ async function reorderLibrarySources(body) {
   await saveState();
   broadcastProgram();
   return { ok: true };
+}
+
+async function ingestSource(source) {
+  if (!source || source.type === "bump") {
+    return { id: source?.id || "", title: source?.title || "", status: "skipped", message: "Bumps are generated directly by the broadcaster." };
+  }
+
+  const updatedAt = Date.now();
+  if (source.type === "local") {
+    const filePath = mediaPathFromSource(source.path);
+    const ready = Boolean(filePath && existsSync(filePath));
+    source.ingest = {
+      status: ready ? "ready" : "missing",
+      message: ready ? "Server media verified for shared HLS playout." : `File not found: ${source.path || "unknown path"}`,
+      path: ready ? source.path : "",
+      updatedAt
+    };
+    return { id: source.id, title: source.title, type: source.type, ...source.ingest };
+  }
+
+  const candidates = await discoverAuthorizedMediaCandidates(source);
+  source.ingest = {
+    status: candidates.length ? "candidates_found" : "needs_media",
+    message: candidates.length
+      ? `Found ${candidates.length} possible public repository media candidate${candidates.length === 1 ? "" : "s"} for admin review.`
+      : "No public repository media candidates found. Provide an authorized server media file before this source can be included in the shared broadcast feed.",
+    path: "",
+    candidates,
+    updatedAt
+  };
+  return { id: source.id, title: source.title, type: source.type, ...source.ingest };
+}
+
+async function ingestSourceById(sourceId) {
+  const source = state.sources.find((item) => item.id === sourceId);
+  if (!source) throw new Error("Unknown source.");
+  const result = await ingestSource(source);
+  await saveState();
+  broadcastProgram();
+  return result;
+}
+
+async function ingestSourceLibrary(body) {
+  const sources = librarySources(body.folderId);
+  const results = await Promise.all(sources.map(ingestSource));
+  await saveState();
+  broadcastProgram();
+  return ingestSummary(results);
+}
+
+async function ingestAllSources() {
+  const results = await Promise.all(state.sources.filter((source) => source.type !== "bump").map(ingestSource));
+  await saveState();
+  broadcastProgram();
+  return ingestSummary(results);
+}
+
+function ingestSummary(results) {
+  return {
+    ok: true,
+    total: results.length,
+    ready: results.filter((item) => item.status === "ready").length,
+    needsMedia: results.filter((item) => item.status === "needs_media").length,
+    candidatesFound: results.filter((item) => item.status === "candidates_found").length,
+    missing: results.filter((item) => item.status === "missing").length,
+    skipped: results.filter((item) => item.status === "skipped").length,
+    results
+  };
+}
+
+async function discoverAuthorizedMediaCandidates(source) {
+  const query = normalizeSearchQuery(`${source.title || ""} ${source.url || ""}`);
+  if (query.length < 3) return [];
+  const archiveCandidates = await searchInternetArchiveCandidates(query).catch(() => []);
+  return archiveCandidates.slice(0, 5);
+}
+
+async function searchInternetArchiveCandidates(query) {
+  const params = new URLSearchParams({
+    q: `mediatype:(movies) AND (${query})`,
+    fl: "identifier,title,creator,licenseurl,rights,date,description",
+    rows: "6",
+    page: "1",
+    output: "json"
+  });
+  const response = await fetch(`https://archive.org/advancedsearch.php?${params}`);
+  if (!response.ok) return [];
+  const data = await response.json();
+  const docs = data?.response?.docs || [];
+  const candidateGroups = await Promise.all(docs.map((doc) => internetArchiveFilesForDoc(doc).catch(() => [])));
+  return candidateGroups.flat();
+}
+
+async function internetArchiveFilesForDoc(doc) {
+  const identifier = String(doc.identifier || "");
+  if (!identifier) return [];
+  const response = await fetch(`https://archive.org/metadata/${encodeURIComponent(identifier)}`);
+  if (!response.ok) return [];
+  const metadata = await response.json();
+  const files = Array.isArray(metadata.files) ? metadata.files : [];
+  return files
+    .filter((file) => playableArchiveFile(file))
+    .slice(0, 2)
+    .map((file) => ({
+      repository: "Internet Archive",
+      identifier,
+      title: String(doc.title || metadata.metadata?.title || identifier),
+      creator: Array.isArray(doc.creator) ? doc.creator.join(", ") : String(doc.creator || metadata.metadata?.creator || ""),
+      licenseUrl: Array.isArray(doc.licenseurl) ? doc.licenseurl[0] : String(doc.licenseurl || metadata.metadata?.licenseurl || ""),
+      rights: Array.isArray(doc.rights) ? doc.rights.join(", ") : String(doc.rights || metadata.metadata?.rights || ""),
+      detailUrl: `https://archive.org/details/${encodeURIComponent(identifier)}`,
+      mediaUrl: `https://archive.org/download/${encodeURIComponent(identifier)}/${encodeArchiveFilePath(file.name)}`,
+      fileName: file.name,
+      format: file.format || "",
+      size: Number(file.size || 0)
+    }));
+}
+
+function playableArchiveFile(file) {
+  const name = String(file.name || "");
+  const format = String(file.format || "");
+  if (/\.(mp4|m4v|mov|webm)$/i.test(name)) return true;
+  return /(mpeg4|h\.264|webm|quicktime)/i.test(format) && !/\.(gif|jpg|png|txt|xml|json)$/i.test(name);
+}
+
+function encodeArchiveFilePath(fileName) {
+  return String(fileName || "").split("/").map((part) => encodeURIComponent(part)).join("/");
 }
 
 async function createScheduleLibrary(body) {
@@ -1234,7 +1628,10 @@ async function serveFile(req, res, baseDir, urlPrefix = "") {
     const fileStat = await stat(filePath);
     if (!fileStat.isFile()) throw new Error("Not a file");
     const ext = path.extname(filePath).toLowerCase();
-    res.writeHead(200, { "content-type": mimeTypes[ext] || "application/octet-stream" });
+    res.writeHead(200, {
+      "content-type": mimeTypes[ext] || "application/octet-stream",
+      ...(baseDir === HLS_DIR ? { "cache-control": "no-cache, no-store, must-revalidate" } : {})
+    });
     createReadStream(filePath).pipe(res);
   } catch {
     if (baseDir === PUBLIC_DIR) {
@@ -1256,8 +1653,18 @@ async function handleApi(req, res, pathname) {
         serverTime: Date.now(),
         mode: state.broadcastMode,
         queueLength: state.liveQueue.length,
-        scheduleLength: state.schedule.length
+        scheduleLength: state.schedule.length,
+        stream: {
+          url: "/stream/live.m3u8",
+          status: hlsPlayout.status,
+          error: hlsPlayout.error
+        }
       });
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/stream-debug") {
+      sendJson(res, 200, await streamDebug());
       return;
     }
 
@@ -1394,6 +1801,25 @@ async function handleApi(req, res, pathname) {
       return;
     }
 
+    if (req.method === "POST" && pathname === "/api/ingest/all") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await ingestAllSources());
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/ingest/library") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await ingestSourceLibrary(await readJson(req)));
+      return;
+    }
+
+    const ingestSourceMatch = pathname.match(/^\/api\/ingest\/sources\/([^/]+)$/);
+    if (req.method === "POST" && ingestSourceMatch) {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await ingestSourceById(ingestSourceMatch[1]));
+      return;
+    }
+
     const updateSourceMatch = pathname.match(/^\/api\/sources\/([^/]+)$/);
     if (req.method === "PATCH" && updateSourceMatch) {
       if (!requireAdmin(req, res)) return;
@@ -1493,7 +1919,15 @@ async function handleApi(req, res, pathname) {
 await ensureState();
 await refreshBumpMusic();
 if (ensureAutoBumpAudioStarts()) await saveState();
+syncHlsPlayout().catch((error) => {
+  hlsPlayout.status = "error";
+  hlsPlayout.error = error.message;
+});
 setInterval(broadcastProgram, 1000);
+setInterval(() => syncHlsPlayout().catch((error) => {
+  hlsPlayout.status = "error";
+  hlsPlayout.error = error.message;
+}), 1000);
 setInterval(flushTimelineSave, 1000);
 setInterval(async () => {
   cleanSchedule();
@@ -1510,6 +1944,10 @@ createServer(async (req, res) => {
   }
   if (url.pathname.startsWith("/bumpgenerator")) {
     await serveFile(req, res, BUMP_GENERATOR_DIR, "/bumpgenerator");
+    return;
+  }
+  if (url.pathname.startsWith("/stream/")) {
+    await serveFile(req, res, HLS_DIR, "/stream");
     return;
   }
   if (url.pathname.startsWith("/media/")) {
