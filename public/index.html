@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DoinkTV</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="brand-mark">D</div>
+        <div>
+          <div class="brand">DoinkTV</div>
+          <div class="tagline">Synchronized broadcast</div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <div id="liveBadge" class="badge">Waiting for signal</div>
+        <button id="adminToggle" class="ghost-button" type="button" aria-expanded="false">Log In</button>
+      </div>
+    </header>
+
+    <div id="loginPopover" class="login-popover hidden">
+      <div class="auth-tabs" role="tablist" aria-label="Account access">
+        <button id="showLoginButton" class="auth-tab active" type="button">Log In</button>
+        <button id="showRegisterButton" class="auth-tab" type="button">Create Account</button>
+      </div>
+      <form id="loginForm" class="login-form">
+        <input name="username" autocomplete="username" placeholder="Username or email" required>
+        <input name="password" type="password" autocomplete="current-password" placeholder="Password" required>
+        <button type="submit">Log in</button>
+        <p id="loginMessage" class="message"></p>
+      </form>
+      <form id="registerForm" class="login-form hidden">
+        <input name="email" type="email" autocomplete="email" placeholder="Email" required>
+        <input name="username" autocomplete="username" placeholder="Username" required>
+        <input name="password" type="password" autocomplete="new-password" placeholder="Password" required>
+        <input name="passwordConfirmation" type="password" autocomplete="new-password" placeholder="Confirm password" required>
+        <button type="submit">Create account</button>
+        <p id="registerMessage" class="message"></p>
+      </form>
+    </div>
+
+    <main class="shell">
+      <section class="stage" aria-label="DoinkTV broadcast">
+        <div id="playerFrame" class="player-frame">
+          <div class="crt-brand" aria-hidden="true">AMISH</div>
+          <div class="crt-vents" aria-hidden="true"></div>
+          <div class="crt-knobs" aria-hidden="true">
+            <span></span>
+            <span></span>
+          </div>
+          <div id="emptyState" class="empty-state">
+            <h1>Stand by</h1>
+            <p>The broadcast schedule is empty. The next source will appear here automatically.</p>
+          </div>
+          <video id="localPlayer" playsinline muted autoplay></video>
+          <div id="youtubePlayer" class="youtube-player"></div>
+          <div class="shield" aria-hidden="true"></div>
+        </div>
+        <div class="broadcast-meta">
+          <div>
+            <span class="label">Now</span>
+            <strong id="nowTitle">No active program</strong>
+          </div>
+          <div>
+            <span class="label">Next</span>
+            <strong id="nextTitle">Unscheduled</strong>
+          </div>
+          <div>
+            <span class="label">Progress</span>
+            <strong id="progressText">00:00 / 00:00</strong>
+          </div>
+        </div>
+        <a id="youtubeLink" class="youtube-link hidden" href="#" target="_blank" rel="noopener noreferrer">Open original on YouTube</a>
+      </section>
+
+      <aside id="chatPanel" class="chat-panel" aria-label="Global chat">
+        <div class="chat-top">
+          <div>
+            <h2>Global Chat</h2>
+            <p id="chatStatus">Log in to join</p>
+          </div>
+          <button id="chatToggle" class="ghost-button compact" type="button" aria-expanded="true">Minimize</button>
+        </div>
+        <div id="chatBody" class="chat-body">
+          <div id="chatMessages" class="chat-messages"></div>
+          <form id="chatForm" class="chat-form">
+            <input id="chatInput" name="text" maxlength="280" autocomplete="off" placeholder="Log in to chat" disabled>
+            <button id="chatSendButton" type="submit" disabled>Send</button>
+          </form>
+          <p id="chatMessage" class="message"></p>
+        </div>
+      </aside>
+
+      <aside id="adminPanel" class="admin-panel hidden" aria-label="Admin controls">
+        <div class="panel-top">
+          <div>
+            <h2>Broadcast Control</h2>
+            <p id="adminIdentity">Signed in as DoinkWizard</p>
+          </div>
+          <button id="logoutButton" class="ghost-button" title="Log out">Log out</button>
+        </div>
+
+        <div id="adminTools" class="admin-tools hidden">
+          <form id="sourceForm" class="stack">
+            <h3>Add source</h3>
+            <input name="title" placeholder="Title" required>
+            <input name="duration" type="number" min="5" step="1" placeholder="Duration in seconds" required>
+            <select name="type">
+              <option value="youtube">YouTube</option>
+              <option value="local">Server file</option>
+            </select>
+            <input name="youtube" placeholder="YouTube URL or ID">
+            <input name="path" placeholder="media/example.mp4">
+            <button type="submit">Add source</button>
+            <p id="sourceMessage" class="message"></p>
+          </form>
+
+          <form id="scheduleForm" class="stack">
+            <h3>Schedule</h3>
+            <select name="sourceId" required></select>
+            <input name="startAt" type="datetime-local" required>
+            <input name="duration" type="number" min="5" step="1" placeholder="Override duration">
+            <button type="submit">Add to schedule</button>
+            <button id="playNowButton" type="button" class="secondary">Play now</button>
+            <p id="scheduleMessage" class="message"></p>
+          </form>
+
+          <div class="lists">
+            <section>
+              <h3>Sources</h3>
+              <div id="sourcesList" class="item-list"></div>
+            </section>
+            <section>
+              <h3>Upcoming</h3>
+              <div id="scheduleList" class="item-list"></div>
+            </section>
+          </div>
+        </div>
+      </aside>
+    </main>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

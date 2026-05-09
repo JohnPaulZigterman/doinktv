@@ -1,0 +1,542 @@
+import { createServer } from "node:http";
+import { readFile, writeFile, mkdir, stat } from "node:fs/promises";
+import { createReadStream, existsSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import crypto from "node:crypto";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PORT = Number(process.env.PORT || 3000);
+const DATA_DIR = path.join(__dirname, "data");
+const MEDIA_DIR = path.join(__dirname, "media");
+const PUBLIC_DIR = path.join(__dirname, "public");
+const STATE_PATH = path.join(DATA_DIR, "state.json");
+
+const ADMIN_USER = process.env.ADMIN_USER || "DoinkWizard";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ChipTanaka12!@";
+const SESSION_TTL_MS = 1000 * 60 * 60 * 12;
+
+const sessions = new Map();
+const sseClients = new Set();
+const chatClients = new Set();
+let state = {
+  sources: [],
+  schedule: [],
+  users: [],
+  chat: [],
+  nowPlaying: null
+};
+
+const mimeTypes = {
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".ogg": "video/ogg",
+  ".mov": "video/quicktime",
+  ".m4v": "video/x-m4v"
+};
+
+async function ensureState() {
+  await mkdir(DATA_DIR, { recursive: true });
+  await mkdir(MEDIA_DIR, { recursive: true });
+  if (!existsSync(STATE_PATH)) {
+    await saveState();
+  } else {
+    state = JSON.parse(await readFile(STATE_PATH, "utf8"));
+    state.sources ||= [];
+    state.schedule ||= [];
+    state.users ||= [];
+    state.chat ||= [];
+    state.nowPlaying ||= null;
+  }
+}
+
+async function saveState() {
+  await mkdir(DATA_DIR, { recursive: true });
+  await writeFile(STATE_PATH, `${JSON.stringify(state, null, 2)}\n`);
+}
+
+function sendJson(res, status, body) {
+  const json = JSON.stringify(body);
+  res.writeHead(status, {
+    "content-type": "application/json; charset=utf-8",
+    "content-length": Buffer.byteLength(json)
+  });
+  res.end(json);
+}
+
+function parseCookies(req) {
+  return Object.fromEntries(
+    (req.headers.cookie || "")
+      .split(";")
+      .map((cookie) => cookie.trim())
+      .filter(Boolean)
+      .map((cookie) => {
+        const [name, ...rest] = cookie.split("=");
+        return [name, decodeURIComponent(rest.join("="))];
+      })
+  );
+}
+
+function isAdmin(req) {
+  return getSession(req)?.role === "admin";
+}
+
+function getSession(req) {
+  const token = parseCookies(req).doink_session;
+  const session = token && sessions.get(token);
+  if (!session || session.expiresAt < Date.now()) {
+    if (token) sessions.delete(token);
+    return null;
+  }
+  session.expiresAt = Date.now() + SESSION_TTL_MS;
+  return session;
+}
+
+function requireAdmin(req, res) {
+  if (isAdmin(req)) return true;
+  sendJson(res, 401, { error: "Admin login required." });
+  return false;
+}
+
+async function readJson(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  const raw = Buffer.concat(chunks).toString("utf8");
+  if (!raw) return {};
+  return JSON.parse(raw);
+}
+
+function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
+  const hash = crypto.scryptSync(String(password), salt, 64).toString("hex");
+  return { salt, hash };
+}
+
+function verifyPassword(password, passwordHash) {
+  const candidate = hashPassword(password, passwordHash.salt).hash;
+  return crypto.timingSafeEqual(Buffer.from(candidate, "hex"), Buffer.from(passwordHash.hash, "hex"));
+}
+
+function publicUser(session) {
+  if (!session) return null;
+  return {
+    username: session.username,
+    role: session.role
+  };
+}
+
+function requireSession(req, res) {
+  const session = getSession(req);
+  if (session) return session;
+  sendJson(res, 401, { error: "Log in to chat." });
+  return null;
+}
+
+function createSession(res, { username, role, userId = null }) {
+  const token = crypto.randomBytes(32).toString("hex");
+  sessions.set(token, {
+    userId,
+    username,
+    role,
+    expiresAt: Date.now() + SESSION_TTL_MS
+  });
+  res.setHeader("set-cookie", `doink_session=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=43200`);
+}
+
+function validateRegistration(body) {
+  const email = String(body.email || "").trim().toLowerCase();
+  const username = String(body.username || "").trim();
+  const password = String(body.password || "");
+  const confirmation = String(body.passwordConfirmation || body.confirmPassword || "");
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Enter a valid email address.");
+  if (!/^[a-zA-Z0-9_]{3,24}$/.test(username)) {
+    throw new Error("Usernames must be 3-24 characters and use letters, numbers, or underscores.");
+  }
+  if (username.toLowerCase() === ADMIN_USER.toLowerCase()) throw new Error("That username is reserved.");
+  if (password.length < 8) throw new Error("Passwords must be at least 8 characters.");
+  if (password !== confirmation) throw new Error("Passwords do not match.");
+  if (state.users.some((user) => user.email === email)) throw new Error("That email is already registered.");
+  if (state.users.some((user) => user.username.toLowerCase() === username.toLowerCase())) {
+    throw new Error("That username is already registered.");
+  }
+
+  return { email, username, password };
+}
+
+async function registerUser(body) {
+  const { email, username, password } = validateRegistration(body);
+  const user = {
+    id: crypto.randomUUID(),
+    email,
+    username,
+    passwordHash: hashPassword(password),
+    role: "user",
+    createdAt: Date.now()
+  };
+  state.users.push(user);
+  await saveState();
+  return user;
+}
+
+function normalizeYouTubeId(input) {
+  const value = String(input || "").trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(value)) return value;
+  try {
+    const url = new URL(value);
+    if (url.hostname.includes("youtu.be")) return url.pathname.slice(1, 12);
+    if (url.searchParams.has("v")) return url.searchParams.get("v");
+    const embed = url.pathname.match(/\/embed\/([a-zA-Z0-9_-]{11})/);
+    if (embed) return embed[1];
+  } catch {
+    return "";
+  }
+  return "";
+}
+
+function publicProgram() {
+  const now = Date.now();
+  const entries = [...state.schedule]
+    .map((entry) => ({
+      ...entry,
+      source: state.sources.find((source) => source.id === entry.sourceId)
+    }))
+    .filter((entry) => entry.source && Number.isFinite(entry.startAt) && Number.isFinite(entry.duration))
+    .sort((a, b) => a.startAt - b.startAt);
+
+  const live = entries.find((entry) => now >= entry.startAt && now < entry.startAt + entry.duration * 1000);
+  const next = entries.find((entry) => entry.startAt > now);
+
+  return {
+    serverTime: now,
+    live: live
+      ? {
+          id: live.id,
+          title: live.title || live.source.title,
+          startAt: live.startAt,
+          duration: live.duration,
+          offset: Math.max(0, (now - live.startAt) / 1000),
+          source: live.source
+        }
+      : null,
+    next: next
+      ? {
+          id: next.id,
+          title: next.title || next.source.title,
+          startAt: next.startAt,
+          duration: next.duration,
+          source: next.source
+        }
+      : null
+  };
+}
+
+function broadcastProgram() {
+  const payload = `data: ${JSON.stringify(publicProgram())}\n\n`;
+  for (const client of sseClients) {
+    client.write(payload);
+  }
+}
+
+function publicChat() {
+  return {
+    serverTime: Date.now(),
+    messages: state.chat.slice(-80)
+  };
+}
+
+function broadcastChat() {
+  const payload = `data: ${JSON.stringify(publicChat())}\n\n`;
+  for (const client of chatClients) {
+    client.write(payload);
+  }
+}
+
+async function createChatMessage(req, body) {
+  const session = getSession(req);
+  if (!session) throw new Error("Log in to chat.");
+  const text = String(body.text || "").replace(/\s+/g, " ").trim();
+  if (!text) throw new Error("Enter a message first.");
+  if (text.length > 280) throw new Error("Messages must be 280 characters or less.");
+
+  const message = {
+    id: crypto.randomUUID(),
+    username: session.username,
+    role: session.role,
+    text,
+    createdAt: Date.now()
+  };
+  state.chat.push(message);
+  state.chat = state.chat.slice(-200);
+  await saveState();
+  broadcastChat();
+  return message;
+}
+
+function cleanSchedule() {
+  const cutoff = Date.now() - 1000 * 60 * 60 * 12;
+  state.schedule = state.schedule.filter((entry) => entry.startAt + entry.duration * 1000 > cutoff);
+}
+
+async function createSource(body) {
+  const type = body.type === "local" ? "local" : "youtube";
+  const title = String(body.title || "").trim() || "Untitled source";
+  const duration = Number(body.duration);
+  if (!Number.isFinite(duration) || duration < 5) {
+    throw new Error("Duration must be at least 5 seconds.");
+  }
+
+  const source = {
+    id: crypto.randomUUID(),
+    type,
+    title,
+    duration: Math.round(duration)
+  };
+
+  if (type === "youtube") {
+    const youtubeId = normalizeYouTubeId(body.youtube || body.url);
+    if (!youtubeId) throw new Error("Enter a valid YouTube URL or video ID.");
+    source.youtubeId = youtubeId;
+    source.url = `https://www.youtube.com/watch?v=${youtubeId}`;
+  } else {
+    const rawPath = String(body.path || "").trim().replaceAll("\\", "/");
+    if (!rawPath) throw new Error("Enter a server media path.");
+    if (rawPath.includes("..")) throw new Error("Media paths cannot traverse directories.");
+    const relativePath = rawPath.replace(/^\/?media\//, "");
+    const filePath = path.join(MEDIA_DIR, relativePath);
+    if (!existsSync(filePath)) throw new Error(`No file exists at media/${relativePath}.`);
+    source.path = `/media/${relativePath}`;
+  }
+
+  state.sources.push(source);
+  await saveState();
+  return source;
+}
+
+async function createScheduleEntry(body, immediate = false) {
+  const source = state.sources.find((item) => item.id === body.sourceId);
+  if (!source) throw new Error("Unknown source.");
+
+  const duration = Number(body.duration || source.duration);
+  if (!Number.isFinite(duration) || duration < 5) {
+    throw new Error("Duration must be at least 5 seconds.");
+  }
+
+  const startAt = immediate ? Date.now() : Date.parse(body.startAt);
+  if (!Number.isFinite(startAt)) throw new Error("Enter a valid start time.");
+
+  const entry = {
+    id: crypto.randomUUID(),
+    sourceId: source.id,
+    title: String(body.title || "").trim(),
+    startAt,
+    duration: Math.round(duration)
+  };
+
+  if (immediate) {
+    state.schedule = state.schedule.filter((item) => Date.now() >= item.startAt + item.duration * 1000);
+  }
+
+  state.schedule.push(entry);
+  state.schedule.sort((a, b) => a.startAt - b.startAt);
+  cleanSchedule();
+  await saveState();
+  broadcastProgram();
+  return entry;
+}
+
+async function removeItem(collection, id) {
+  const before = state[collection].length;
+  state[collection] = state[collection].filter((item) => item.id !== id);
+  await saveState();
+  broadcastProgram();
+  return before !== state[collection].length;
+}
+
+async function serveFile(req, res, baseDir, urlPrefix = "") {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const decoded = decodeURIComponent(url.pathname.slice(urlPrefix.length));
+  const requested = decoded === "/" || decoded === "" ? "index.html" : decoded.replace(/^\/+/, "");
+  const filePath = path.normalize(path.join(baseDir, requested));
+  if (!filePath.startsWith(baseDir)) {
+    res.writeHead(403);
+    res.end("Forbidden");
+    return;
+  }
+
+  try {
+    const fileStat = await stat(filePath);
+    if (!fileStat.isFile()) throw new Error("Not a file");
+    const ext = path.extname(filePath).toLowerCase();
+    res.writeHead(200, { "content-type": mimeTypes[ext] || "application/octet-stream" });
+    createReadStream(filePath).pipe(res);
+  } catch {
+    if (baseDir === PUBLIC_DIR) {
+      const indexPath = path.join(PUBLIC_DIR, "index.html");
+      res.writeHead(200, { "content-type": mimeTypes[".html"] });
+      createReadStream(indexPath).pipe(res);
+      return;
+    }
+    res.writeHead(404);
+    res.end("Not found");
+  }
+}
+
+async function handleApi(req, res, pathname) {
+  try {
+    if (req.method === "GET" && pathname === "/api/program") {
+      sendJson(res, 200, publicProgram());
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/events") {
+      res.writeHead(200, {
+        "content-type": "text/event-stream; charset=utf-8",
+        "cache-control": "no-cache, no-transform",
+        connection: "keep-alive"
+      });
+      res.write(`data: ${JSON.stringify(publicProgram())}\n\n`);
+      sseClients.add(res);
+      req.on("close", () => sseClients.delete(res));
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/chat") {
+      sendJson(res, 200, publicChat());
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/chat/events") {
+      res.writeHead(200, {
+        "content-type": "text/event-stream; charset=utf-8",
+        "cache-control": "no-cache, no-transform",
+        connection: "keep-alive"
+      });
+      res.write(`data: ${JSON.stringify(publicChat())}\n\n`);
+      chatClients.add(res);
+      req.on("close", () => chatClients.delete(res));
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/chat") {
+      const session = requireSession(req, res);
+      if (!session) return;
+      const message = await createChatMessage(req, await readJson(req));
+      sendJson(res, 201, message);
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/login") {
+      const body = await readJson(req);
+      const login = String(body.username || "").trim();
+      const password = String(body.password || "");
+
+      if (login === ADMIN_USER && password === ADMIN_PASSWORD) {
+        createSession(res, { username: ADMIN_USER, role: "admin" });
+        sendJson(res, 200, { ok: true, user: { username: ADMIN_USER, role: "admin" } });
+        return;
+      }
+
+      const user = state.users.find(
+        (item) => item.username.toLowerCase() === login.toLowerCase() || item.email === login.toLowerCase()
+      );
+      if (!user || !verifyPassword(password, user.passwordHash)) {
+        sendJson(res, 401, { error: "Invalid username, email, or password." });
+        return;
+      }
+      createSession(res, { username: user.username, role: user.role, userId: user.id });
+      sendJson(res, 200, { ok: true, user: { username: user.username, role: user.role } });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/register") {
+      const user = await registerUser(await readJson(req));
+      createSession(res, { username: user.username, role: user.role, userId: user.id });
+      sendJson(res, 201, { ok: true, user: { username: user.username, role: user.role } });
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/me") {
+      sendJson(res, 200, { user: publicUser(getSession(req)) });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/logout") {
+      const token = parseCookies(req).doink_session;
+      if (token) sessions.delete(token);
+      res.setHeader("set-cookie", "doink_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0");
+      sendJson(res, 200, { ok: true });
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/admin") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, {
+        user: publicUser(getSession(req)),
+        sources: state.sources,
+        schedule: state.schedule
+      });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/sources") {
+      if (!requireAdmin(req, res)) return;
+      const source = await createSource(await readJson(req));
+      broadcastProgram();
+      sendJson(res, 201, source);
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/schedule") {
+      if (!requireAdmin(req, res)) return;
+      const entry = await createScheduleEntry(await readJson(req), false);
+      sendJson(res, 201, entry);
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/play-now") {
+      if (!requireAdmin(req, res)) return;
+      const entry = await createScheduleEntry(await readJson(req), true);
+      sendJson(res, 201, entry);
+      return;
+    }
+
+    const deleteMatch = pathname.match(/^\/api\/(sources|schedule)\/([^/]+)$/);
+    if (req.method === "DELETE" && deleteMatch) {
+      if (!requireAdmin(req, res)) return;
+      const [, type, id] = deleteMatch;
+      const removed = await removeItem(type, id);
+      sendJson(res, removed ? 200 : 404, { ok: removed });
+      return;
+    }
+
+    sendJson(res, 404, { error: "Not found." });
+  } catch (error) {
+    sendJson(res, 400, { error: error.message || "Request failed." });
+  }
+}
+
+await ensureState();
+setInterval(broadcastProgram, 1000);
+setInterval(async () => {
+  cleanSchedule();
+  await saveState();
+}, 1000 * 60 * 5);
+
+createServer(async (req, res) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  if (url.pathname.startsWith("/api/")) {
+    await handleApi(req, res, url.pathname);
+    return;
+  }
+  if (url.pathname.startsWith("/media/")) {
+    await serveFile(req, res, MEDIA_DIR, "/media");
+    return;
+  }
+  await serveFile(req, res, PUBLIC_DIR);
+}).listen(PORT, () => {
+  console.log(`DoinkTV is live at http://localhost:${PORT}`);
+});
