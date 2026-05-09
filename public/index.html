@@ -56,10 +56,9 @@
             <h1>Stand by</h1>
             <p>The broadcast schedule is empty. The next source will appear here automatically.</p>
           </div>
-          <video id="localPlayer" playsinline muted autoplay></video>
+          <video id="localPlayer" playsinline autoplay></video>
           <audio id="bumpAudio" preload="auto"></audio>
           <div id="youtubePlayer" class="youtube-player"></div>
-          <div id="youtubeMask" class="youtube-mask" aria-hidden="true"></div>
           <div id="bumpPlayer" class="bump-player"></div>
           <div class="shield" aria-hidden="true"></div>
           <a id="youtubeLink" class="youtube-link hidden" href="#" target="_blank" rel="noopener noreferrer">Open original on YouTube</a>
@@ -77,6 +76,7 @@
       <aside id="chatPanel" class="chat-panel" aria-label="Global chat">
         <div class="rail-tabs hidden" data-admin-rail-tabs>
           <button id="showBroadcastPanelButton" class="auth-tab" type="button">Broadcast</button>
+          <button id="showQueuePanelButton" class="auth-tab" type="button">Queue</button>
           <button id="showBumpPanelButton" class="auth-tab" type="button">Bumps</button>
           <button id="showChatPanelButton" class="auth-tab active" type="button">Chat</button>
         </div>
@@ -114,6 +114,7 @@
       <aside id="adminPanel" class="admin-panel hidden" aria-label="Admin controls">
         <div class="rail-tabs hidden" data-admin-rail-tabs>
           <button id="showBroadcastPanelButtonAlt" class="auth-tab active" type="button">Broadcast</button>
+          <button id="showQueuePanelButtonAlt" class="auth-tab" type="button">Queue</button>
           <button id="showBumpPanelButtonAlt" class="auth-tab" type="button">Bumps</button>
           <button id="showChatPanelButtonAlt" class="auth-tab" type="button">Chat</button>
         </div>
@@ -173,14 +174,16 @@
               <button id="scheduledModeButton" class="auth-tab active" type="button">Scheduled</button>
               <button id="queueModeButton" class="auth-tab" type="button">Live queue</button>
             </div>
+            <div class="mode-toggle" role="group" aria-label="Broadcast target">
+              <button class="auth-tab active" data-pick-mode="source" type="button">Source</button>
+              <button class="auth-tab" data-pick-mode="library" type="button">Library</button>
+            </div>
             <select name="folderId"></select>
             <select name="sourceId" required></select>
             <input name="startAt" type="datetime-local" required>
             <input name="duration" type="number" min="5" step="1" placeholder="Override duration">
-            <button type="submit">Schedule source</button>
-            <button id="scheduleLibraryButton" type="button" class="secondary">Schedule library</button>
-            <button id="addQueueButton" type="button" class="secondary">Queue source</button>
-            <button id="queueLibraryButton" type="button" class="secondary">Queue library</button>
+            <button type="submit">Schedule</button>
+            <button id="addQueueButton" type="button" class="secondary">Add to queue</button>
             <button id="playNowButton" type="button" class="secondary">Play immediately</button>
             <p id="scheduleMessage" class="message"></p>
           </form>
@@ -194,20 +197,32 @@
               <h3>Upcoming</h3>
               <div id="scheduleList" class="item-list"></div>
             </section>
-            <section>
-              <div class="section-heading">
-                <h3>Live queue</h3>
-                <button id="clearQueueButton" class="danger compact" type="button">Clear queue</button>
-              </div>
-              <div id="queueList" class="item-list"></div>
-            </section>
           </div>
         </div>
+      </aside>
+
+      <aside id="queuePanel" class="admin-panel hidden" aria-label="Queue controls">
+        <div class="rail-tabs hidden" data-admin-rail-tabs>
+          <button id="showBroadcastPanelButtonQueue" class="auth-tab" type="button">Broadcast</button>
+          <button id="showQueuePanelButtonQueue" class="auth-tab active" type="button">Queue</button>
+          <button id="showBumpPanelButtonQueue" class="auth-tab" type="button">Bumps</button>
+          <button id="showChatPanelButtonQueue" class="auth-tab" type="button">Chat</button>
+        </div>
+        <div class="panel-top">
+          <div>
+            <h2>Queue Editor</h2>
+            <p>Drag queued items to reorder the live stack</p>
+          </div>
+          <button id="clearQueueButton" class="danger compact" type="button">Clear queue</button>
+        </div>
+        <div id="queueList" class="item-list queue-editor"></div>
+        <p id="queueMessage" class="message"></p>
       </aside>
 
       <aside id="bumpPanel" class="admin-panel hidden" aria-label="Bump generator">
         <div class="rail-tabs hidden" data-admin-rail-tabs>
           <button id="showBroadcastPanelButtonBump" class="auth-tab" type="button">Broadcast</button>
+          <button id="showQueuePanelButtonBump" class="auth-tab" type="button">Queue</button>
           <button id="showBumpPanelButtonBump" class="auth-tab active" type="button">Bumps</button>
           <button id="showChatPanelButtonBump" class="auth-tab" type="button">Chat</button>
         </div>

@@ -219,7 +219,7 @@ p {
 
 .rail-tabs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
   margin-bottom: 12px;
   padding: 4px;
@@ -282,7 +282,11 @@ p {
 }
 
 .shell.bump-workspace {
+  width: 100%;
+  height: calc(100vh - 68px);
+  padding: 8px;
   grid-template-columns: minmax(0, 1fr);
+  gap: 0;
 }
 
 .shell.bump-workspace .stage {
@@ -363,23 +367,6 @@ p {
   border-radius: inherit;
 }
 
-.youtube-mask {
-  position: absolute;
-  inset: clamp(14px, 1.8vw, 26px);
-  z-index: 4;
-  display: none;
-  border-radius: clamp(16px, 2.2vw, 30px);
-  background:
-    radial-gradient(circle at 50% 48%, rgba(55, 213, 255, 0.08), transparent 30%),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.026) 0 1px, transparent 1px 5px),
-    #050607;
-  pointer-events: none;
-}
-
-.player-frame[data-mode="youtube"] .youtube-mask.active {
-  display: block;
-}
-
 .player-frame video {
   object-fit: contain;
 }
@@ -399,7 +386,7 @@ p {
   display: block;
 }
 
-.player-frame[data-mode="youtube"].youtube-clean .youtube-player {
+.player-frame[data-mode="youtube"] .youtube-player {
   opacity: 1;
 }
 
@@ -676,9 +663,51 @@ p {
 }
 
 .volume-control input {
+  appearance: none;
   width: 100%;
   min-height: 24px;
-  accent-color: var(--accent);
+  background: transparent;
+}
+
+.volume-control input::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(90deg, var(--accent) 0 var(--volume-fill, 70%), rgba(255, 255, 255, 0.12) var(--volume-fill, 70%) 100%);
+}
+
+.volume-control input::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border: 2px solid #11100a;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px rgba(255, 224, 102, 0.24);
+}
+
+.volume-control input::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.volume-control input::-moz-range-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.volume-control input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #11100a;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px rgba(255, 224, 102, 0.24);
 }
 
 .volume-control output {
@@ -722,36 +751,28 @@ p {
 
 .youtube-link {
   position: absolute;
-  left: clamp(22px, 2.6vw, 38px);
-  bottom: clamp(14px, 1.7vw, 24px);
+  left: clamp(28px, 3vw, 42px);
+  bottom: clamp(5px, 0.7vw, 10px);
   z-index: 8;
   display: inline-flex;
   align-items: center;
-  min-height: 26px;
-  padding: 0 9px;
-  border: 1px solid rgba(186, 199, 211, 0.2);
-  border-radius: 9px;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.055), transparent 40%),
-    rgba(16, 19, 22, 0.76);
-  color: rgba(216, 224, 232, 0.72);
-  font-size: 11px;
-  font-weight: 800;
+  min-height: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 224, 102, 0.48);
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: 0.14em;
   text-decoration: none;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 8px 18px rgba(0, 0, 0, 0.22);
+  text-transform: uppercase;
+  box-shadow: none;
   pointer-events: auto;
-  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+  transition: color 140ms ease, opacity 140ms ease;
 }
 
 .youtube-link:hover {
-  transform: translateY(-1px);
-  border-color: rgba(216, 224, 232, 0.34);
-  color: rgba(242, 246, 250, 0.9);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.08), transparent 40%),
-    rgba(22, 26, 30, 0.88);
+  color: rgba(255, 224, 102, 0.76);
 }
 
 .label {
@@ -912,16 +933,28 @@ p {
   position: relative;
   top: auto;
   width: 100%;
-  max-height: calc(100vh - 68px - (clamp(12px, 2.4vw, 26px) * 2));
+  height: 100%;
+  max-height: none;
+  padding: 8px;
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
   overflow: hidden;
+  border-radius: 18px;
+}
+
+.shell.bump-workspace #bumpPanel .rail-tabs {
+  margin-bottom: 6px;
+}
+
+.shell.bump-workspace #bumpPanel .panel-top {
+  margin-bottom: 8px;
+  min-height: 0;
 }
 
 .shell.bump-workspace .bump-frame {
   min-height: 0;
   height: 100%;
-  border-radius: 18px;
+  border-radius: 14px;
 }
 
 .stack {
@@ -1094,6 +1127,36 @@ p {
   gap: 6px;
 }
 
+.queue-item,
+.source-item {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.queue-item[draggable="true"],
+.source-item[draggable="true"] {
+  cursor: grab;
+}
+
+.queue-item.dragging,
+.source-item.dragging {
+  opacity: 0.48;
+}
+
+.drag-handle {
+  display: inline-grid;
+  place-items: center;
+  min-width: 42px;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 button:disabled {
   cursor: not-allowed;
   opacity: 0.42;
@@ -1191,17 +1254,18 @@ button:disabled {
 .admin-panel .rail-tabs,
 .admin-panel .mode-toggle,
 .chat-panel .rail-tabs {
-  gap: 4px;
+  gap: 2px;
   margin-bottom: 9px;
-  padding: 3px;
-  border-radius: 13px;
+  padding: 2px;
+  border-radius: 11px;
 }
 
 .admin-panel .auth-tab,
 .chat-panel .auth-tab {
-  min-height: 30px;
-  border-radius: 10px;
-  font-size: 12px;
+  min-height: 28px;
+  padding: 0 6px;
+  border-radius: 9px;
+  font-size: 11px;
 }
 
 .admin-panel .stack {
@@ -1302,7 +1366,8 @@ button:disabled {
 
   .shell,
   .shell.chat-collapsed,
-  .shell.admin-open.chat-collapsed {
+  .shell.admin-open.chat-collapsed,
+  .shell.bump-workspace {
     grid-template-columns: 1fr;
   }
 

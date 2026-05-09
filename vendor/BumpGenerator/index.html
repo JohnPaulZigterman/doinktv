@@ -1,0 +1,278 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bump Generator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>bump generator</h1>
+      </div>
+      <div class="status" id="status">Ready.</div>
+    </header>
+
+    <main>
+      <section class="controls" aria-label="Bump settings">
+        <div class="field">
+          <div class="label">Text lines</div>
+          <div id="textLines" class="text-lines">
+            <div class="text-line">
+              <input class="line-input" type="text" value="we will now stare quietly at this image for five seconds." aria-label="Text line 1">
+              <button class="icon-button remove-line" type="button" aria-label="Remove line" title="Remove line">x</button>
+            </div>
+          </div>
+          <button id="addLineBtn" type="button" class="secondary">Add line</button>
+        </div>
+
+        <div class="field">
+          <label for="secondsPerLine">Seconds per line</label>
+          <div class="range-row">
+            <input id="secondsPerLine" type="range" min="1" max="12" step="1" value="5">
+            <span id="secondsPerLineValue">5s</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="fontSize">Text size</label>
+          <div class="range-row">
+            <input id="fontSize" type="range" min="24" max="72" value="42">
+            <span id="fontSizeValue">42</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="label">Placement</div>
+          <div class="segmented" role="radiogroup" aria-label="Text placement">
+            <input id="placeTop" name="placement" type="radio" value="top">
+            <label for="placeTop">Top</label>
+            <input id="placeMiddle" name="placement" type="radio" value="middle" checked>
+            <label for="placeMiddle">Middle</label>
+            <input id="placeBottom" name="placement" type="radio" value="bottom">
+            <label for="placeBottom">Bottom</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="label">Alignment</div>
+          <div class="segmented" role="radiogroup" aria-label="Text alignment">
+            <input id="alignLeft" name="alignment" type="radio" value="left" checked>
+            <label for="alignLeft">Left</label>
+            <input id="alignCenter" name="alignment" type="radio" value="center">
+            <label for="alignCenter">Center</label>
+            <input id="alignRight" name="alignment" type="radio" value="right">
+            <label for="alignRight">Right</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="songInput">Audio</label>
+          <input id="songInput" type="file" accept="audio/*">
+        </div>
+
+        <div class="field">
+          <label for="audioStart">Audio start</label>
+          <div class="range-row">
+            <input id="audioStart" type="range" min="0" max="0" step="0.1" value="0" disabled>
+            <span id="audioStartValue">0:00</span>
+          </div>
+        </div>
+
+        <details class="credits-panel" aria-label="Music credit settings">
+          <summary class="panel-title">
+            <span>Music credit</span>
+            <span class="summary-hint">Open</span>
+          </summary>
+          <div class="panel-body">
+            <div class="field">
+              <label for="creditText">Credit text</label>
+              <textarea id="creditText" class="credit-textarea" placeholder="Audio metadata will appear here"></textarea>
+            </div>
+            <div class="grid-2">
+              <div class="field">
+                <label for="creditPosition">Position</label>
+                <select id="creditPosition">
+                  <option value="top-left">Top left</option>
+                  <option value="top-center">Top center</option>
+                  <option value="top-right">Top right</option>
+                  <option value="center-left">Center left</option>
+                  <option value="center">Center</option>
+                  <option value="center-right">Center right</option>
+                  <option value="bottom-left">Bottom left</option>
+                  <option value="bottom-center">Bottom center</option>
+                  <option value="bottom-right" selected>Bottom right</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="creditFont">Font</label>
+                <select id="creditFont">
+                  <option value="Arial, Helvetica, sans-serif">Arial</option>
+                  <option value="Georgia, serif">Georgia</option>
+                  <option value="'Courier New', monospace">Courier New</option>
+                  <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                  <option value="Verdana, sans-serif">Verdana</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="creditSize">Credit size</label>
+              <div class="range-row">
+                <input id="creditSize" type="range" min="12" max="40" value="18">
+                <span id="creditSizeValue">18</span>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <div class="field">
+          <label for="imageInput">Background</label>
+          <input id="imageInput" type="file" accept="image/*,video/*">
+        </div>
+
+        <details class="wallpaper-panel" aria-label="Wallpaper generator">
+          <summary class="panel-title">
+            <span>Wallpaper generator</span>
+            <span class="summary-hint">Open</span>
+          </summary>
+          <div class="panel-body">
+            <div class="grid-2">
+              <div class="field">
+                <label for="wallpaperShapes">Shapes</label>
+                <select id="wallpaperShapes">
+                  <option value="mixed">Mixed geometry</option>
+                  <option value="circles">Circles</option>
+                  <option value="diamonds">Diamonds</option>
+                  <option value="triangles">Triangles</option>
+                  <option value="lines">Lines</option>
+                  <option value="stripes">Stripes</option>
+                  <option value="polka">Polka dots</option>
+                  <option value="plaid">Plaid</option>
+                  <option value="tartan">Tartan</option>
+                  <option value="argyle">Argyle</option>
+                  <option value="mondrian">Mondrian</option>
+                  <option value="checkerboard">Checkerboard</option>
+                  <option value="terrazzo">Terrazzo</option>
+                  <option value="memphis">Memphis</option>
+                  <option value="starburst">Starburst</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="wallpaperScheme">Colors</label>
+                <select id="wallpaperScheme">
+                  <option value="midnight">Midnight signal</option>
+                  <option value="pool">Pool hall</option>
+                  <option value="candy">Neon candy</option>
+                  <option value="paper">Sun-faded paper</option>
+                  <option value="mono">Monochrome</option>
+                  <option value="arcade">Arcade carpet</option>
+                  <option value="warning">Hazard tape</option>
+                  <option value="citrus">Citrus pop</option>
+                  <option value="broadcast">Broadcast bars</option>
+                  <option value="miami">Miami night</option>
+                  <option value="mint">Mint punch</option>
+                  <option value="ruby">Ruby terminal</option>
+                  <option value="blueprint">Blueprint</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="wallpaperSpacing">Spacing</label>
+              <div class="range-row">
+                <input id="wallpaperSpacing" type="range" min="34" max="170" value="86">
+                <span id="wallpaperSpacingValue">86</span>
+              </div>
+            </div>
+            <canvas id="wallpaperPreview" class="wallpaper-preview" width="480" height="270" aria-label="Generated wallpaper preview"></canvas>
+            <div class="actions compact-actions">
+              <button id="randomizeWallpaperBtn" type="button" class="secondary">Randomize</button>
+              <button id="useWallpaperBtn" type="button">Use wallpaper</button>
+            </div>
+          </div>
+        </details>
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="format">Canvas</label>
+            <select id="format">
+              <option value="landscape">16:9 landscape</option>
+              <option value="square">1:1 square</option>
+              <option value="vertical">9:16 vertical</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="tone">Style</label>
+            <select id="tone">
+              <option value="classic">black card</option>
+              <option value="caption">image caption</option>
+              <option value="washed">washed photo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="tintStrength">Tint</label>
+          <div class="range-row">
+            <input id="tintStrength" type="range" min="0" max="100" value="72">
+            <span id="tintStrengthValue">72%</span>
+          </div>
+        </div>
+
+        <details class="effects-panel" aria-label="Overlay and effect settings">
+          <summary class="panel-title">
+            <span>Overlays & effects</span>
+            <span class="summary-hint">Open</span>
+          </summary>
+          <div class="panel-body">
+            <div class="effect-grid">
+              <label><input class="effect-toggle" type="checkbox" value="noise"> TV noise</label>
+              <label><input class="effect-toggle" type="checkbox" value="vhs"> VHS static</label>
+              <label><input class="effect-toggle" type="checkbox" value="dvd"> DVD skip</label>
+              <label><input class="effect-toggle" type="checkbox" value="warp"> Warping</label>
+              <label><input class="effect-toggle" type="checkbox" value="fisheye"> Fish eye</label>
+              <label><input class="effect-toggle" type="checkbox" value="scanlines"> Scanlines</label>
+              <label><input class="effect-toggle" type="checkbox" value="chromatic"> Color bleed</label>
+              <label><input class="effect-toggle" type="checkbox" value="flicker"> Flicker</label>
+              <label><input class="effect-toggle" type="checkbox" value="letterbox"> Letterbox</label>
+            </div>
+            <div class="field">
+              <label for="effectIntensity">Effect intensity</label>
+              <div class="range-row">
+                <input id="effectIntensity" type="range" min="0" max="100" value="45">
+                <span id="effectIntensityValue">45%</span>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <div class="actions">
+          <button id="previewBtn" type="button" class="secondary">Preview</button>
+          <button id="renderBtn" type="button">Generate video</button>
+          <button id="queueBumpBtn" type="button" class="secondary">Add to queue</button>
+          <button id="playNextBumpBtn" type="button" class="secondary">Play next in queue</button>
+          <a id="downloadLink" class="download" href="#" download="bump.webm" aria-disabled="true">Download</a>
+        </div>
+
+        <p class="fine-print">Exports as WebM in browsers with MediaRecorder support. Uploaded files stay in this browser tab.</p>
+      </section>
+
+      <section class="preview-shell" aria-label="Preview and output">
+        <div class="stage">
+          <canvas id="stage" width="1280" height="720"></canvas>
+        </div>
+        <div class="meter">
+          <span id="timeLabel">0.0s</span>
+          <div class="bar" aria-hidden="true"><span id="progress"></span></div>
+          <span id="durationLabel">5.0s</span>
+        </div>
+        <video id="outputVideo" class="hide" controls playsinline></video>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+

@@ -341,6 +341,521 @@
       "duration": 144,
       "youtubeId": "B4_HENO5M5E",
       "url": "https://www.youtube.com/watch?v=B4_HENO5M5E"
+    },
+    {
+      "id": "eeefcfdd-48c8-473a-8722-68f870894ca7",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Baman Piderman - Frow Da Party (Ep #12)",
+            "time": "7:46 AM"
+          },
+          {
+            "title": "Baman Piderman - Dis is Season 2 Opener",
+            "time": "7:49 AM"
+          },
+          {
+            "title": "Baman Piderman - Fimd Da Jobs (Ep #13)",
+            "time": "7:51 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "bottom",
+        "tone": "caption",
+        "seed": 92261,
+        "wallpaper": {
+          "shapes": "mixed",
+          "scheme": "pool",
+          "spacing": 87,
+          "seed": 92261
+        },
+        "effects": [
+          "scanlines"
+        ],
+        "effectIntensity": 61,
+        "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
+        "audioStart": 6.6
+      },
+      "generatedAt": 1778325998377
+    },
+    {
+      "id": "5a57d629-fd64-41b3-b873-6de9fedd8451",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Baman Piderman - Dis is Season 2 Opener",
+            "time": "7:49 AM"
+          },
+          {
+            "title": "Baman Piderman - Fimd Da Jobs (Ep #13)",
+            "time": "7:51 AM"
+          },
+          {
+            "title": "Baman Piderman - Revealations (Ep #14)",
+            "time": "7:55 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "top",
+        "tone": "caption",
+        "seed": 10951,
+        "wallpaper": {
+          "shapes": "stripes",
+          "scheme": "broadcast",
+          "spacing": 64,
+          "seed": 10951
+        },
+        "effects": [
+          "warp",
+          "flicker"
+        ],
+        "effectIntensity": 56,
+        "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
+        "audioStart": 20.7
+      },
+      "generatedAt": 1778325998377
+    },
+    {
+      "id": "bea86a8d-92dc-4989-ae3d-8f03a073639c",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Baman Piderman - Revealations (Ep #14)",
+            "time": "7:55 AM"
+          },
+          {
+            "title": "Baman Piderman - Revealations Part 2 (Ep #15)",
+            "time": "7:58 AM"
+          },
+          {
+            "title": "Baman Piderman - Play Da Song (Ep #16)",
+            "time": "8:02 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "bottom",
+        "tone": "washed",
+        "seed": 19963,
+        "wallpaper": {
+          "shapes": "starburst",
+          "scheme": "ruby",
+          "spacing": 122,
+          "seed": 19963
+        },
+        "effects": [],
+        "effectIntensity": 54,
+        "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
+        "audioStart": 62.9
+      },
+      "generatedAt": 1778325998377
+    },
+    {
+      "id": "9aa92ab8-5c51-4534-bfe9-157d9c7ed454",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Baman Piderman - Play Da Song (Ep #16)",
+            "time": "8:02 AM"
+          },
+          {
+            "title": "Baman Piderman - In Da Basement (#17)",
+            "time": "8:07 AM"
+          },
+          {
+            "title": "Baman Piderman - Weirdy Feeling (Ep #18)",
+            "time": "8:09 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "top",
+        "tone": "caption",
+        "seed": 55260,
+        "wallpaper": {
+          "shapes": "memphis",
+          "scheme": "arcade",
+          "spacing": 37,
+          "seed": 55260
+        },
+        "effects": [
+          "noise"
+        ],
+        "effectIntensity": 38,
+        "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
+        "audioStart": 83.6
+      },
+      "generatedAt": 1778325998378
+    },
+    {
+      "id": "936fd2c4-6697-4d77-8b31-dc811c1aec94",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Baman Piderman - In Da Basement (#17)",
+            "time": "8:07 AM"
+          },
+          {
+            "title": "Baman Piderman - Weirdy Feeling (Ep #18)",
+            "time": "8:09 AM"
+          },
+          {
+            "title": "Baman Piderman - Squib Week (Ep 19)",
+            "time": "8:13 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "top",
+        "tone": "caption",
+        "seed": 57943,
+        "wallpaper": {
+          "shapes": "starburst",
+          "scheme": "ruby",
+          "spacing": 136,
+          "seed": 57943
+        },
+        "effects": [
+          "fisheye",
+          "letterbox"
+        ],
+        "effectIntensity": 73,
+        "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
+        "audioStart": 52.8
+      },
+      "generatedAt": 1778325998378
+    },
+    {
+      "id": "26bd5d84-2726-4c9b-b4df-8472caa2344c",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Baman Piderman - Squib Week (Ep 19)",
+            "time": "8:13 AM"
+          },
+          {
+            "title": "Baman Piderman - Drawing Song (Ep 20)",
+            "time": "8:17 AM"
+          },
+          {
+            "title": "Baman Piderman - Ghost Night (Ep #21)",
+            "time": "8:19 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "top",
+        "tone": "classic",
+        "seed": 19255,
+        "wallpaper": {
+          "shapes": "terrazzo",
+          "scheme": "mono",
+          "spacing": 133,
+          "seed": 19255
+        },
+        "effects": [],
+        "effectIntensity": 61,
+        "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
+        "audioStart": 9.6
+      },
+      "generatedAt": 1778325998378
+    },
+    {
+      "id": "2dc06185-2710-4bd8-a7d5-54ed8f330353",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Baman Piderman - Drawing Song (Ep 20)",
+            "time": "8:17 AM"
+          },
+          {
+            "title": "Baman Piderman - Ghost Night (Ep #21)",
+            "time": "8:19 AM"
+          },
+          {
+            "title": "Baman Piderman - Drink Da Tee (Ep 22)",
+            "time": "8:26 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "middle",
+        "tone": "caption",
+        "seed": 50769,
+        "wallpaper": {
+          "shapes": "circles",
+          "scheme": "pool",
+          "spacing": 46,
+          "seed": 50769
+        },
+        "effects": [],
+        "effectIntensity": 27,
+        "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
+        "audioStart": 124.5
+      },
+      "generatedAt": 1778325998379
+    },
+    {
+      "id": "ba0d6805-01c9-4d8d-a3fa-2d7b23787f7e",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Baman Piderman - Drink Da Tee (Ep 22)",
+            "time": "8:26 AM"
+          },
+          {
+            "title": "Baman Piderman - Play Da Concert (Ep #23)",
+            "time": "8:28 AM"
+          },
+          {
+            "title": "Baman Piderman Season 3 Opener",
+            "time": "8:34 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "middle",
+        "tone": "caption",
+        "seed": 13664,
+        "wallpaper": {
+          "shapes": "lines",
+          "scheme": "ruby",
+          "spacing": 117,
+          "seed": 13664
+        },
+        "effects": [
+          "fisheye",
+          "warp"
+        ],
+        "effectIntensity": 29,
+        "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
+        "audioStart": 23
+      },
+      "generatedAt": 1778325998379
+    },
+    {
+      "id": "914bc8f7-4a08-48be-b763-7e702b1d5db7",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Baman Piderman Season 3 Opener",
+            "time": "8:34 AM"
+          },
+          {
+            "title": "Baman Piderman - Happy Winter Friends Mini-Sode",
+            "time": "8:37 AM"
+          },
+          {
+            "title": "Baman Piderman - Paint Da House (Ep #24)",
+            "time": "8:39 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "top",
+        "tone": "washed",
+        "seed": 64347,
+        "wallpaper": {
+          "shapes": "diamonds",
+          "scheme": "mono",
+          "spacing": 163,
+          "seed": 64347
+        },
+        "effects": [],
+        "effectIntensity": 51,
+        "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
+        "audioStart": 108.3
+      },
+      "generatedAt": 1778325998379
+    },
+    {
+      "id": "2fcb171d-ab22-44e5-bfd0-83ac8faf222a",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Baman Piderman - Paint Da House (Ep #24)",
+            "time": "8:39 AM"
+          },
+          {
+            "title": "Baman Piderman - We Hab Da Problem (Ep #25)",
+            "time": "8:45 AM"
+          },
+          {
+            "title": "Baman Piderman - Ghost Night 2 (Ep #26)",
+            "time": "8:51 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "middle",
+        "tone": "classic",
+        "seed": 12303,
+        "wallpaper": {
+          "shapes": "polka",
+          "scheme": "citrus",
+          "spacing": 146,
+          "seed": 12303
+        },
+        "effects": [
+          "warp",
+          "noise"
+        ],
+        "effectIntensity": 53,
+        "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
+        "audioStart": 67.7
+      },
+      "generatedAt": 1778325998380
+    },
+    {
+      "id": "dcd668ec-83e7-4277-95be-3aa832a1c495",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Baman Piderman - We Hab Da Problem (Ep #25)",
+            "time": "8:45 AM"
+          },
+          {
+            "title": "Baman Piderman - Ghost Night 2 (Ep #26)",
+            "time": "8:51 AM"
+          },
+          {
+            "title": "Baman Piderman - Noir Detective",
+            "time": "9:06 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "top",
+        "tone": "caption",
+        "seed": 28355,
+        "wallpaper": {
+          "shapes": "terrazzo",
+          "scheme": "pool",
+          "spacing": 138,
+          "seed": 28355
+        },
+        "effects": [
+          "dvd"
+        ],
+        "effectIntensity": 28,
+        "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
+        "audioStart": 108.8
+      },
+      "generatedAt": 1778325998381
+    },
+    {
+      "id": "cbd06345-f066-4773-ad70-48acb97f27e7",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Baman Piderman - Ghost Night 2 (Ep #26)",
+            "time": "8:51 AM"
+          },
+          {
+            "title": "Baman Piderman - Noir Detective",
+            "time": "9:06 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "middle",
+        "tone": "classic",
+        "seed": 80407,
+        "wallpaper": {
+          "shapes": "diamonds",
+          "scheme": "citrus",
+          "spacing": 100,
+          "seed": 80407
+        },
+        "effects": [
+          "chromatic"
+        ],
+        "effectIntensity": 74,
+        "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
+        "audioStart": 84.5
+      },
+      "generatedAt": 1778325998381
+    },
+    {
+      "id": "02e5393d-3b0d-4057-85b1-8441fd616d59",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Baman Piderman - Noir Detective",
+            "time": "9:06 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "bottom",
+        "tone": "washed",
+        "seed": 63796,
+        "wallpaper": {
+          "shapes": "mixed",
+          "scheme": "mono",
+          "spacing": 51,
+          "seed": 63796
+        },
+        "effects": [],
+        "effectIntensity": 27,
+        "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
+        "audioStart": 115.4
+      },
+      "generatedAt": 1778325998382
     }
   ],
   "sourceFolders": [
@@ -356,25 +871,315 @@
     }
   ],
   "schedule": [],
-  "liveQueue": [],
+  "liveQueue": [
+    {
+      "id": "0373fb80-e706-46f5-95b3-63c05cf27fe0",
+      "sourceId": "a86ba37e-4bc4-440a-b191-b2c2ac16fb0e",
+      "title": "",
+      "startAt": 1778326812218,
+      "duration": 139,
+      "queuedAt": 1778325998245
+    },
+    {
+      "id": "ecb41dad-cd18-462a-97ae-2634b9bdda97",
+      "sourceId": "d6f0d3b7-8e1e-444b-bf94-14c4b6d8970e",
+      "title": "",
+      "startAt": 1778326951218,
+      "duration": 197,
+      "queuedAt": 1778325998250
+    },
+    {
+      "id": "bf197641-ea7f-4ef1-830e-ba5abaaa2c4b",
+      "sourceId": "eeefcfdd-48c8-473a-8722-68f870894ca7",
+      "title": "Schedule bump",
+      "startAt": 1778327148218,
+      "duration": 20,
+      "queuedAt": 1778325998374,
+      "autoBump": true
+    },
+    {
+      "id": "77168734-50fa-48a6-a67e-d866fa431726",
+      "sourceId": "7c514973-4056-4718-a695-4891c229aadf",
+      "title": "",
+      "startAt": 1778327168218,
+      "duration": 193,
+      "queuedAt": 1778325998253
+    },
+    {
+      "id": "38c81bb5-2425-48a6-aca3-73d4846a9c88",
+      "sourceId": "5a57d629-fd64-41b3-b873-6de9fedd8451",
+      "title": "Schedule bump",
+      "startAt": 1778327361218,
+      "duration": 20,
+      "queuedAt": 1778325998374,
+      "autoBump": true
+    },
+    {
+      "id": "8cb4d350-08ba-4aae-9514-bb1ad9718e4a",
+      "sourceId": "9bb38f26-69a0-46ba-8e9e-256a4e57fadc",
+      "title": "",
+      "startAt": 1778327381218,
+      "duration": 104,
+      "queuedAt": 1778325998257
+    },
+    {
+      "id": "9c88eea6-5b4a-47d0-abbb-446edd73edce",
+      "sourceId": "6873ca9c-ad5b-4cd6-9230-ca87ff016607",
+      "title": "",
+      "startAt": 1778327485218,
+      "duration": 238,
+      "queuedAt": 1778325998263
+    },
+    {
+      "id": "1224124d-fbd2-472c-818b-71ce1e2734c2",
+      "sourceId": "bea86a8d-92dc-4989-ae3d-8f03a073639c",
+      "title": "Schedule bump",
+      "startAt": 1778327723218,
+      "duration": 20,
+      "queuedAt": 1778325998374,
+      "autoBump": true
+    },
+    {
+      "id": "ea7ec5a4-75d3-4974-aafd-c0287fb9af17",
+      "sourceId": "1885b5ab-ed60-474b-bdd6-4fbcb1dbbe78",
+      "title": "",
+      "startAt": 1778327743218,
+      "duration": 166,
+      "queuedAt": 1778325998269
+    },
+    {
+      "id": "f8d13b67-e7c3-4ef9-a09b-5cd8cfc35756",
+      "sourceId": "c30f7c2f-0cce-4316-bad6-66d3269cc94d",
+      "title": "",
+      "startAt": 1778327909218,
+      "duration": 236,
+      "queuedAt": 1778325998274
+    },
+    {
+      "id": "6f5d850c-e345-4588-8f70-735f5981dbf1",
+      "sourceId": "9aa92ab8-5c51-4534-bfe9-157d9c7ed454",
+      "title": "Schedule bump",
+      "startAt": 1778328145218,
+      "duration": 20,
+      "queuedAt": 1778325998374,
+      "autoBump": true
+    },
+    {
+      "id": "a65b4d27-95d8-445e-bf17-7cbeffd3496d",
+      "sourceId": "cd3577bc-5198-4b29-978c-b9bec1b5af0b",
+      "title": "",
+      "startAt": 1778328165218,
+      "duration": 283,
+      "queuedAt": 1778325998279
+    },
+    {
+      "id": "f599fcec-3428-4a09-8da1-e4b9bda8a15c",
+      "sourceId": "936fd2c4-6697-4d77-8b31-dc811c1aec94",
+      "title": "Schedule bump",
+      "startAt": 1778328448218,
+      "duration": 20,
+      "queuedAt": 1778325998374,
+      "autoBump": true
+    },
+    {
+      "id": "90ed6443-53b7-4b5c-8694-f2d415f69f11",
+      "sourceId": "d7e21c89-47e2-4e89-b7d5-544679422462",
+      "title": "",
+      "startAt": 1778328468218,
+      "duration": 111,
+      "queuedAt": 1778325998286
+    },
+    {
+      "id": "3b6aa10b-f633-4c93-bb39-35e746175351",
+      "sourceId": "b2c172e6-5a36-48ad-a186-34e7e577d450",
+      "title": "",
+      "startAt": 1778328579218,
+      "duration": 218,
+      "queuedAt": 1778325998294
+    },
+    {
+      "id": "0cdd3569-bc6d-4ad4-89d3-d70e0429f42d",
+      "sourceId": "26bd5d84-2726-4c9b-b4df-8472caa2344c",
+      "title": "Schedule bump",
+      "startAt": 1778328797218,
+      "duration": 20,
+      "queuedAt": 1778325998374,
+      "autoBump": true
+    },
+    {
+      "id": "3e9761a0-ef26-4acb-825c-9bf153d14ab4",
+      "sourceId": "b638e694-2cca-4ad8-93e3-88963b481eea",
+      "title": "",
+      "startAt": 1778328817218,
+      "duration": 194,
+      "queuedAt": 1778325998302
+    },
+    {
+      "id": "16ff7dec-0f45-496f-9522-36b6b1889cdb",
+      "sourceId": "2dc06185-2710-4bd8-a7d5-54ed8f330353",
+      "title": "Schedule bump",
+      "startAt": 1778329011218,
+      "duration": 20,
+      "queuedAt": 1778325998374,
+      "autoBump": true
+    },
+    {
+      "id": "f4a5bd73-33ea-447f-b6a7-6cea283fb3e8",
+      "sourceId": "45669915-fe9b-4a76-87d9-3c41c4679134",
+      "title": "",
+      "startAt": 1778329031218,
+      "duration": 112,
+      "queuedAt": 1778325998309
+    },
+    {
+      "id": "4de1abf1-08ec-4a39-80f0-e7dc213c0dce",
+      "sourceId": "581025a4-eb90-443f-bb94-2d2f4be701f8",
+      "title": "",
+      "startAt": 1778329143218,
+      "duration": 420,
+      "queuedAt": 1778325998314
+    },
+    {
+      "id": "d68b03a5-78f1-431e-8b74-d2482ea19957",
+      "sourceId": "ba0d6805-01c9-4d8d-a3fa-2d7b23787f7e",
+      "title": "Schedule bump",
+      "startAt": 1778329563218,
+      "duration": 20,
+      "queuedAt": 1778325998374,
+      "autoBump": true
+    },
+    {
+      "id": "fc9127e7-2974-4c35-b733-03981a095c22",
+      "sourceId": "30fe56ef-e0f6-4beb-ab2c-fb3e4006efd3",
+      "title": "",
+      "startAt": 1778329583218,
+      "duration": 142,
+      "queuedAt": 1778325998321
+    },
+    {
+      "id": "162d1d14-c48f-49db-aea9-43ec44cf33ed",
+      "sourceId": "98304928-273c-4b1c-be10-84ac3a4adf4b",
+      "title": "",
+      "startAt": 1778329725218,
+      "duration": 349,
+      "queuedAt": 1778325998329
+    },
+    {
+      "id": "714ab0f2-3b5b-4fda-8c62-16307f57ea20",
+      "sourceId": "914bc8f7-4a08-48be-b763-7e702b1d5db7",
+      "title": "Schedule bump",
+      "startAt": 1778330074218,
+      "duration": 20,
+      "queuedAt": 1778325998374,
+      "autoBump": true
+    },
+    {
+      "id": "7d19f2d6-dd8a-436b-97f5-0389378a8cca",
+      "sourceId": "4dcf24e3-6dbd-452b-b953-b81d8680ca57",
+      "title": "",
+      "startAt": 1778330094218,
+      "duration": 171,
+      "queuedAt": 1778325998336
+    },
+    {
+      "id": "752aa7ca-c45d-4767-8770-6bbbdbc7b581",
+      "sourceId": "5e6e38b9-f2e3-4715-9572-0a71b0c0f935",
+      "title": "",
+      "startAt": 1778330265218,
+      "duration": 72,
+      "queuedAt": 1778325998344
+    },
+    {
+      "id": "99cdb491-a716-4890-bb2b-d85eb356917d",
+      "sourceId": "2fcb171d-ab22-44e5-bfd0-83ac8faf222a",
+      "title": "Schedule bump",
+      "startAt": 1778330337218,
+      "duration": 20,
+      "queuedAt": 1778325998374,
+      "autoBump": true
+    },
+    {
+      "id": "3fa112a1-3244-4a3b-a7d8-bb7d7df44b1c",
+      "sourceId": "79851dce-b1ec-419f-8e5c-2f8282199039",
+      "title": "",
+      "startAt": 1778330357218,
+      "duration": 381,
+      "queuedAt": 1778325998351
+    },
+    {
+      "id": "350024c7-7fe1-4a68-8576-2f6494418527",
+      "sourceId": "dcd668ec-83e7-4277-95be-3aa832a1c495",
+      "title": "Schedule bump",
+      "startAt": 1778330738218,
+      "duration": 20,
+      "queuedAt": 1778325998374,
+      "autoBump": true
+    },
+    {
+      "id": "3b469633-753d-41c4-8499-6715f74da2cd",
+      "sourceId": "a66ceca1-65b5-433c-81c6-1da2520bd603",
+      "title": "",
+      "startAt": 1778330758218,
+      "duration": 302,
+      "queuedAt": 1778325998358
+    },
+    {
+      "id": "512c38ad-3cdc-4dd7-9f03-86f4c9a78925",
+      "sourceId": "cbd06345-f066-4773-ad70-48acb97f27e7",
+      "title": "Schedule bump",
+      "startAt": 1778331060218,
+      "duration": 20,
+      "queuedAt": 1778325998374,
+      "autoBump": true
+    },
+    {
+      "id": "50a6393e-5b11-41e0-ae4e-eff6ef866372",
+      "sourceId": "59865b51-6d08-4cad-b214-f8b44a34040f",
+      "title": "",
+      "startAt": 1778331080218,
+      "duration": 873,
+      "queuedAt": 1778325998366
+    },
+    {
+      "id": "0795af05-ea88-40cd-a31b-9e8ce1586d3f",
+      "sourceId": "02e5393d-3b0d-4057-85b1-8441fd616d59",
+      "title": "Schedule bump",
+      "startAt": 1778331953218,
+      "duration": 20,
+      "queuedAt": 1778325998374,
+      "autoBump": true
+    },
+    {
+      "id": "d8791e2b-2fc5-42d9-b637-3560316ed3fd",
+      "sourceId": "8f9b6c8f-c8cf-4790-9abe-1a381a5d60ed",
+      "title": "",
+      "startAt": 1778331973218,
+      "duration": 144,
+      "queuedAt": 1778325998374
+    }
+  ],
   "broadcastMode": "queue",
   "lastAutoBumpAt": 0,
   "bumpMusic": [
     {
       "name": "Bag Walk [CL]",
-      "path": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3"
+      "path": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
+      "duration": 144
     },
     {
       "name": "Sambattle [CL]",
-      "path": "/media/bump-music/Sambattle%20%5BCL%5D.mp3"
+      "path": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
+      "duration": 152.7
     },
     {
       "name": "Special Sauce [CL]",
-      "path": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3"
+      "path": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
+      "duration": 168.7
     },
     {
       "name": "Upriver [CL]",
-      "path": "/media/bump-music/Upriver%20%5BCL%5D.mp3"
+      "path": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
+      "duration": 153.6
     }
   ],
   "users": [],

@@ -7,22 +7,29 @@ import crypto from "node:crypto";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
-const DATA_DIR = path.join(__dirname, "data");
-const MEDIA_DIR = path.join(__dirname, "media");
+const DATA_DIR = process.env.DOINK_DATA_DIR || path.join(__dirname, "data");
+const MEDIA_DIR = process.env.DOINK_MEDIA_DIR || path.join(__dirname, "media");
 const BUMP_MUSIC_DIR = path.join(MEDIA_DIR, "bump-music");
 const PUBLIC_DIR = path.join(__dirname, "public");
-const BUMP_GENERATOR_DIR = path.join(__dirname, "..", "BumpGenerator");
+const VENDORED_BUMP_GENERATOR_DIR = path.join(__dirname, "vendor", "BumpGenerator");
+const BUMP_GENERATOR_DIR = process.env.BUMP_GENERATOR_DIR
+  || (existsSync(VENDORED_BUMP_GENERATOR_DIR) ? VENDORED_BUMP_GENERATOR_DIR : path.join(__dirname, "..", "BumpGenerator"));
 const STATE_PATH = path.join(DATA_DIR, "state.json");
 const AUTO_BUMP_INTERVAL_MS = 1000 * 60 * 3;
-const AUTO_BUMP_DURATION = 10;
+const AUTO_BUMP_DURATION = 20;
 
 const ADMIN_USER = process.env.ADMIN_USER || "DoinkWizard";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ChipTanaka12!@";
+const ADMIN_ACCOUNTS = [
+  { username: ADMIN_USER, password: ADMIN_PASSWORD },
+  { username: "ChillNeil", password: "ChillyBilly12!@" }
+];
 const SESSION_TTL_MS = 1000 * 60 * 60 * 12;
 
 const sessions = new Map();
 const sseClients = new Set();
 const chatClients = new Set();
+let timelineSaveNeeded = false;
 let state = {
   sources: [],
   sourceFolders: [],
@@ -170,7 +177,9 @@ function validateRegistration(body) {
   if (!/^[a-zA-Z0-9_]{3,24}$/.test(username)) {
     throw new Error("Usernames must be 3-24 characters and use letters, numbers, or underscores.");
   }
-  if (username.toLowerCase() === ADMIN_USER.toLowerCase()) throw new Error("That username is reserved.");
+  if (ADMIN_ACCOUNTS.some((admin) => username.toLowerCase() === admin.username.toLowerCase())) {
+    throw new Error("That username is reserved.");
+  }
   if (password.length < 8) throw new Error("Passwords must be at least 8 characters.");
   if (password !== confirmation) throw new Error("Passwords do not match.");
   if (state.users.some((user) => user.email === email)) throw new Error("That email is already registered.");
@@ -344,6 +353,7 @@ async function getYouTubeInfo(input) {
 }
 
 function publicProgram() {
+  maintainBroadcastTimeline();
   const now = Date.now();
   const entries = activeBroadcastEntries()
     .map((entry) => ({
@@ -400,7 +410,7 @@ function upcomingNormalQueueItems(startAt, count = 3) {
       ...entry,
       source: state.sources.find((source) => source.id === entry.sourceId)
     }))
-    .filter((entry) => entry.source && !isBumpSource(entry.source))
+    .filter((entry) => entry.source && (!isBumpSource(entry.source) || !entry.autoBump))
     .sort((a, b) => a.startAt - b.startAt)
     .slice(0, count);
 }
@@ -472,6 +482,7 @@ function createAutoBumpSource(afterEntryEnd) {
       }))
     : [{ title: "More DoinkTV shortly", time: formatEstTime(afterEntryEnd) }];
   const visuals = randomAutoBumpVisuals();
+  const audio = randomBumpMusic(AUTO_BUMP_DURATION);
 
   const source = {
     id: crypto.randomUUID(),
@@ -489,7 +500,50 @@ function createAutoBumpSource(afterEntryEnd) {
       wallpaper: visuals.wallpaper,
       effects: visuals.effects,
       effectIntensity: visuals.effectIntensity,
-      audio: randomBumpMusicPath()
+      audio: audio.path,
+      audioStart: audio.start
+    },
+    generatedAt: Date.now()
+  };
+  state.sources.push(source);
+  return source;
+}
+
+function createManualBumpSource(body = {}) {
+  const duration = Number(body.duration || AUTO_BUMP_DURATION);
+  if (!Number.isFinite(duration) || duration < 3 || duration > 120) {
+    throw new Error("Bump duration must be between 3 and 120 seconds.");
+  }
+
+  const lines = Array.isArray(body.lines)
+    ? body.lines
+        .map((line) => (typeof line === "string" ? { time: "", title: line } : { time: String(line.time || ""), title: String(line.title || "") }))
+        .filter((line) => line.title.trim())
+        .slice(0, 8)
+    : [];
+
+  const audio = body.audio
+    ? { path: String(body.audio), start: Math.max(0, Number(body.audioStart) || 0) }
+    : randomBumpMusic(Math.round(duration));
+
+  const source = {
+    id: crypto.randomUUID(),
+    type: "bump",
+    title: String(body.title || "Manual bump").trim() || "Manual bump",
+    folderId: "",
+    duration: Math.round(duration),
+    bump: {
+      heading: String(body.heading || "bump").trim() || "bump",
+      lines: lines.length ? lines : [{ time: "", title: "DoinkTV continues shortly" }],
+      alignment: ["left", "center", "right"].includes(body.alignment) ? body.alignment : "left",
+      placement: ["top", "middle", "bottom"].includes(body.placement) ? body.placement : "middle",
+      tone: ["classic", "caption", "washed"].includes(body.tone) ? body.tone : "classic",
+      seed: Number(body.wallpaper?.seed || body.seed || Math.floor(Math.random() * 100000)),
+      wallpaper: body.wallpaper || randomAutoBumpVisuals().wallpaper,
+      effects: Array.isArray(body.effects) ? body.effects.slice(0, 2) : [],
+      effectIntensity: Math.max(0, Math.min(100, Number(body.effectIntensity) || 0)),
+      audio: audio.path,
+      audioStart: audio.start
     },
     generatedAt: Date.now()
   };
@@ -501,16 +555,114 @@ function randomBumpMusicPath() {
   return state.bumpMusic?.length ? state.bumpMusic[Math.floor(Math.random() * state.bumpMusic.length)].path : "";
 }
 
+function randomBumpMusic(requiredSeconds = AUTO_BUMP_DURATION) {
+  const music = state.bumpMusic?.length ? state.bumpMusic[Math.floor(Math.random() * state.bumpMusic.length)] : null;
+  if (!music) return { path: "", start: 0 };
+  return randomBumpMusicClip(music, requiredSeconds);
+}
+
+function randomBumpMusicClip(music, requiredSeconds = AUTO_BUMP_DURATION) {
+  const duration = Number(music.duration || 0);
+  const safeRequiredSeconds = Math.max(0, Number(requiredSeconds) || 0);
+  const maxStart = Math.max(0, duration - safeRequiredSeconds);
+  return {
+    path: music.path,
+    start: maxStart > 0 ? Math.round(Math.random() * maxStart * 10) / 10 : 0
+  };
+}
+
+function ensureAutoBumpAudioStarts() {
+  let changed = false;
+  const autoBumpSourceIds = new Set(state.liveQueue.filter((entry) => entry.autoBump).map((entry) => entry.sourceId));
+  for (const source of state.sources) {
+    if (!autoBumpSourceIds.has(source.id) || !source.bump) continue;
+    if (Number.isFinite(Number(source.bump.audioStart))) continue;
+    const music = state.bumpMusic.find((item) => item.path === source.bump.audio) || state.bumpMusic[0];
+    const clip = music ? randomBumpMusicClip(music, source.duration || AUTO_BUMP_DURATION) : { path: source.bump.audio || "", start: 0 };
+    source.bump.audio = clip.path;
+    source.bump.audioStart = clip.start;
+    changed = true;
+  }
+  return changed;
+}
+
 async function refreshBumpMusic() {
   await mkdir(BUMP_MUSIC_DIR, { recursive: true });
   const files = await readdir(BUMP_MUSIC_DIR, { withFileTypes: true });
-  state.bumpMusic = files
+  const musicFiles = files
     .filter((file) => file.isFile() && /\.(mp3|wav|ogg|m4a)$/i.test(file.name))
-    .map((file) => ({
-      name: file.name.replace(/\.[^/.]+$/, ""),
-      path: `/media/bump-music/${encodeURIComponent(file.name).replace(/%2F/g, "/")}`
-    }))
+    .map((file) => file.name);
+  state.bumpMusic = (await Promise.all(musicFiles.map(async (fileName) => ({
+    name: fileName.replace(/\.[^/.]+$/, ""),
+    path: `/media/bump-music/${encodeURIComponent(fileName).replace(/%2F/g, "/")}`,
+    duration: await readAudioDuration(path.join(BUMP_MUSIC_DIR, fileName))
+  }))))
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function readAudioDuration(filePath) {
+  if (/\.mp3$/i.test(filePath)) return readMp3Duration(filePath);
+  return 0;
+}
+
+async function readMp3Duration(filePath) {
+  const buffer = await readFile(filePath);
+  let offset = 0;
+  if (buffer.toString("latin1", 0, 3) === "ID3" && buffer.length >= 10) {
+    offset = 10 + ((buffer[6] & 0x7f) << 21) + ((buffer[7] & 0x7f) << 14) + ((buffer[8] & 0x7f) << 7) + (buffer[9] & 0x7f);
+  }
+
+  const bitrateTable = {
+    V1L1: [0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448],
+    V1L2: [0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384],
+    V1L3: [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320],
+    V2L1: [0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256],
+    V2L2: [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160],
+    V2L3: [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160]
+  };
+  const sampleRateTable = {
+    3: [44100, 48000, 32000],
+    2: [22050, 24000, 16000],
+    0: [11025, 12000, 8000]
+  };
+
+  let duration = 0;
+  let frames = 0;
+  while (offset + 4 <= buffer.length) {
+    if (buffer[offset] !== 0xff || (buffer[offset + 1] & 0xe0) !== 0xe0) {
+      offset += 1;
+      continue;
+    }
+
+    const versionBits = (buffer[offset + 1] >> 3) & 0x03;
+    const layerBits = (buffer[offset + 1] >> 1) & 0x03;
+    const bitrateIndex = (buffer[offset + 2] >> 4) & 0x0f;
+    const sampleRateIndex = (buffer[offset + 2] >> 2) & 0x03;
+    const padding = (buffer[offset + 2] >> 1) & 0x01;
+    if (versionBits === 1 || layerBits === 0 || bitrateIndex === 0 || bitrateIndex === 15 || sampleRateIndex === 3) {
+      offset += 1;
+      continue;
+    }
+
+    const versionKey = versionBits === 3 ? "V1" : "V2";
+    const layerKey = `L${4 - layerBits}`;
+    const bitrate = bitrateTable[`${versionKey}${layerKey}`]?.[bitrateIndex] * 1000;
+    const sampleRate = sampleRateTable[versionBits]?.[sampleRateIndex];
+    if (!bitrate || !sampleRate) {
+      offset += 1;
+      continue;
+    }
+
+    const samples = layerBits === 3 ? 384 : versionBits === 3 || layerBits === 2 ? 1152 : 576;
+    const frameLength = layerBits === 3
+      ? Math.floor((12 * bitrate) / sampleRate + padding) * 4
+      : Math.floor(((versionBits === 3 ? 144 : 72) * bitrate) / sampleRate + padding);
+    if (!frameLength || offset + frameLength > buffer.length + 1) break;
+    duration += samples / sampleRate;
+    frames += 1;
+    offset += frameLength;
+  }
+  return frames ? Math.round(duration * 10) / 10 : 0;
 }
 
 function rebuildLiveQueueTimings({ insertAutoBumps = true } = {}) {
@@ -531,7 +683,7 @@ function rebuildLiveQueueTimings({ insertAutoBumps = true } = {}) {
   const pending = queue.filter((entry) => !current || entry.id !== current.id).filter((entry) => entry.startAt + entry.duration * 1000 > now);
 
   for (const item of pending) {
-    if (isBumpSource(item.source)) continue;
+    if (isBumpSource(item.source) && item.autoBump) continue;
     const normalEntry = {
       id: item.id,
       sourceId: item.sourceId,
@@ -542,6 +694,7 @@ function rebuildLiveQueueTimings({ insertAutoBumps = true } = {}) {
     };
     rebuilt.push(normalEntry);
     cursor += item.duration * 1000;
+    if (isBumpSource(item.source)) continue;
     normalSecondsSinceBump += item.duration;
 
     if (insertAutoBumps && normalSecondsSinceBump >= AUTO_BUMP_INTERVAL_MS / 1000) {
@@ -583,6 +736,47 @@ function broadcastProgram() {
   for (const client of sseClients) {
     client.write(payload);
   }
+}
+
+function maintainBroadcastTimeline() {
+  if (state.broadcastMode !== "queue") return false;
+  const changed = maintainLiveQueueContinuity();
+  if (changed) timelineSaveNeeded = true;
+  return changed;
+}
+
+function maintainLiveQueueContinuity() {
+  const now = Date.now();
+  const queue = state.liveQueue
+    .map((entry) => ({
+      ...entry,
+      source: state.sources.find((source) => source.id === entry.sourceId)
+    }))
+    .filter((entry) => entry.source && entry.startAt + entry.duration * 1000 > now)
+    .sort((a, b) => a.startAt - b.startAt);
+
+  const bumpSourceCount = state.sources.filter((source) => isBumpSource(source)).length;
+  let changed = queue.length !== state.liveQueue.length;
+  const current = queue.find((entry) => now >= entry.startAt && now < entry.startAt + entry.duration * 1000);
+
+  if (!current && queue.length && queue[0].startAt > now) {
+    const firstStart = queue[0].startAt;
+    for (const entry of queue) {
+      entry.startAt = now + (entry.startAt - firstStart);
+    }
+    changed = true;
+  }
+
+  state.liveQueue = queue.map(stripQueueSource);
+  pruneUnusedBumpSources();
+  if (state.sources.filter((source) => isBumpSource(source)).length !== bumpSourceCount) changed = true;
+  return changed;
+}
+
+async function flushTimelineSave() {
+  if (!timelineSaveNeeded) return;
+  timelineSaveNeeded = false;
+  await saveState();
 }
 
 function publicChat() {
@@ -773,6 +967,30 @@ function librarySources(folderId) {
     .sort((a, b) => state.sources.indexOf(a) - state.sources.indexOf(b));
 }
 
+async function reorderLibrarySources(body) {
+  const folderId = normalizeFolderId(body.folderId);
+  const sources = librarySources(folderId);
+  const sourceById = new Map(sources.map((source) => [source.id, source]));
+  const ordered = (Array.isArray(body.ids) ? body.ids : [])
+    .map(String)
+    .filter((id) => sourceById.has(id))
+    .map((id) => sourceById.get(id));
+
+  for (const source of sources) {
+    if (!ordered.some((item) => item.id === source.id)) ordered.push(source);
+  }
+
+  const nextOrder = [...ordered];
+  state.sources = state.sources.map((source) => {
+    if (source.type === "bump" || (source.folderId || "") !== folderId) return source;
+    return nextOrder.shift() || source;
+  });
+
+  await saveState();
+  broadcastProgram();
+  return { ok: true };
+}
+
 async function createScheduleLibrary(body) {
   const sources = librarySources(body.folderId);
   if (!sources.length) throw new Error("That source library is empty.");
@@ -839,11 +1057,52 @@ async function createQueueLibrary(body) {
   const sources = librarySources(body.folderId);
   if (!sources.length) throw new Error("That source library is empty.");
 
+  if (body.immediate) state.liveQueue = [];
   const entries = [];
   for (const source of sources) {
     entries.push(await createQueueEntry({ sourceId: source.id, duration: source.duration }, false));
   }
   return { entries };
+}
+
+async function queueManualBump(body = {}) {
+  const source = createManualBumpSource(body);
+  const now = Date.now();
+  const activeOrFuture = state.liveQueue
+    .filter((item) => item.startAt + item.duration * 1000 > now)
+    .sort((a, b) => a.startAt - b.startAt);
+  const current = activeOrFuture.find((entry) => now >= entry.startAt && now < entry.startAt + entry.duration * 1000);
+  const tailEnd = activeOrFuture.reduce((latest, item) => Math.max(latest, item.startAt + item.duration * 1000), now);
+  const insertAt = body.position === "next" && current ? current.startAt + current.duration * 1000 : tailEnd;
+  const entry = {
+    id: crypto.randomUUID(),
+    sourceId: source.id,
+    title: source.title,
+    startAt: insertAt,
+    duration: source.duration,
+    queuedAt: now
+  };
+
+  if (body.position === "next") {
+    const beforeInsert = activeOrFuture.filter((item) => item.startAt < insertAt);
+    const afterInsert = activeOrFuture.filter((item) => item.startAt >= insertAt);
+    state.liveQueue = [...beforeInsert, entry, ...afterInsert];
+    let cursor = current ? current.startAt + current.duration * 1000 : now;
+    state.liveQueue = state.liveQueue.map((item) => {
+      if (current && item.id === current.id) return item;
+      const updated = { ...item, startAt: cursor };
+      cursor += item.duration * 1000;
+      return updated;
+    });
+  } else {
+    state.liveQueue = [...activeOrFuture, entry].sort((a, b) => a.startAt - b.startAt);
+  }
+
+  state.broadcastMode = "queue";
+  rebuildLiveQueueTimings();
+  await saveState();
+  broadcastProgram();
+  return { source, entry };
 }
 
 async function clearLiveQueue() {
@@ -863,7 +1122,7 @@ async function moveQueueEntry(id, direction) {
       ...entry,
       source: state.sources.find((source) => source.id === entry.sourceId)
     }))
-    .filter((entry) => entry.source && !isBumpSource(entry.source))
+    .filter((entry) => entry.source && (!isBumpSource(entry.source) || !entry.autoBump))
     .sort((a, b) => a.startAt - b.startAt);
 
   const index = pending.findIndex((entry) => entry.id === id);
@@ -896,6 +1155,46 @@ async function moveQueueEntry(id, direction) {
   await saveState();
   broadcastProgram();
   return { ok: true, moved: true };
+}
+
+async function reorderLiveQueue(body) {
+  const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
+  const now = Date.now();
+  const current = state.liveQueue.find((entry) => now >= entry.startAt && now < entry.startAt + entry.duration * 1000);
+  const pending = state.liveQueue
+    .filter((entry) => (!current || entry.id !== current.id) && entry.startAt + entry.duration * 1000 > now)
+    .map((entry) => ({
+      ...entry,
+      source: state.sources.find((source) => source.id === entry.sourceId)
+    }))
+    .filter((entry) => entry.source && !isBumpSource(entry.source))
+    .sort((a, b) => a.startAt - b.startAt);
+
+  const pendingById = new Map(pending.map((entry) => [entry.id, entry]));
+  const ordered = ids.filter((id) => pendingById.has(id)).map((id) => pendingById.get(id));
+  for (const entry of pending) {
+    if (!ordered.some((item) => item.id === entry.id)) ordered.push(entry);
+  }
+
+  let cursor = current ? current.startAt + current.duration * 1000 : now;
+  const reordered = current ? [current] : [];
+  for (const item of ordered) {
+    reordered.push({
+      id: item.id,
+      sourceId: item.sourceId,
+      title: item.title || "",
+      startAt: cursor,
+      duration: item.duration,
+      queuedAt: item.queuedAt || now
+    });
+    cursor += item.duration * 1000;
+  }
+
+  state.liveQueue = reordered;
+  rebuildLiveQueueTimings();
+  await saveState();
+  broadcastProgram();
+  return { ok: true };
 }
 
 async function setBroadcastMode(body) {
@@ -951,6 +1250,17 @@ async function serveFile(req, res, baseDir, urlPrefix = "") {
 
 async function handleApi(req, res, pathname) {
   try {
+    if (req.method === "GET" && pathname === "/api/health") {
+      sendJson(res, 200, {
+        ok: true,
+        serverTime: Date.now(),
+        mode: state.broadcastMode,
+        queueLength: state.liveQueue.length,
+        scheduleLength: state.schedule.length
+      });
+      return;
+    }
+
     if (req.method === "GET" && pathname === "/api/program") {
       sendJson(res, 200, publicProgram());
       return;
@@ -1004,9 +1314,10 @@ async function handleApi(req, res, pathname) {
       const login = String(body.username || "").trim();
       const password = String(body.password || "");
 
-      if (login === ADMIN_USER && password === ADMIN_PASSWORD) {
-        createSession(res, { username: ADMIN_USER, role: "admin" });
-        sendJson(res, 200, { ok: true, user: { username: ADMIN_USER, role: "admin" } });
+      const admin = ADMIN_ACCOUNTS.find((account) => login === account.username && password === account.password);
+      if (admin) {
+        createSession(res, { username: admin.username, role: "admin" });
+        sendJson(res, 200, { ok: true, user: { username: admin.username, role: "admin" } });
         return;
       }
 
@@ -1077,6 +1388,12 @@ async function handleApi(req, res, pathname) {
       return;
     }
 
+    if (req.method === "PATCH" && pathname === "/api/sources/reorder") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await reorderLibrarySources(await readJson(req)));
+      return;
+    }
+
     const updateSourceMatch = pathname.match(/^\/api\/sources\/([^/]+)$/);
     if (req.method === "PATCH" && updateSourceMatch) {
       if (!requireAdmin(req, res)) return;
@@ -1106,6 +1423,13 @@ async function handleApi(req, res, pathname) {
       return;
     }
 
+    if (req.method === "POST" && pathname === "/api/play-now-library") {
+      if (!requireAdmin(req, res)) return;
+      state.broadcastMode = "queue";
+      sendJson(res, 201, await createQueueLibrary({ ...(await readJson(req)), immediate: true }));
+      return;
+    }
+
     if (req.method === "POST" && pathname === "/api/queue") {
       if (!requireAdmin(req, res)) return;
       const entry = await createQueueEntry(await readJson(req), false);
@@ -1119,6 +1443,12 @@ async function handleApi(req, res, pathname) {
       return;
     }
 
+    if (req.method === "POST" && pathname === "/api/queue-bump") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 201, await queueManualBump(await readJson(req)));
+      return;
+    }
+
     if (req.method === "DELETE" && pathname === "/api/queue") {
       if (!requireAdmin(req, res)) return;
       sendJson(res, 200, await clearLiveQueue());
@@ -1129,6 +1459,12 @@ async function handleApi(req, res, pathname) {
     if (req.method === "PATCH" && moveQueueMatch) {
       if (!requireAdmin(req, res)) return;
       sendJson(res, 200, await moveQueueEntry(moveQueueMatch[1], (await readJson(req)).direction));
+      return;
+    }
+
+    if (req.method === "PATCH" && pathname === "/api/queue/reorder") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await reorderLiveQueue(await readJson(req)));
       return;
     }
 
@@ -1156,9 +1492,13 @@ async function handleApi(req, res, pathname) {
 
 await ensureState();
 await refreshBumpMusic();
+if (ensureAutoBumpAudioStarts()) await saveState();
 setInterval(broadcastProgram, 1000);
+setInterval(flushTimelineSave, 1000);
 setInterval(async () => {
   cleanSchedule();
+  maintainBroadcastTimeline();
+  await flushTimelineSave();
   await saveState();
 }, 1000 * 60 * 5);
 

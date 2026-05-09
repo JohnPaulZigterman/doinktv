@@ -7,7 +7,7 @@ const progressText = document.querySelector("#progressText");
 const youtubeLink = document.querySelector("#youtubeLink");
 const bumpPlayer = document.querySelector("#bumpPlayer");
 const bumpAudio = document.querySelector("#bumpAudio");
-const youtubeMask = document.querySelector("#youtubeMask");
+const crtBrand = document.querySelector(".crt-brand");
 const volumeSlider = document.querySelector("#volumeSlider");
 const volumeValue = document.querySelector("#volumeValue");
 const fullscreenButton = document.querySelector("#fullscreenButton");
@@ -17,21 +17,31 @@ const loginPopover = document.querySelector("#loginPopover");
 const adminPanel = document.querySelector("#adminPanel");
 const chatPanel = document.querySelector("#chatPanel");
 const bumpPanel = document.querySelector("#bumpPanel");
+const queuePanel = document.querySelector("#queuePanel");
 const chatToggle = document.querySelector("#chatToggle");
 const adminRailTabs = document.querySelectorAll("[data-admin-rail-tabs]");
 const showBroadcastPanelButtons = [
   document.querySelector("#showBroadcastPanelButton"),
   document.querySelector("#showBroadcastPanelButtonAlt"),
+  document.querySelector("#showBroadcastPanelButtonQueue"),
   document.querySelector("#showBroadcastPanelButtonBump")
+];
+const showQueuePanelButtons = [
+  document.querySelector("#showQueuePanelButton"),
+  document.querySelector("#showQueuePanelButtonAlt"),
+  document.querySelector("#showQueuePanelButtonQueue"),
+  document.querySelector("#showQueuePanelButtonBump")
 ];
 const showBumpPanelButtons = [
   document.querySelector("#showBumpPanelButton"),
   document.querySelector("#showBumpPanelButtonAlt"),
+  document.querySelector("#showBumpPanelButtonQueue"),
   document.querySelector("#showBumpPanelButtonBump")
 ];
 const showChatPanelButtons = [
   document.querySelector("#showChatPanelButton"),
   document.querySelector("#showChatPanelButtonAlt"),
+  document.querySelector("#showChatPanelButtonQueue"),
   document.querySelector("#showChatPanelButtonBump")
 ];
 const chatStatus = document.querySelector("#chatStatus");
@@ -55,16 +65,17 @@ const sourceForm = document.querySelector("#sourceForm");
 const scheduleForm = document.querySelector("#scheduleForm");
 const scheduledModeButton = document.querySelector("#scheduledModeButton");
 const queueModeButton = document.querySelector("#queueModeButton");
-const scheduleLibraryButton = document.querySelector("#scheduleLibraryButton");
+const pickModeButtons = document.querySelectorAll("[data-pick-mode]");
 const addQueueButton = document.querySelector("#addQueueButton");
-const queueLibraryButton = document.querySelector("#queueLibraryButton");
 const playNowButton = document.querySelector("#playNowButton");
 const sourceFolderMessage = document.querySelector("#sourceFolderMessage");
 const playlistImportMessage = document.querySelector("#playlistImportMessage");
 const sourceMessage = document.querySelector("#sourceMessage");
 const scheduleMessage = document.querySelector("#scheduleMessage");
+const queueMessage = document.querySelector("#queueMessage");
 const scheduleFolderSelect = scheduleForm.elements.folderId;
 const sourceSelect = scheduleForm.elements.sourceId;
+const timingDurationInput = scheduleForm.elements.duration;
 const sourcesList = document.querySelector("#sourcesList");
 const scheduleList = document.querySelector("#scheduleList");
 const queueList = document.querySelector("#queueList");
@@ -88,7 +99,7 @@ const youtubeMetadataReadyPromise = new Promise((resolve) => {
 });
 let currentProgramId = "";
 let loadedYouTubeProgramId = "";
-let youtubeMaskTimer;
+let youtubePlaybackRetryTimer;
 let currentProgram = null;
 let clockDelta = 0;
 let adminAuthenticated = false;
@@ -97,9 +108,12 @@ let chatCollapsed = false;
 let youtubeAutofillTimer;
 let broadcastMode = "scheduled";
 let adminRailView = "broadcast";
+let schedulePickMode = "source";
+let draggedQueueId = "";
+let draggedSourceId = "";
 let adminDataCache = { sourceFolders: [], sources: [] };
 const expandedSourceFolders = new Set(JSON.parse(localStorage.getItem("doink_expanded_source_folders") || "[]"));
-let audioUnlocked = false;
+let audioUnlocked = true;
 let viewerVolume = Number(localStorage.getItem("doink_volume") || 70);
 if (!Number.isFinite(viewerVolume)) viewerVolume = 70;
 viewerVolume = Math.max(0, Math.min(100, viewerVolume));
@@ -127,13 +141,7 @@ window.onYouTubeIframeAPIReady = () => {
         applyViewerVolume();
         syncProgram(currentProgram);
       },
-      onStateChange: (event) => {
-        if (event.data === YT.PlayerState.PLAYING) {
-          frame.classList.add("youtube-clean");
-          setYouTubeMask(true, 900);
-        }
-        enforcePlayback();
-      }
+      onStateChange: () => enforcePlayback()
     }
   });
 
@@ -203,6 +211,7 @@ function setUserState(user) {
     setAdminRailView(adminRailView || "broadcast");
   } else {
     adminPanel.classList.add("hidden");
+    queuePanel.classList.add("hidden");
     bumpPanel.classList.add("hidden");
     chatPanel.classList.remove("hidden");
     shell.classList.remove("bump-workspace");
@@ -219,16 +228,19 @@ function setChatCollapsed(isCollapsed) {
 }
 
 function setAdminRailView(view) {
-  adminRailView = ["broadcast", "bump", "chat"].includes(view) ? view : "broadcast";
+  adminRailView = ["broadcast", "queue", "bump", "chat"].includes(view) ? view : "broadcast";
   const showingBroadcast = adminRailView === "broadcast";
+  const showingQueue = adminRailView === "queue";
   const showingBump = adminRailView === "bump";
   adminPanel.classList.toggle("hidden", !showingBroadcast);
+  queuePanel.classList.toggle("hidden", !showingQueue);
   bumpPanel.classList.toggle("hidden", !showingBump);
-  chatPanel.classList.toggle("hidden", showingBroadcast || showingBump);
+  chatPanel.classList.toggle("hidden", showingBroadcast || showingQueue || showingBump);
   chatPanel.classList.remove("collapsed");
   shell.classList.remove("chat-collapsed");
   shell.classList.toggle("bump-workspace", showingBump);
   showBroadcastPanelButtons.forEach((button) => button.classList.toggle("active", showingBroadcast));
+  showQueuePanelButtons.forEach((button) => button.classList.toggle("active", showingQueue));
   showBumpPanelButtons.forEach((button) => button.classList.toggle("active", showingBump));
   showChatPanelButtons.forEach((button) => button.classList.toggle("active", adminRailView === "chat"));
 }
@@ -237,6 +249,14 @@ function setBroadcastModeUI(mode) {
   broadcastMode = mode === "queue" ? "queue" : "scheduled";
   scheduledModeButton.classList.toggle("active", broadcastMode === "scheduled");
   queueModeButton.classList.toggle("active", broadcastMode === "queue");
+}
+
+function setSchedulePickMode(mode) {
+  schedulePickMode = mode === "library" ? "library" : "source";
+  pickModeButtons.forEach((button) => button.classList.toggle("active", button.dataset.pickMode === schedulePickMode));
+  sourceSelect.classList.toggle("hidden", schedulePickMode === "library");
+  sourceSelect.required = schedulePickMode === "source";
+  timingDurationInput.classList.toggle("hidden", schedulePickMode === "library");
 }
 
 function syncSourceFields(shouldFocus = false) {
@@ -315,15 +335,6 @@ function setMode(mode) {
   } else {
     delete frame.dataset.mode;
   }
-  if (mode !== "youtube") frame.classList.remove("youtube-clean");
-}
-
-function setYouTubeMask(active, holdMs = 0) {
-  clearTimeout(youtubeMaskTimer);
-  youtubeMask.classList.toggle("active", active);
-  if (active && holdMs) {
-    youtubeMaskTimer = setTimeout(() => youtubeMask.classList.remove("active"), holdMs);
-  }
 }
 
 function applyViewerVolume({ unlock = false } = {}) {
@@ -336,6 +347,7 @@ function applyViewerVolume({ unlock = false } = {}) {
   bumpAudio.volume = volume;
   bumpAudio.muted = muted;
   volumeSlider.value = Math.round(viewerVolume);
+  volumeSlider.style.setProperty("--volume-fill", `${Math.round(viewerVolume)}%`);
   volumeValue.textContent = `${Math.round(viewerVolume)}%`;
 
   if (youtubeReady) {
@@ -362,27 +374,39 @@ function syncLocal(live) {
   localPlayer.play().catch(() => {});
 }
 
+function forceYouTubePlayback({ allowMuteFallback = false } = {}) {
+  if (!youtubeReady) return;
+  youtubePlayer.playVideo?.();
+  clearTimeout(youtubePlaybackRetryTimer);
+  youtubePlaybackRetryTimer = setTimeout(() => {
+    const state = youtubePlayer.getPlayerState?.();
+    const notPlaying = [YT.PlayerState.UNSTARTED, YT.PlayerState.CUED, YT.PlayerState.PAUSED].includes(state);
+    if (!notPlaying) return;
+    if (allowMuteFallback) youtubePlayer.mute?.();
+    youtubePlayer.playVideo?.();
+  }, 500);
+}
+
 function syncYouTube(live) {
   if (!youtubeReady) return;
   const offset = Math.min(activeOffset(), live.duration - 0.2);
   if (loadedYouTubeProgramId !== live.id) {
-    frame.classList.remove("youtube-clean");
-    setYouTubeMask(true);
     youtubePlayer.loadVideoById({ videoId: live.source.youtubeId, startSeconds: Math.max(0, offset) });
     loadedYouTubeProgramId = live.id;
+    forceYouTubePlayback({ allowMuteFallback: true });
   } else {
     const ytTime = youtubePlayer.getCurrentTime?.() || 0;
     if (Math.abs(ytTime - offset) > 1.25) {
-      setYouTubeMask(true, 650);
       youtubePlayer.seekTo(Math.max(0, offset), true);
     }
-    youtubePlayer.playVideo();
+    forceYouTubePlayback({ allowMuteFallback: true });
   }
   applyViewerVolume();
 }
 
 function renderBump(live) {
   const bump = live.source.bump || { heading: "coming up", lines: [] };
+  const isNewBump = currentProgramId !== live.id;
   const wallpaper = bump.wallpaper || {};
   const effects = Array.isArray(bump.effects) ? bump.effects : [];
   const effectIntensity = Math.max(0, Math.min(100, Number(bump.effectIntensity) || 0));
@@ -411,11 +435,24 @@ function renderBump(live) {
       </ul>
     </div>`;
   const audioPath = bump.audio || "";
-  if (audioPath && bumpAudio.src !== new URL(audioPath, location.origin).href) {
+  const audioStart = Math.max(0, Number(bump.audioStart) || 0);
+  const targetTime = audioStart + Math.max(0, activeOffset());
+  const audioChanged = audioPath && bumpAudio.src !== new URL(audioPath, location.origin).href;
+  if (audioChanged) {
     bumpAudio.src = audioPath;
   }
   if (audioPath) {
-    bumpAudio.currentTime = Math.min(activeOffset(), 1);
+    if (isNewBump || audioChanged || Math.abs((bumpAudio.currentTime || 0) - targetTime) > 2.5) {
+      const seekAudio = () => {
+        const maxSeek = Number.isFinite(bumpAudio.duration) ? Math.max(0, bumpAudio.duration - 0.25) : targetTime;
+        bumpAudio.currentTime = Math.min(targetTime, maxSeek);
+      };
+      if (bumpAudio.readyState >= 1) {
+        seekAudio();
+      } else {
+        bumpAudio.addEventListener("loadedmetadata", seekAudio, { once: true });
+      }
+    }
     applyViewerVolume();
     bumpAudio.play().catch(() => {});
   }
@@ -446,13 +483,13 @@ function syncProgram(program) {
     progressText.textContent = "00:00 / 00:00";
     youtubeLink.classList.add("hidden");
     youtubeLink.href = "#";
+    crtBrand.classList.remove("hidden");
     liveBadge.textContent = "Waiting";
     liveBadge.classList.add("off");
     localPlayer.pause();
     bumpAudio.pause();
+    clearTimeout(youtubePlaybackRetryTimer);
     if (youtubeReady) youtubePlayer.stopVideo();
-    frame.classList.remove("youtube-clean");
-    setYouTubeMask(false);
     loadedYouTubeProgramId = "";
     return;
   }
@@ -462,12 +499,13 @@ function syncProgram(program) {
   nowTitle.textContent = live.title;
   setMode(live.source.type);
   youtubeLink.classList.toggle("hidden", live.source.type !== "youtube");
+  crtBrand.classList.toggle("hidden", live.source.type === "youtube");
   youtubeLink.href = live.source.type === "youtube" ? live.source.url : "#";
 
   if (live.source.type === "local") {
     bumpAudio.pause();
+    clearTimeout(youtubePlaybackRetryTimer);
     if (youtubeReady) youtubePlayer.stopVideo();
-    setYouTubeMask(false);
     loadedYouTubeProgramId = "";
     syncLocal(live);
   } else if (live.source.type === "youtube") {
@@ -476,8 +514,8 @@ function syncProgram(program) {
     syncYouTube(live);
   } else if (live.source.type === "bump") {
     localPlayer.pause();
+    clearTimeout(youtubePlaybackRetryTimer);
     if (youtubeReady) youtubePlayer.stopVideo();
-    setYouTubeMask(false);
     loadedYouTubeProgramId = "";
     renderBump(live);
   }
@@ -520,7 +558,8 @@ function renderAdmin(data) {
             ? folder.sources
                 .map(
                   (source) => `
-            <div class="item">
+            <div class="item source-item" data-source-item="${source.id}" data-source-folder="${folder.id}" draggable="true">
+              <span class="drag-handle" aria-hidden="true">Drag</span>
               <div>
                 <strong>${escapeHtml(source.title)}</strong>
                 <small>${escapeHtml(source.type === "youtube" ? source.url : source.path)} &middot; ${formatDuration(source.duration)}</small>
@@ -580,16 +619,15 @@ function renderAdmin(data) {
           const source = data.sources.find((item) => item.id === entry.sourceId);
           const isBump = source?.type === "bump";
           const isCurrent = Date.now() >= entry.startAt && Date.now() < entry.startAt + entry.duration * 1000;
-          const canMove = !isBump && !isCurrent;
+          const canMove = (!isBump || !entry.autoBump) && !isCurrent;
           return `
-            <div class="item queue-item">
+            <div class="item queue-item" data-queue-item="${entry.id}" draggable="${canMove}">
+              <span class="drag-handle" aria-hidden="true">${canMove ? "Drag" : "Live"}</span>
               <div>
                 <strong>${escapeHtml(entry.title || source?.title || "Queued source")}</strong>
                 <small>${new Date(entry.startAt).toLocaleTimeString()} &middot; ${formatDuration(entry.duration)}${isCurrent ? " &middot; On air" : ""}${isBump ? " &middot; Auto bump" : ""}</small>
               </div>
               <div class="queue-actions">
-                <button class="secondary compact" data-move-queue="${entry.id}" data-direction="up" type="button"${!canMove || index === 0 ? " disabled" : ""}>Up</button>
-                <button class="secondary compact" data-move-queue="${entry.id}" data-direction="down" type="button"${!canMove || index === liveQueue.length - 1 ? " disabled" : ""}>Down</button>
                 <button class="danger compact" data-delete-queue="${entry.id}" type="button">Delete</button>
               </div>
             </div>`;
@@ -733,6 +771,7 @@ adminToggle.addEventListener("click", () => {
     const railOpen = shell.classList.contains("admin-open");
     shell.classList.toggle("admin-open", !railOpen);
     adminPanel.classList.toggle("hidden", railOpen || adminRailView !== "broadcast");
+    queuePanel.classList.toggle("hidden", railOpen || adminRailView !== "queue");
     bumpPanel.classList.toggle("hidden", railOpen || adminRailView !== "bump");
     chatPanel.classList.toggle("hidden", railOpen || adminRailView !== "chat");
     shell.classList.toggle("bump-workspace", !railOpen && adminRailView === "bump");
@@ -751,8 +790,10 @@ adminToggle.addEventListener("click", () => {
 showLoginButton.addEventListener("click", () => setAuthMode("login"));
 showRegisterButton.addEventListener("click", () => setAuthMode("register"));
 showBroadcastPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("broadcast")));
+showQueuePanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("queue")));
 showBumpPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("bump")));
 showChatPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("chat")));
+pickModeButtons.forEach((button) => button.addEventListener("click", () => setSchedulePickMode(button.dataset.pickMode)));
 chatToggle.addEventListener("click", () => setChatCollapsed(!chatCollapsed));
 scheduledModeButton.addEventListener("click", async () => {
   try {
@@ -898,19 +939,9 @@ scheduleForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
     const body = Object.fromEntries(new FormData(scheduleForm));
-    await api("/api/schedule", { method: "POST", body: JSON.stringify(body) });
-    setMessage(scheduleMessage, "Scheduled.");
-    await loadAdmin();
-  } catch (error) {
-    setMessage(scheduleMessage, error.message, true);
-  }
-});
-
-scheduleLibraryButton.addEventListener("click", async () => {
-  try {
-    const body = Object.fromEntries(new FormData(scheduleForm));
-    await api("/api/schedule-library", { method: "POST", body: JSON.stringify(body) });
-    setMessage(scheduleMessage, "Library scheduled.");
+    const endpoint = schedulePickMode === "library" ? "/api/schedule-library" : "/api/schedule";
+    await api(endpoint, { method: "POST", body: JSON.stringify(body) });
+    setMessage(scheduleMessage, schedulePickMode === "library" ? "Library scheduled." : "Scheduled.");
     await loadAdmin();
   } catch (error) {
     setMessage(scheduleMessage, error.message, true);
@@ -920,19 +951,9 @@ scheduleLibraryButton.addEventListener("click", async () => {
 addQueueButton.addEventListener("click", async () => {
   try {
     const body = Object.fromEntries(new FormData(scheduleForm));
-    await api("/api/queue", { method: "POST", body: JSON.stringify(body) });
-    setMessage(scheduleMessage, "Added to live queue.");
-    await loadAdmin();
-  } catch (error) {
-    setMessage(scheduleMessage, error.message, true);
-  }
-});
-
-queueLibraryButton.addEventListener("click", async () => {
-  try {
-    const body = Object.fromEntries(new FormData(scheduleForm));
-    await api("/api/queue-library", { method: "POST", body: JSON.stringify(body) });
-    setMessage(scheduleMessage, "Library added to live queue.");
+    const endpoint = schedulePickMode === "library" ? "/api/queue-library" : "/api/queue";
+    await api(endpoint, { method: "POST", body: JSON.stringify(body) });
+    setMessage(scheduleMessage, schedulePickMode === "library" ? "Library added to live queue." : "Added to live queue.");
     await loadAdmin();
   } catch (error) {
     setMessage(scheduleMessage, error.message, true);
@@ -942,7 +963,8 @@ queueLibraryButton.addEventListener("click", async () => {
 playNowButton.addEventListener("click", async () => {
   try {
     const body = Object.fromEntries(new FormData(scheduleForm));
-    await api("/api/play-now", { method: "POST", body: JSON.stringify(body) });
+    const endpoint = schedulePickMode === "library" ? "/api/play-now-library" : "/api/play-now";
+    await api(endpoint, { method: "POST", body: JSON.stringify(body) });
     setMessage(scheduleMessage, "Live queue started.");
     await loadAdmin();
   } catch (error) {
@@ -982,11 +1004,97 @@ document.addEventListener("fullscreenchange", () => {
 clearQueueButton?.addEventListener("click", async () => {
   try {
     await api("/api/queue", { method: "DELETE" });
-    setMessage(scheduleMessage, "Queue cleared.");
+    setMessage(queueMessage, "Queue cleared.");
     await loadAdmin();
   } catch (error) {
-    setMessage(scheduleMessage, error.message, true);
+    setMessage(queueMessage, error.message, true);
   }
+});
+
+queueList.addEventListener("dragstart", (event) => {
+  const item = event.target.closest("[data-queue-item]");
+  if (!item || item.getAttribute("draggable") !== "true") return;
+  draggedQueueId = item.dataset.queueItem;
+  item.classList.add("dragging");
+  event.dataTransfer.effectAllowed = "move";
+  event.dataTransfer.setData("text/plain", draggedQueueId);
+});
+
+queueList.addEventListener("dragover", (event) => {
+  if (!draggedQueueId) return;
+  const target = event.target.closest("[data-queue-item]");
+  if (!target || target.dataset.queueItem === draggedQueueId || target.getAttribute("draggable") !== "true") return;
+  event.preventDefault();
+  const dragging = queueList.querySelector(".dragging");
+  const rect = target.getBoundingClientRect();
+  const afterTarget = event.clientY > rect.top + rect.height / 2;
+  queueList.insertBefore(dragging, afterTarget ? target.nextSibling : target);
+});
+
+queueList.addEventListener("drop", async (event) => {
+  if (!draggedQueueId) return;
+  event.preventDefault();
+  const ids = [...queueList.querySelectorAll("[data-queue-item][draggable='true']")].map((item) => item.dataset.queueItem);
+  try {
+    await api("/api/queue/reorder", { method: "PATCH", body: JSON.stringify({ ids }) });
+    setMessage(queueMessage, "Queue reordered.");
+    await loadAdmin();
+  } catch (error) {
+    setMessage(queueMessage, error.message, true);
+    await loadAdmin();
+  } finally {
+    draggedQueueId = "";
+  }
+});
+
+queueList.addEventListener("dragend", () => {
+  queueList.querySelectorAll(".dragging").forEach((item) => item.classList.remove("dragging"));
+  draggedQueueId = "";
+});
+
+sourcesList.addEventListener("dragstart", (event) => {
+  const item = event.target.closest("[data-source-item]");
+  if (!item || item.getAttribute("draggable") !== "true") return;
+  draggedSourceId = item.dataset.sourceItem;
+  item.classList.add("dragging");
+  event.dataTransfer.effectAllowed = "move";
+  event.dataTransfer.setData("text/plain", draggedSourceId);
+});
+
+sourcesList.addEventListener("dragover", (event) => {
+  if (!draggedSourceId) return;
+  const target = event.target.closest("[data-source-item]");
+  const dragging = sourcesList.querySelector(".dragging");
+  if (!target || !dragging || target.dataset.sourceItem === draggedSourceId) return;
+  if (target.dataset.sourceFolder !== dragging.dataset.sourceFolder) return;
+  event.preventDefault();
+  const rect = target.getBoundingClientRect();
+  const afterTarget = event.clientY > rect.top + rect.height / 2;
+  target.parentElement.insertBefore(dragging, afterTarget ? target.nextSibling : target);
+});
+
+sourcesList.addEventListener("drop", async (event) => {
+  if (!draggedSourceId) return;
+  event.preventDefault();
+  const dragging = sourcesList.querySelector(".dragging");
+  const folderId = dragging?.dataset.sourceFolder || "";
+  const container = dragging?.closest(".item-list");
+  const ids = container ? [...container.querySelectorAll("[data-source-item]")].map((item) => item.dataset.sourceItem) : [];
+  try {
+    await api("/api/sources/reorder", { method: "PATCH", body: JSON.stringify({ folderId, ids }) });
+    setMessage(sourceMessage, "Library reordered.");
+    await loadAdmin();
+  } catch (error) {
+    setMessage(sourceMessage, error.message, true);
+    await loadAdmin();
+  } finally {
+    draggedSourceId = "";
+  }
+});
+
+sourcesList.addEventListener("dragend", () => {
+  sourcesList.querySelectorAll(".dragging").forEach((item) => item.classList.remove("dragging"));
+  draggedSourceId = "";
 });
 
 document.addEventListener("click", async (event) => {
@@ -1038,7 +1146,7 @@ document.addEventListener("click", async (event) => {
     if (folderId) await api(`/api/source-folders/${folderId}`, { method: "DELETE" });
     if (sourceId || scheduleId || queueId || folderId) await loadAdmin();
   } catch (error) {
-    setMessage(scheduleMessage, error.message, true);
+    setMessage(queueId ? queueMessage : scheduleMessage, error.message, true);
   }
 });
 
@@ -1056,6 +1164,8 @@ document.addEventListener("submit", async (event) => {
   }
 });
 
+api("/api/program").then(syncProgram).catch(() => {});
+
 new EventSource("/api/events").onmessage = (event) => {
   syncProgram(JSON.parse(event.data));
 };
@@ -1064,11 +1174,28 @@ new EventSource("/api/chat/events").onmessage = (event) => {
   renderChat(JSON.parse(event.data));
 };
 
+window.addEventListener("message", async (event) => {
+  if (event.origin !== location.origin || event.data?.type !== "doinktv:queue-bump") return;
+  try {
+    await api("/api/queue-bump", {
+      method: "POST",
+      body: JSON.stringify({ ...event.data.bump, position: event.data.position })
+    });
+    setMessage(queueMessage, event.data.position === "next" ? "Bump queued next." : "Bump added to queue.");
+    event.source?.postMessage({ type: "doinktv:bump-queued", ok: true, position: event.data.position }, event.origin);
+    await loadAdmin();
+  } catch (error) {
+    setMessage(queueMessage, error.message, true);
+    event.source?.postMessage({ type: "doinktv:bump-queued", ok: false, error: error.message }, event.origin);
+  }
+});
+
 localPlayer.addEventListener("pause", () => setTimeout(enforcePlayback, 100));
 localPlayer.addEventListener("seeking", () => setTimeout(enforcePlayback, 100));
 setInterval(tickProgress, 1000);
 setChatCollapsed(false);
 applyViewerVolume();
+setSchedulePickMode(schedulePickMode);
 syncSourceFields();
 updateSourceDurationDisplay();
 refreshSession().catch(() => setUserState(null));
