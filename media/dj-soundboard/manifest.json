@@ -1,0 +1,292 @@
+{
+  "version": 1,
+  "generatedAt": "2026-05-10T07:35:29.904Z",
+  "groups": {
+    "quotes": {
+      "label": "Quotes",
+      "color": "#f2b84a"
+    },
+    "radio": {
+      "label": "Radio Dirt",
+      "color": "#68c3b7"
+    },
+    "crowd": {
+      "label": "Crowd",
+      "color": "#d68a37"
+    },
+    "scratches": {
+      "label": "Scratches",
+      "color": "#c968ff"
+    },
+    "sfx": {
+      "label": "SFX",
+      "color": "#7db7ff"
+    },
+    "sirens": {
+      "label": "Sirens",
+      "color": "#ff715f"
+    },
+    "stings": {
+      "label": "Stings",
+      "color": "#8fd06d"
+    }
+  },
+  "sounds": [
+    {
+      "id": "radioactive",
+      "label": "Radioactive",
+      "group": "quotes",
+      "path": "/media/dj-soundboard/01-quotes-radioactive.wav",
+      "duration": 2.6,
+      "sourceFile": "C:/Loopcloud/ISR_License Free Movie Expansion 2 (970114acf0e8)/LM2_Rx 2/LM2_Spoken_Radioactive.wav"
+    },
+    {
+      "id": "power-may-fail",
+      "label": "Power May Fail",
+      "group": "quotes",
+      "path": "/media/dj-soundboard/02-quotes-power-may-fail.wav",
+      "duration": 1.4,
+      "sourceFile": "C:/Loopcloud/ISR_License Free Movie Clips_Expansion (6c33d9ebe8d4)/LFE_Audio/LFME_Spoken_Vocal-Power may fail.wav"
+    },
+    {
+      "id": "evil-place",
+      "label": "Evil Place",
+      "group": "quotes",
+      "path": "/media/dj-soundboard/03-quotes-evil-place.wav",
+      "duration": 2.3,
+      "sourceFile": "C:/Loopcloud/ISR_License Free Movie Clips_Expansion (6c33d9ebe8d4)/LFE_Audio/LFME_Spoken_Vocal-This is an evil place.wav"
+    },
+    {
+      "id": "your-machine",
+      "label": "Your Machine",
+      "group": "quotes",
+      "path": "/media/dj-soundboard/04-quotes-your-machine.wav",
+      "duration": 2.1,
+      "sourceFile": "C:/Loopcloud/ISR_License Free Movie Clips_Expansion (6c33d9ebe8d4)/LFE_Audio/LFME_Spoken_Vocal-You and your machine.wav"
+    },
+    {
+      "id": "surprise-folks",
+      "label": "Surprise Folks",
+      "group": "quotes",
+      "path": "/media/dj-soundboard/05-quotes-surprise-folks.wav",
+      "duration": 2.6,
+      "sourceFile": "C:/Loopcloud/MOVIE_DIALOGUE_5 (b580f385a42a)/Movie_Dialogue_5_Wavs/Big Show/MD5_ASupriseForYouFolks.wav"
+    },
+    {
+      "id": "welcome-back",
+      "label": "Welcome Back",
+      "group": "quotes",
+      "path": "/media/dj-soundboard/06-quotes-welcome-back.wav",
+      "duration": 1.8,
+      "sourceFile": "C:/Loopcloud/ELECTRO_SWING_THING (1e7290a5b3de)/YGD_VOCAL_PHRASES/YGD_Spoken_Male_Voc_WelcomeBack20s.wav"
+    },
+    {
+      "id": "old-phone",
+      "label": "Old Phone",
+      "group": "radio",
+      "path": "/media/dj-soundboard/07-radio-old-phone.wav",
+      "duration": 16.3,
+      "sourceFile": "C:/Loopcloud/FA148_Street Beatz (5ec74cd048cb)/Oneshots/FXs/SB_FX_Old Phone_FA.wav"
+    },
+    {
+      "id": "static-wash",
+      "label": "Static Wash",
+      "group": "radio",
+      "path": "/media/dj-soundboard/08-radio-static-wash.wav",
+      "duration": 15.4,
+      "sourceFile": "C:/Loopcloud/UNDRGRND SOUNDS - Classic Deep House - WAV (689038ca89d3)/FX One-Shots/US_CH_FX_static.wav"
+    },
+    {
+      "id": "broken-radio",
+      "label": "Broken Radio",
+      "group": "radio",
+      "path": "/media/dj-soundboard/09-radio-broken-radio.wav",
+      "duration": 15,
+      "sourceFile": "C:/Loopcloud/ISR_Electronic Body Music (f88bcf1aa88a)/ISR_Electric Body Music/EBC_BROKEN RADIO/EBC_BROKEN RADIO_09.wav"
+    },
+    {
+      "id": "radio-noise",
+      "label": "Radio Noise",
+      "group": "radio",
+      "path": "/media/dj-soundboard/10-radio-radio-noise.wav",
+      "duration": 7.7,
+      "sourceFile": "C:/Loopcloud/Undrgrnd Sounds - Microhouse (7d1927ad27f1)/UNDRGRND Sounds - Micro House - Wav/US_MH_FX/Loops/US_MH_125_FX_radionoise.wav"
+    },
+    {
+      "id": "crowd-pop",
+      "label": "Crowd Pop",
+      "group": "crowd",
+      "path": "/media/dj-soundboard/11-crowd-crowd-pop.wav",
+      "duration": 2.4,
+      "sourceFile": "C:/Loopcloud/SmokReV1 (790c562e083b)/Smokers Relight Deux Vol.1 (80bpm)/Smokers Relight Samples Wav/03 Fx & Vox Mix/EQ-eFx 096 Crowd.wav"
+    },
+    {
+      "id": "basement-crowd",
+      "label": "Basement Crowd",
+      "group": "crowd",
+      "path": "/media/dj-soundboard/12-crowd-basement-crowd.wav",
+      "duration": 48,
+      "sourceFile": "C:/Loopcloud/LO-FI_BEATS_&_CUTS (c2b890215412)/XPQ_SOUNDS/XPQ_FOUND_SOUNDS/ZPQ_Crowd.wav"
+    },
+    {
+      "id": "tropical-crowd",
+      "label": "Tropical Crowd",
+      "group": "crowd",
+      "path": "/media/dj-soundboard/13-crowd-tropical-crowd.wav",
+      "duration": 34.3,
+      "sourceFile": "C:/Loopcloud/PBB_TROPICAL_CHILL_WAV (1fd7ded2eac4)/WAV_LOOPS/FX_LOOPS/TC_112_CROWD_FX_004_Db.wav"
+    },
+    {
+      "id": "scratch-cut",
+      "label": "Scratch Cut",
+      "group": "scratches",
+      "path": "/media/dj-soundboard/14-scratches-scratch-cut.wav",
+      "duration": 0.5,
+      "sourceFile": "C:/Loopcloud/Singomakers_Hip_Hop_Ultra_Pack_2_(Full_Zip) (1119dd71a876)/SHU2_One_Shots/SHU2_Scratch_Cuts/SHU2_Scratch_Cut_45.wav"
+    },
+    {
+      "id": "ruff-scratch",
+      "label": "Ruff Scratch",
+      "group": "scratches",
+      "path": "/media/dj-soundboard/15-scratches-ruff-scratch.wav",
+      "duration": 2.7,
+      "sourceFile": "C:/Loopcloud/AIM10_TRIPHOP_ATTACK (79391f1f0c37)/AIM10_WAV_LOOPS/DRUM_LOOPS/Aim10_88_Ruff_Drums_Fill_Scratch_2.wav"
+    },
+    {
+      "id": "kaos-scratch",
+      "label": "Kaos Scratch",
+      "group": "scratches",
+      "path": "/media/dj-soundboard/16-scratches-kaos-scratch.wav",
+      "duration": 2.6,
+      "sourceFile": "C:/Loopcloud/AIM10_TRIPHOP_ATTACK (79391f1f0c37)/AIM10_WAV_LOOPS/DRUM_LOOPS/WET_VERSIONS/Aim10_92_Kaos_Hat Scratch_3_Verb.wav"
+    },
+    {
+      "id": "8bit-zapper",
+      "label": "8Bit Zapper",
+      "group": "sfx",
+      "path": "/media/dj-soundboard/17-sfx-8bit-zapper.wav",
+      "duration": 0.4,
+      "sourceFile": "C:/Loopcloud/Renegade Audio - Chopstick Dubplate - Lickshot Dub Sirens & Sound FX Vol 1 (248d01901c1f)/8Bit FX Shots/LoFi/RALS_1_8Bit_FX_Zapper_01_LoFi.wav"
+    },
+    {
+      "id": "8bit-arcade",
+      "label": "8Bit Arcade",
+      "group": "sfx",
+      "path": "/media/dj-soundboard/18-sfx-8bit-arcade.wav",
+      "duration": 2.4,
+      "sourceFile": "C:/Loopcloud/Renegade Audio - Chopstick Dubplate - Lickshot Dub Sirens & Sound FX Vol 1 (248d01901c1f)/8Bit FX Shots/LoFi/RALS_1_8Bit_FX_Arcade_09_LoFi.wav"
+    },
+    {
+      "id": "laser-weapon",
+      "label": "Laser Weapon",
+      "group": "sfx",
+      "path": "/media/dj-soundboard/19-sfx-laser-weapon.wav",
+      "duration": 0.8,
+      "sourceFile": "C:/Loopcloud/Push Button Bang - Classic Games Sound Collection (13a4b7602fca)/LASERS_AND_WEAPONS/CGS_LASERS_AND_WEAPONS_050_SFX.wav"
+    },
+    {
+      "id": "cartoon-droid",
+      "label": "Cartoon Droid",
+      "group": "sfx",
+      "path": "/media/dj-soundboard/20-sfx-cartoon-droid.wav",
+      "duration": 1.3,
+      "sourceFile": "C:/Loopcloud/SFXtools - ST098 - Story Sonic (163fbbacc145)/Animation/SS_FX_Animation_SciFi_Cartoon_Droid_3_ST.wav"
+    },
+    {
+      "id": "dub-siren-hit",
+      "label": "Dub Siren Hit",
+      "group": "sirens",
+      "path": "/media/dj-soundboard/21-sirens-dub-siren-hit.wav",
+      "duration": 1.4,
+      "sourceFile": "C:/Loopcloud/Renegade Audio - Totally Dubwise - Dub To Jungle Vol. 2 (9e80491e3e27)/One-Shots/FX One-Shots/RADJ_FX_Hit_Dub_Siren_68.wav"
+    },
+    {
+      "id": "dub-siren-33",
+      "label": "Dub Siren 33",
+      "group": "sirens",
+      "path": "/media/dj-soundboard/22-sirens-dub-siren-33.wav",
+      "duration": 2.9,
+      "sourceFile": "C:/Loopcloud/RA_DubToJungle (5d8d8930ec9f)/ONE SHOTS/FX/RATD_FX_Dub_Siren_33.wav"
+    },
+    {
+      "id": "reggae-siren",
+      "label": "Reggae Siren",
+      "group": "sirens",
+      "path": "/media/dj-soundboard/23-sirens-reggae-siren.wav",
+      "duration": 3.9,
+      "sourceFile": "C:/Loopcloud/DUBMATIX_ULTIMATE_REGGAE_ONE_SHOTS (b92b60ffb29f)/D1S_FX/D1S_SIRENS/D1S_Dub_Siren_FX_21.wav"
+    },
+    {
+      "id": "ghost-train",
+      "label": "Ghost Train",
+      "group": "sirens",
+      "path": "/media/dj-soundboard/24-sirens-ghost-train.wav",
+      "duration": 6.7,
+      "sourceFile": "C:/Loopcloud/DUB_&_REGGAE_SIRENS (5d5e07f88246)/SI_02_DRY_SIRENS/SI_ROOTS_TS1_MK2_DUB_SIREN/SI_TS1_Ghost_Train_2.wav"
+    },
+    {
+      "id": "sax-bark",
+      "label": "Sax Bark",
+      "group": "stings",
+      "path": "/media/dj-soundboard/25-stings-sax-bark.wav",
+      "duration": 0.4,
+      "sourceFile": "C:/Loopcloud/RA_DubToJungle (5d8d8930ec9f)/ONE SHOTS/HORNS/Saxaphone/RATD_Em_Saxaphone.wav"
+    },
+    {
+      "id": "horn-blast",
+      "label": "Horn Blast",
+      "group": "stings",
+      "path": "/media/dj-soundboard/26-stings-horn-blast.wav",
+      "duration": 0.3,
+      "sourceFile": "C:/Loopcloud/Aim Audio - AIM30 - Breathe Trip Hop (aaec4adc2261)/AIM30_HITS/INST HITS/Aim30_Dm_Horn_Blast.wav"
+    },
+    {
+      "id": "junglist-hit",
+      "label": "Junglist Hit",
+      "group": "stings",
+      "path": "/media/dj-soundboard/27-stings-junglist-hit.wav",
+      "duration": 0.2,
+      "sourceFile": "C:/Loopcloud/Niche Audio - Jungle DNB (f70f4191ba0c)/ONE-SHOTS/FX ONE-SHOTS/JDB_Vox_Junglist_Hit_Niche_K13.wav"
+    },
+    {
+      "id": "sword-stinger",
+      "label": "Sword Stinger",
+      "group": "stings",
+      "path": "/media/dj-soundboard/28-stings-sword-stinger.wav",
+      "duration": 0.7,
+      "sourceFile": "C:/Loopcloud/Maximus (b1d0507a3a75)/Raw Sources & Field Recordings/MX_Stinger_Sword2_CT.wav"
+    },
+    {
+      "id": "foghorn",
+      "label": "Foghorn",
+      "group": "sirens",
+      "path": "/media/dj-soundboard/29-sirens-foghorn.wav",
+      "duration": 1.7,
+      "sourceFile": "C:/Loopcloud/Cestra_GHOSTSYNDICATE_Bass One Shots (6a4e637e24f6)/GS_CESTRA_Samples/GS_CESTRA_FOGHORN_10_F_V3.wav"
+    },
+    {
+      "id": "80s-rise",
+      "label": "80s Rise",
+      "group": "stings",
+      "path": "/media/dj-soundboard/30-stings-80s-rise.wav",
+      "duration": 3.2,
+      "sourceFile": "C:/Loopcloud/RankinAudio_AkiraTheDonpresStoicBeats (5318e879efff)/DRUM ONE SHOTS/RISERS SFX/Drunk_80S_Video_Game_Upper.Wav"
+    },
+    {
+      "id": "hard-to-describe",
+      "label": "Hard To Describe",
+      "group": "quotes",
+      "path": "/media/dj-soundboard/31-quotes-hard-to-describe.wav",
+      "duration": 2.4,
+      "sourceFile": "C:/Loopcloud/ISR_License Free Movie Expansion 2 (970114acf0e8)/LM2_Rx/LM2_Spoken_Not easy to describe.wav"
+    },
+    {
+      "id": "ufo-description",
+      "label": "UFO Description",
+      "group": "quotes",
+      "path": "/media/dj-soundboard/32-quotes-ufo-description.wav",
+      "duration": 19.2,
+      "sourceFile": "C:/Loopcloud/ISR_License Free Movie Expansion 2 (970114acf0e8)/LM2_Ufo/LM2_Spoken_Description_02.wav"
+    }
+  ]
+}

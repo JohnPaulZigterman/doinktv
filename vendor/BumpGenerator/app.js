@@ -5,6 +5,8 @@ const textLines = document.querySelector("#textLines");
 const addLineBtn = document.querySelector("#addLineBtn");
 const imageInput = document.querySelector("#imageInput");
 const songInput = document.querySelector("#songInput");
+const serverSongSelect = document.querySelector("#serverSongSelect");
+const serverBackgroundSelect = document.querySelector("#serverBackgroundSelect");
 const audioStart = document.querySelector("#audioStart");
 const audioStartValue = document.querySelector("#audioStartValue");
 const creditText = document.querySelector("#creditText");
@@ -52,6 +54,8 @@ let wallpaperSeed = Math.floor(Math.random() * 100000);
 let creditWasAutoFilled = true;
 let audioProbeUrl = "";
 let previewAudio = null;
+let selectedServerAudio = null;
+let selectedServerBackground = null;
 const effectCanvas = document.createElement("canvas");
 const effectCtx = effectCanvas.getContext("2d");
 
@@ -124,9 +128,14 @@ function resetAudioStart() {
   updateAudioStartReadout();
 }
 
+function clearAudioProbeUrl() {
+  if (audioProbeUrl && audioProbeUrl.startsWith("blob:")) URL.revokeObjectURL(audioProbeUrl);
+  audioProbeUrl = "";
+}
+
 function configureAudioStart(file) {
   stopPreviewAudio();
-  if (audioProbeUrl) URL.revokeObjectURL(audioProbeUrl);
+  clearAudioProbeUrl();
   resetAudioStart();
   if (!file) return;
 
@@ -144,6 +153,36 @@ function configureAudioStart(file) {
     updateAudioStartReadout();
   };
   probe.onerror = resetAudioStart;
+}
+
+function configureServerAudio(asset) {
+  stopPreviewAudio();
+  clearAudioProbeUrl();
+  resetAudioStart();
+  selectedServerAudio = asset || null;
+  if (!asset?.path) return;
+
+  audioProbeUrl = asset.path;
+  previewAudio = new Audio(audioProbeUrl);
+  previewAudio.loop = true;
+  previewAudio.volume = 0.82;
+  const max = Math.max(0, Number(asset.duration || 0));
+  if (max > 0) {
+    audioStart.max = String(max.toFixed(1));
+    audioStart.disabled = false;
+    updateAudioStartReadout();
+  } else {
+    const probe = new Audio();
+    probe.preload = "metadata";
+    probe.src = audioProbeUrl;
+    probe.onloadedmetadata = () => {
+      const duration = Math.max(0, probe.duration || 0);
+      audioStart.max = String(duration.toFixed(1));
+      audioStart.disabled = duration === 0;
+      updateAudioStartReadout();
+    };
+    probe.onerror = resetAudioStart;
+  }
 }
 
 function synchsafeToInt(bytes) {
@@ -234,6 +273,13 @@ async function autofillCreditFromAudio(file) {
   }
 }
 
+function autofillCreditFromServerAudio(asset) {
+  if (!asset || (!creditWasAutoFilled && creditText.value.trim())) return;
+  creditText.value = `Song: ${asset.name || "Server audio"}\nArtist: Server library`;
+  creditWasAutoFilled = true;
+  restartPreview();
+}
+
 function tintAlpha() {
   return clamp(Number(tintStrength.value) || 0, 0, 100) / 100;
 }
@@ -256,7 +302,7 @@ function wallpaperConfig() {
 }
 
 function doinkQueuePayload() {
-  return {
+  const payload = {
     title: "Manual bump",
     heading: "bump",
     lines: textLineValues(),
@@ -276,6 +322,15 @@ function doinkQueuePayload() {
     effects: selectedEffects(),
     effectIntensity: Number(effectIntensity.value) || 0
   };
+  if (selectedServerAudio?.path) {
+    payload.audio = selectedServerAudio.path;
+    payload.audioStart = Number(audioStart.value) || 0;
+  }
+  if (selectedServerBackground?.path) {
+    payload.background = selectedServerBackground.path;
+    payload.backgroundType = selectedServerBackground.type;
+  }
+  return payload;
 }
 
 function sendBumpToDoinkTV(position) {
@@ -309,7 +364,7 @@ function setCanvasFormat() {
 }
 
 function clearBackgroundMedia() {
-  if (backgroundUrl) URL.revokeObjectURL(backgroundUrl);
+  if (backgroundUrl && backgroundUrl.startsWith("blob:")) URL.revokeObjectURL(backgroundUrl);
   if (backgroundVideo) {
     backgroundVideo.pause();
     backgroundVideo.removeAttribute("src");
@@ -329,6 +384,24 @@ function loadImageBackground(file) {
   backgroundImage.onerror = () => {
     backgroundImage = null;
     status.textContent = "That image could not be loaded.";
+    drawFrame();
+  };
+}
+
+function loadImageBackgroundUrl(asset) {
+  clearBackgroundMedia();
+  selectedServerBackground = asset || null;
+  if (!asset?.path) return;
+  state.usingWallpaper = false;
+  backgroundImage = new Image();
+  backgroundImage.crossOrigin = "anonymous";
+  backgroundUrl = asset.path;
+  backgroundImage.src = backgroundUrl;
+  backgroundImage.onload = drawFrame;
+  backgroundImage.onerror = () => {
+    backgroundImage = null;
+    selectedServerBackground = null;
+    status.textContent = "That server image could not be loaded.";
     drawFrame();
   };
 }
@@ -354,13 +427,51 @@ function loadVideoBackground(file) {
   backgroundVideo.load();
 }
 
+function loadVideoBackgroundUrl(asset) {
+  clearBackgroundMedia();
+  selectedServerBackground = asset || null;
+  if (!asset?.path) return;
+  state.usingWallpaper = false;
+  backgroundVideo = document.createElement("video");
+  backgroundUrl = asset.path;
+  backgroundVideo.src = backgroundUrl;
+  backgroundVideo.crossOrigin = "anonymous";
+  backgroundVideo.muted = true;
+  backgroundVideo.loop = true;
+  backgroundVideo.playsInline = true;
+  backgroundVideo.preload = "auto";
+  backgroundVideo.onloadeddata = () => {
+    backgroundVideo.play().catch(() => {});
+    drawFrame();
+  };
+  backgroundVideo.onerror = () => {
+    backgroundVideo = null;
+    selectedServerBackground = null;
+    status.textContent = "That server video could not be loaded.";
+    drawFrame();
+  };
+  backgroundVideo.load();
+}
+
 function loadBackground(file) {
   state.usingWallpaper = false;
+  selectedServerBackground = null;
   if (file.type.startsWith("video/")) {
     loadVideoBackground(file);
   } else {
     loadImageBackground(file);
   }
+}
+
+function loadServerBackground(asset) {
+  if (!asset) return;
+  if (asset.type === "video") {
+    loadVideoBackgroundUrl(asset);
+  } else {
+    loadImageBackgroundUrl(asset);
+  }
+  status.textContent = `Using server background: ${asset.name || asset.fileName || "Untitled"}.`;
+  restartPreview();
 }
 
 function seededUnit(seed, x, y, salt = 0) {
@@ -1304,6 +1415,11 @@ function keepOutputPreviewLive() {
   animationId = requestAnimationFrame(previewLoop);
 }
 
+function selectedAudioSourceUrl() {
+  if (songInput.files[0]) return URL.createObjectURL(songInput.files[0]);
+  return selectedServerAudio?.path || "";
+}
+
 function seekVideo(video, time) {
   return new Promise((resolve) => {
     if (!video || !Number.isFinite(video.duration) || video.duration === 0) {
@@ -1357,10 +1473,11 @@ async function renderVideo() {
   let generatedVideo = false;
 
   try {
-    if (songInput.files[0]) {
+    const selectedAudioUrl = selectedAudioSourceUrl();
+    if (selectedAudioUrl) {
       audioContext = new AudioContext();
       const destination = audioContext.createMediaStreamDestination();
-      audioElement = new Audio(URL.createObjectURL(songInput.files[0]));
+      audioElement = new Audio(selectedAudioUrl);
       audioElement.crossOrigin = "anonymous";
       audioElement.loop = true;
       audioElement.volume = 0.82;
@@ -1420,7 +1537,7 @@ async function renderVideo() {
     stream.getTracks().forEach((track) => track.stop());
     if (audioElement) {
       audioElement.pause();
-      URL.revokeObjectURL(audioUrl);
+      if (audioUrl.startsWith("blob:")) URL.revokeObjectURL(audioUrl);
     }
     if (audioContext) await audioContext.close();
 
@@ -1439,7 +1556,7 @@ async function renderVideo() {
     console.error(error);
     status.textContent = "Export failed. Try a shorter clip or different audio file.";
     if (audioElement) audioElement.pause();
-    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    if (audioUrl?.startsWith("blob:")) URL.revokeObjectURL(audioUrl);
     if (audioContext && audioContext.state !== "closed") await audioContext.close();
     stream.getTracks().forEach((track) => track.stop());
   } finally {
@@ -1501,20 +1618,91 @@ function addTextLine(value = "") {
   restartPreview();
 }
 
+function optionLabel(asset) {
+  if (!asset) return "";
+  const duration = Number(asset.duration || 0);
+  return duration > 0 ? `${asset.name} (${formatTimecode(duration)})` : asset.name || asset.fileName || asset.path;
+}
+
+function populateAssetSelect(select, assets, placeholder) {
+  select.innerHTML = `<option value="">${placeholder}</option>`;
+  assets.forEach((asset, index) => {
+    const option = document.createElement("option");
+    option.value = String(index);
+    option.textContent = optionLabel(asset);
+    select.append(option);
+  });
+}
+
+async function loadServerAssets() {
+  try {
+    const response = await fetch("/api/bump-assets");
+    if (!response.ok) throw new Error("Server assets unavailable.");
+    const assets = await response.json();
+    const music = Array.isArray(assets.music) ? assets.music : [];
+    const backgrounds = Array.isArray(assets.backgrounds) ? assets.backgrounds : [];
+
+    populateAssetSelect(serverSongSelect, music, music.length ? "Use server song..." : "No server songs found");
+    populateAssetSelect(serverBackgroundSelect, backgrounds, backgrounds.length ? "Use server background..." : "No server backgrounds found");
+    serverSongSelect._assets = music;
+    serverBackgroundSelect._assets = backgrounds;
+
+    if (music.length && !songInput.files[0]) {
+      serverSongSelect.value = "0";
+      configureServerAudio(music[0]);
+      autofillCreditFromServerAudio(music[0]);
+      status.textContent = `Loaded server song: ${music[0].name}.`;
+    }
+    if (backgrounds.length && !imageInput.files[0]) {
+      serverBackgroundSelect.value = "0";
+      loadServerBackground(backgrounds[0]);
+    }
+  } catch (error) {
+    console.warn("Could not load server bump assets", error);
+  }
+}
+
 imageInput.addEventListener("change", () => {
-  if (imageInput.files[0]) loadBackground(imageInput.files[0]);
+  if (imageInput.files[0]) {
+    serverBackgroundSelect.value = "";
+    loadBackground(imageInput.files[0]);
+  }
 });
 
 songInput.addEventListener("change", () => {
   if (songInput.files[0]) {
+    selectedServerAudio = null;
+    serverSongSelect.value = "";
     configureAudioStart(songInput.files[0]);
     autofillCreditFromAudio(songInput.files[0]);
   } else {
     resetAudioStart();
-    if (audioProbeUrl) URL.revokeObjectURL(audioProbeUrl);
-    audioProbeUrl = "";
+    clearAudioProbeUrl();
     previewAudio = null;
   }
+});
+
+serverSongSelect.addEventListener("change", () => {
+  const asset = serverSongSelect._assets?.[Number(serverSongSelect.value)];
+  if (!asset) {
+    selectedServerAudio = null;
+    resetAudioStart();
+    return;
+  }
+  songInput.value = "";
+  configureServerAudio(asset);
+  autofillCreditFromServerAudio(asset);
+  status.textContent = `Using server song: ${asset.name}.`;
+});
+
+serverBackgroundSelect.addEventListener("change", () => {
+  const asset = serverBackgroundSelect._assets?.[Number(serverBackgroundSelect.value)];
+  if (!asset) {
+    selectedServerBackground = null;
+    return;
+  }
+  imageInput.value = "";
+  loadServerBackground(asset);
 });
 
 wallpaperSpacing.addEventListener("input", () => {
@@ -1601,3 +1789,4 @@ window.addEventListener("message", (event) => {
 durationLabel.textContent = `${durationSeconds().toFixed(1)}s`;
 renderWallpaperPreview();
 restartPreview();
+loadServerAssets();

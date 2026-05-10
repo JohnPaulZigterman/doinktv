@@ -12,6 +12,9 @@ const PORT = Number(process.env.PORT || 3000);
 const DATA_DIR = process.env.DOINK_DATA_DIR || path.join(__dirname, "data");
 const MEDIA_DIR = process.env.DOINK_MEDIA_DIR || path.join(__dirname, "media");
 const BUMP_MUSIC_DIR = path.join(MEDIA_DIR, "bump-music");
+const DJ_SOUNDBOARD_DIR = path.join(MEDIA_DIR, "dj-soundboard");
+const DJ_SOUNDBOARD_MANIFEST = path.join(DJ_SOUNDBOARD_DIR, "manifest.json");
+const BUMP_BACKGROUND_EXTENSIONS = /\.(avif|gif|jpe?g|png|webp|mp4|mov|m4v|webm)$/i;
 const HLS_DIR = process.env.DOINK_HLS_DIR || path.join(DATA_DIR, "hls");
 const PUBLIC_DIR = path.join(__dirname, "public");
 const VENDORED_BUMP_GENERATOR_DIR = path.join(__dirname, "vendor", "BumpGenerator");
@@ -20,8 +23,332 @@ const BUMP_GENERATOR_DIR = process.env.BUMP_GENERATOR_DIR
 const STATE_PATH = path.join(DATA_DIR, "state.json");
 const AUTO_BUMP_INTERVAL_MS = 1000 * 60 * 3;
 const AUTO_BUMP_DURATION = 20;
+const BLOCK_BUMP_DURATION = 16;
+const FADE_BREAK_MIN_SECONDS = 60 * 5.5;
+const FADE_BREAK_MIN_SOURCE_DURATION = 60 * 12;
+const FADE_BREAK_MIN_REMAINING_SECONDS = 60 * 4;
+const FADE_BREAK_SCAN_SECONDS = 60 * 24;
+const FADE_BREAK_BUMP_DURATION = 18;
+const FADE_BREAK_MAX_CONCURRENT_PROBES = 2;
 const MIN_QUEUE_VIDEO_ITEMS = 5;
 const CHAOS_AUDIO_PLAYLIST_ID = "PLWL3FzHaRRMkQqUhks8Y9l35rqY_kKCto";
+const WEEKLY_SCHEDULE_LOOKAHEAD_DAYS = 8;
+const WEEKLY_ARCHIVE_IMPORT_LIMIT = 12;
+const WEEKLY_ARCHIVE_EXCLUDE_TERMS = [
+  "alex jones",
+  "conspiracy",
+  "sermon",
+  "shaykh",
+  "quran",
+  "religion",
+  "isis",
+  "terror",
+  "offensive",
+  "adult",
+  "nsfw",
+  "nfsw",
+  "fetish",
+  "sexy",
+  "sex",
+  "nasty",
+  "barely legal",
+  "slave",
+  "dominatrix",
+  "nude",
+  "porn",
+  "erotic",
+  "hate",
+  "tosec",
+  "dat pack",
+  "iso",
+  "dvd transfer",
+  "deleted videos",
+  "conference",
+  "black hat",
+  "shmoocon",
+  "hope -",
+  "patricia",
+  "kevin annett"
+];
+const WEEKLY_BLOCKS = [
+  {
+    id: "the-fridge",
+    name: "THE FRIDGE",
+    folderName: "Weekly - THE FRIDGE",
+    days: [1, 2, 3, 4],
+    time: "20:00",
+    durationMinutes: 180,
+    minDuration: 45,
+    queries: [
+      "independent animation cartoon sketch comedy",
+      "animated short comedy cartoon",
+      "internet animation anthology cartoon",
+      "public access comedy sketch animation"
+    ]
+  },
+  {
+    id: "retro-block",
+    name: "RETRO BLOCK",
+    folderName: "Weekly - RETRO BLOCK",
+    days: [5],
+    time: "20:00",
+    durationMinutes: 180,
+    minDuration: 120,
+    queries: [
+      "classic animation public domain cartoon",
+      "looney tunes public domain cartoon",
+      "popeye public domain cartoon",
+      "retro science fiction television movie"
+    ]
+  },
+  {
+    id: "saturday-morning-cartoons",
+    name: "SATURDAY MORNING CARTOONS",
+    folderName: "Weekly - SATURDAY MORNING CARTOONS",
+    days: [6],
+    time: "08:00",
+    durationMinutes: 240,
+    minDuration: 45,
+    queries: [
+      "saturday morning cartoons public domain",
+      "classic cartoons public domain",
+      "cartoon anthology animation",
+      "vintage animation children television"
+    ]
+  },
+  {
+    id: "de-coffeeschoop",
+    name: "DE COFFEESCHOOP",
+    folderName: "Weekly - DE COFFEESCHOOP",
+    days: [0],
+    time: "11:00",
+    durationMinutes: 180,
+    minDuration: 90,
+    queries: [
+      "public domain music video",
+      "creative commons music video",
+      "live music performance archive",
+      "full album video creative commons"
+    ]
+  },
+  {
+    id: "music-box",
+    name: "MUSIC BOX",
+    folderName: "Weekly - MUSIC BOX",
+    days: [1, 3, 5],
+    time: "16:00",
+    durationMinutes: 120,
+    minDuration: 90,
+    requireAny: ["music", "song", "band", "live", "concert", "performance", "video", "album"],
+    queries: [
+      "music video creative commons",
+      "independent music video",
+      "public access music performance",
+      "experimental music video"
+    ]
+  },
+  {
+    id: "daytime-talk-shows",
+    name: "DAYTIME TALK SHOWS",
+    folderName: "Weekly - DAYTIME TALK SHOWS",
+    days: [1, 2, 3, 4, 5],
+    time: "13:00",
+    durationMinutes: 90,
+    minDuration: 600,
+    requireAny: ["talk", "interview", "show", "conversation", "episode"],
+    queries: [
+      "public access talk show",
+      "community television interview",
+      "local access television talk",
+      "archive talk show interview"
+    ]
+  },
+  {
+    id: "late-night-talk-shows",
+    name: "LATE NIGHT TALK SHOWS",
+    folderName: "Weekly - LATE NIGHT TALK SHOWS",
+    days: [1, 2, 3, 4, 5],
+    time: "23:30",
+    durationMinutes: 120,
+    minDuration: 600,
+    requireAny: ["talk", "show", "comedy", "interview", "space ghost", "cartoon planet"],
+    queries: [
+      "late night talk show public access",
+      "space ghost coast to coast",
+      "public access comedy talk show",
+      "weird talk show archive"
+    ]
+  },
+  {
+    id: "late-night-anime",
+    name: "LATE NIGHT ANIME",
+    folderName: "Weekly - LATE NIGHT ANIME",
+    days: [0, 1, 2, 3, 4, 5, 6],
+    time: "02:00",
+    durationMinutes: 180,
+    minDuration: 600,
+    requireAny: ["anime", "animation", "animated", "ova", "cel", "manga"],
+    queries: [
+      "1990s anime ova cel animation",
+      "90s anime cel animation",
+      "classic anime ova 1990s",
+      "retro anime cel animation"
+    ]
+  }
+];
+
+const WEEKLY_BLOCK_IDENTITIES = {
+  "the-fridge": {
+    heading: "THE FRIDGE",
+    taglines: ["prime time cartoons, sketches, and questionable leftovers", "open the door, lose the plot", "cold cuts from the animated shelf"],
+    scheme: "candy",
+    shapes: "memphis",
+    effects: ["vhs", "chromatic", "flicker"],
+    alignment: "left",
+    placement: "middle",
+    tone: "caption",
+    fontSize: 54,
+    creditText: "DOINKTV AFTER-DINNER STATIC"
+  },
+  "retro-block": {
+    heading: "RETRO BLOCK",
+    taglines: ["old reels, weird signals, familiar dust", "broadcast fossils reanimated", "yesterday's future, badly tuned"],
+    scheme: "broadcast",
+    shapes: "checkerboard",
+    effects: ["scanlines", "vhs", "letterbox"],
+    alignment: "center",
+    placement: "middle",
+    tone: "classic",
+    fontSize: 58,
+    creditText: "ARCHIVE FEED / STAND BY"
+  },
+  "saturday-morning-cartoons": {
+    heading: "SATURDAY MORNING CARTOONS",
+    taglines: ["cereal voltage rising", "remote lost under the couch", "all pajamas, no supervision"],
+    scheme: "citrus",
+    shapes: "starburst",
+    effects: ["flicker", "chromatic"],
+    alignment: "left",
+    placement: "top",
+    tone: "caption",
+    fontSize: 48,
+    creditText: "SAT AM CARTOON RELAY"
+  },
+  "de-coffeeschoop": {
+    heading: "DE COFFEESCHOOP",
+    taglines: ["three hours of full-song bump energy", "steam, static, and long grooves", "no rush, just signal"],
+    scheme: "mint",
+    shapes: "plaid",
+    effects: ["noise", "scanlines"],
+    alignment: "right",
+    placement: "middle",
+    tone: "washed",
+    fontSize: 52,
+    creditText: "FULL SONG BUMPS EVENTUALLY"
+  },
+  "music-box": {
+    heading: "MUSIC BOX",
+    taglines: ["music television from the wrong alley", "request line melted, videos remain", "all hooks, no chaperone"],
+    scheme: "miami",
+    shapes: "diamonds",
+    effects: ["chromatic", "flicker"],
+    alignment: "center",
+    placement: "bottom",
+    tone: "caption",
+    fontSize: 56,
+    creditText: "MUSIC BOX / VIDEO CARTS"
+  },
+  "daytime-talk-shows": {
+    heading: "DAYTIME TALK SHOWS",
+    taglines: ["chairs, callers, strong opinions", "local access at lunch volume", "the sofa has the floor"],
+    scheme: "paper",
+    shapes: "lines",
+    effects: ["scanlines"],
+    alignment: "left",
+    placement: "middle",
+    tone: "caption",
+    fontSize: 48,
+    creditText: "PUBLIC ACCESS NERVE CENTER"
+  },
+  "late-night-talk-shows": {
+    heading: "LATE NIGHT TALK SHOWS",
+    taglines: ["desk lights after midnight", "monologue fumes and orbiting callers", "the guest is lost backstage"],
+    scheme: "midnight",
+    shapes: "terrazzo",
+    effects: ["noise", "vhs", "letterbox"],
+    alignment: "left",
+    placement: "bottom",
+    tone: "classic",
+    fontSize: 52,
+    creditText: "AFTER HOURS CALL-IN STATIC"
+  },
+  "late-night-anime": {
+    heading: "LATE NIGHT ANIME",
+    taglines: ["cel shade after 2AM", "OVA hour, tracking unstable", "subbed, dubbed, half-awake"],
+    scheme: "arcade",
+    shapes: "argyle",
+    effects: ["vhs", "chromatic", "scanlines"],
+    alignment: "right",
+    placement: "middle",
+    tone: "caption",
+    fontSize: 54,
+    creditText: "2AM CEL-SHADED TRANSMISSION"
+  }
+};
+
+const BUMP_CLASSES = [
+  {
+    id: "auto-bump",
+    label: "Auto Schedule Bump",
+    status: "active",
+    description: "Short generated queue filler that previews upcoming programming."
+  },
+  {
+    id: "manual-bump",
+    label: "Manual Bump",
+    status: "active",
+    description: "Operator-built bump from the bump generator."
+  },
+  {
+    id: "block-bump",
+    label: "Block Bump",
+    status: "active",
+    description: "Short identity bump attached to a weekly programming block."
+  },
+  {
+    id: "fade-break-bump",
+    label: "Fade Break Bump",
+    status: "active",
+    description: "Best-effort TV-style interstitial inserted at detected fade-outs in longer programs."
+  },
+  {
+    id: "full-song-bump",
+    label: "Full Song Bump",
+    status: "placeholder",
+    description: "Future long-form music/video bump class for music-heavy blocks."
+  },
+  {
+    id: "legal-id-bump",
+    label: "Legal ID Bump",
+    status: "placeholder",
+    description: "Future station ID break with call sign/legal-ID flavor."
+  },
+  {
+    id: "call-in-bump",
+    label: "Call-In Bump",
+    status: "placeholder",
+    description: "Future break built around viewer/chat/caller material."
+  },
+  {
+    id: "weather-bump",
+    label: "Weather Bump",
+    status: "placeholder",
+    description: "Future fake/local/weather-style interstitial slot."
+  }
+];
+
+const PROGRAM_VOTE_MAX_OPTIONS = 4;
+const EXPLICIT_ARCHIVE_PATTERN = /\b(?:hentai|porn(?:o|ography)?|xxx|x-rated|adult\s+video|sex\s+tape|hardcore|explicit\s+sex|uncensored\s+sex|erotic\s+massage|blowjob|fellatio|cumshot|creampie|bukkake|gangbang|handjob|deepthroat|anal\s+sex|pussy|milf|barely\s+legal|onlyfans)\b/i;
 
 const ADMIN_USER = process.env.ADMIN_USER || "DoinkWizard";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ChipTanaka12!@";
@@ -64,10 +391,20 @@ const FX_PRESETS = {
   "illegal-operation": { label: "Illegal operation", duration: 10 },
   "playlist-audio": { label: "Random playlist audio", duration: 90 },
   "visual-adjust": { label: "Visual abuse", duration: 90 },
+  "auto-filter-sweep": { label: "Auto filter sweep", duration: 12 },
   "source-overlay": { label: "Source overlay", duration: 45 },
   "audio-desync": { label: "Audio desync", duration: 10 },
   "amen-break": { label: "Amen break", duration: 6 },
   "radio-sting": { label: "FM morning radio", duration: 7 },
+  "legal-id": { label: "Legal ID cart", duration: 8 },
+  "cart-wall": { label: "Cart wall", duration: 6 },
+  "record-scratch": { label: "Record scratch", duration: 4 },
+  "dj-mic": { label: "DJ mic live", duration: 60 },
+  "frequency-drift": { label: "Frequency drift", duration: 60 },
+  "caller-line": { label: "Caller line", duration: 14 },
+  "party-damage": { label: "Party damage", duration: 60 },
+  "dub-siren": { label: "Dub siren", duration: 8 },
+  "soundboard-sample": { label: "Soundboard cart", duration: 8 },
   hum: { label: "Audio hum", duration: 10 },
   countdown: { label: "Random countdown", duration: 10 },
   gun: { label: "Shoot the stream", duration: 4 },
@@ -105,14 +442,34 @@ const FX_PRESETS = {
   beer: { label: "Beer button", duration: 10 },
   lsd: { label: "LSD button", duration: 12 }
 };
+const LEGAL_ID_CARTS = [
+  { call: "KDKA", city: "Pittsburgh", note: "historic AM pioneer" },
+  { call: "WBCN", city: "Boston", note: "former Boston rock call sign" },
+  { call: "WLIR", city: "Garden City", note: "former Long Island new-wave call sign" },
+  { call: "WNEW-FM", city: "New York", note: "former progressive rock identity" },
+  { call: "WJZ", city: "New York", note: "former New York AM call sign" },
+  { call: "WYNY", city: "New York", note: "defunct New York country identity" }
+];
+const CART_WALL_PRESETS = [
+  "airhorn",
+  "rewind",
+  "laser",
+  "siren",
+  "needle-drop",
+  "bad-jingle",
+  "panic-button"
+];
 
 const sessions = new Map();
 const sseClients = new Set();
+const adminSseClients = new Set();
 const chatClients = new Set();
 let timelineSaveNeeded = false;
+let adminActivityUntil = 0;
 const autoIngestQueue = [];
 const autoIngestQueued = new Set();
 const autoIngestInFlight = new Set();
+const fadeBreakDetectionInFlight = new Set();
 let autoIngestPumpActive = false;
 const ffmpegPath = process.env.FFMPEG_PATH || ffmpegInstaller.path || "ffmpeg";
 let hlsPlayout = {
@@ -126,14 +483,17 @@ let state = {
   sources: [],
   sourceFolders: [],
   schedule: [],
+  weeklyBlocks: [],
   liveQueue: [],
   broadcastMode: "scheduled",
   lastAutoBumpAt: 0,
   bumpMusic: [],
   users: [],
   chat: [],
+  programVotes: [],
   nowPlaying: null,
-  activeFx: []
+  activeFx: [],
+  fadeBreaks: {}
 };
 
 const mimeTypes = {
@@ -161,14 +521,17 @@ async function ensureState() {
     state.sources ||= [];
     state.sourceFolders ||= [];
     state.schedule ||= [];
+    state.weeklyBlocks ||= [];
     state.liveQueue ||= [];
     state.broadcastMode = state.broadcastMode === "queue" ? "queue" : "scheduled";
     state.lastAutoBumpAt ||= 0;
     state.bumpMusic ||= [];
     state.users ||= [];
     state.chat ||= [];
+    state.programVotes ||= [];
     state.nowPlaying ||= null;
     state.activeFx ||= [];
+    state.fadeBreaks ||= {};
     state.sourceFolders = state.sourceFolders.map((folder) => ({
       ...folder,
       randomEligible: folder.randomEligible !== false
@@ -178,11 +541,40 @@ async function ensureState() {
       randomEligible: source.randomEligible ?? source.type !== "youtube"
     }));
   }
+  syncWeeklyBlockTemplates();
 }
 
 async function saveState() {
   await mkdir(DATA_DIR, { recursive: true });
   await writeFile(STATE_PATH, `${JSON.stringify(state, null, 2)}\n`);
+}
+
+function syncWeeklyBlockTemplates() {
+  const existing = new Map((state.weeklyBlocks || []).map((block) => [block.id, block]));
+  state.weeklyBlocks = WEEKLY_BLOCKS.map((template) => ({
+    ...template,
+    ...(existing.get(template.id) || {}),
+    identity: weeklyBlockIdentity(template),
+    enabled: existing.get(template.id)?.enabled !== false,
+    folderName: template.folderName,
+    queries: template.queries
+  }));
+}
+
+function weeklyBlockIdentity(block = {}) {
+  const identity = WEEKLY_BLOCK_IDENTITIES[block.id] || {};
+  return {
+    heading: identity.heading || block.name || "DOINKTV",
+    taglines: Array.isArray(identity.taglines) && identity.taglines.length ? identity.taglines : ["more strange programming shortly"],
+    scheme: identity.scheme || "broadcast",
+    shapes: identity.shapes || "mixed",
+    effects: Array.isArray(identity.effects) ? identity.effects : ["scanlines"],
+    alignment: identity.alignment || "left",
+    placement: identity.placement || "middle",
+    tone: identity.tone || "caption",
+    fontSize: identity.fontSize || 52,
+    creditText: identity.creditText || "DOINKTV BLOCK BUMP"
+  };
 }
 
 function sendJson(res, status, body) {
@@ -211,6 +603,10 @@ function isAdmin(req) {
   return getSession(req)?.role === "admin";
 }
 
+function markAdminActivity() {
+  adminActivityUntil = Date.now() + 30000;
+}
+
 function getSession(req) {
   const token = parseCookies(req).doink_session;
   const session = token && sessions.get(token);
@@ -223,7 +619,10 @@ function getSession(req) {
 }
 
 function requireAdmin(req, res) {
-  if (isAdmin(req)) return true;
+  if (isAdmin(req)) {
+    markAdminActivity();
+    return true;
+  }
   sendJson(res, 401, { error: "Admin login required." });
   return false;
 }
@@ -355,6 +754,10 @@ function normalizeInternetArchiveId(input) {
 
 function archiveDownloadUrl(identifier, fileName) {
   return `https://archive.org/download/${encodeURIComponent(identifier)}/${String(fileName || "").split("/").map(encodeURIComponent).join("/")}`;
+}
+
+function encodeArchiveFilePath(fileName) {
+  return String(fileName || "").split("/").map(encodeURIComponent).join("/");
 }
 
 function normalizeSearchQuery(value) {
@@ -533,6 +936,7 @@ async function searchInternetArchiveSources(query, rows = 10) {
   ["identifier", "title", "description", "creator", "date", "year", "downloads", "publicdate"].forEach((field) => {
     search.searchParams.append("fl[]", field);
   });
+  search.searchParams.append("fl[]", "subject");
   search.searchParams.set("rows", String(Math.max(1, Math.min(20, Number(rows) || 10))));
   search.searchParams.set("page", "1");
   search.searchParams.set("sort[]", "downloads desc");
@@ -556,6 +960,7 @@ async function internetArchiveSearchResultForDoc(doc = {}) {
   if (!file) return null;
   const title = String(doc.title || metadata.metadata?.title || archiveId).trim();
   const description = Array.isArray(doc.description) ? doc.description.join(" ") : String(doc.description || "");
+  const subject = Array.isArray(doc.subject) ? doc.subject.join(", ") : String(doc.subject || "");
   return {
     archiveId,
     archiveFile: file.name,
@@ -569,6 +974,7 @@ async function internetArchiveSearchResultForDoc(doc = {}) {
     creator: Array.isArray(doc.creator) ? doc.creator.join(", ") : String(doc.creator || ""),
     year: String(doc.year || doc.date || "").slice(0, 12),
     downloads: Number(doc.downloads || 0),
+    subject,
     description: description.replace(/\s+/g, " ").trim().slice(0, 220)
   };
 }
@@ -591,6 +997,77 @@ function chooseInternetArchiveVideoFiles(item = {}, limit = 50) {
     .filter((file) => isInternetArchiveVideoFile(file))
     .sort((a, b) => internetArchiveFileScore(b) - internetArchiveFileScore(a))
     .slice(0, Math.max(1, limit));
+}
+
+function chooseEnglishCaptionFile(item = {}, archiveFile = "") {
+  const files = Array.isArray(item.files) ? item.files : [];
+  const videoBase = String(archiveFile || "").replace(/\.[^.]+$/, "").toLowerCase();
+  return files
+    .filter((file) => isInternetArchiveCaptionFile(file))
+    .map((file) => ({ file, score: internetArchiveCaptionScore(file, videoBase) }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score)[0]?.file || null;
+}
+
+function isInternetArchiveCaptionFile(file = {}) {
+  const name = String(file.name || "");
+  const format = String(file.format || "");
+  if (!/\.(srt|vtt)$/i.test(name)) return false;
+  return /(subrip|subtitle|caption|webvtt|vtt|srt)/i.test(`${format} ${name}`);
+}
+
+function internetArchiveCaptionScore(file = {}, videoBase = "") {
+  const name = String(file.name || "");
+  const lower = name.toLowerCase();
+  let score = /\.(vtt)$/i.test(name) ? 16 : 12;
+  if (/(^|[._ -])(en|eng|english|en-us|en_us)([._ -]|$)/i.test(lower)) score += 60;
+  if (!/(^|[._ -])(en|eng|english|en-us|en_us)([._ -]|$)/i.test(lower) && /(^|[._ -])(jp|jpn|ja|es|spa|fr|fre|de|ger|ita|pt|rus)([._ -]|$)/i.test(lower)) score -= 80;
+  if (videoBase) {
+    const captionBase = lower.replace(/\.[^.]+$/, "");
+    if (captionBase.includes(videoBase.slice(0, 32)) || videoBase.includes(captionBase.slice(0, 32))) score += 25;
+  }
+  if (/auto|machine|whisper/i.test(lower)) score -= 8;
+  return score;
+}
+
+function srtToWebVtt(text = "") {
+  return `WEBVTT\n\n${String(text)
+    .replace(/^\uFEFF/, "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .replace(/^\d+\n(?=\d\d:\d\d:\d\d[,\.]\d{3}\s+-->\s+)/gm, "")
+    .replace(/(\d\d:\d\d:\d\d),(\d{3})/g, "$1.$2")
+    .trim()}\n`;
+}
+
+async function captionInfoForSourceId(sourceId = "") {
+  const source = state.sources.find((item) => item.id === sourceId);
+  if (!source || source.type !== "internet-archive" || !source.archiveId) return { available: false };
+  const metadata = await loadInternetArchiveMetadata(source.archiveId);
+  const file = chooseEnglishCaptionFile(metadata, source.archiveFile);
+  if (!file) return { available: false };
+  const params = new URLSearchParams({ sourceId: source.id, file: file.name });
+  return {
+    available: true,
+    label: "English",
+    srclang: "en",
+    file: file.name,
+    src: `/api/captions/file?${params}`
+  };
+}
+
+async function captionFileForRequest(sourceId = "", captionFile = "") {
+  const source = state.sources.find((item) => item.id === sourceId);
+  if (!source || source.type !== "internet-archive" || !source.archiveId) throw new Error("No caption source is available.");
+  const metadata = await loadInternetArchiveMetadata(source.archiveId);
+  const file = chooseEnglishCaptionFile(metadata, source.archiveFile);
+  if (!file || file.name !== captionFile) throw new Error("That caption file is not available.");
+  const response = await fetch(archiveDownloadUrl(source.archiveId, file.name), {
+    headers: { "user-agent": "DoinkTV Caption Loader" }
+  });
+  if (!response.ok) throw new Error("Could not load captions.");
+  const text = await response.text();
+  return /\.vtt$/i.test(file.name) && /^\s*WEBVTT/i.test(text) ? text : srtToWebVtt(text);
 }
 
 function isInternetArchiveVideoFile(file = {}) {
@@ -709,9 +1186,13 @@ async function importInternetArchiveItemFiles(archiveId, body = {}, limit = 50) 
 
 function publicProgram() {
   maintainBroadcastTimeline();
+  applyDetectedFadeBreaks();
   const program = programSnapshot();
+  queueFadeBreakDetectionForProgram(program);
   return {
     ...program,
+    audience: publicAudience(),
+    votePoll: publicProgramVotePoll(program.live),
     fx: activeBroadcastFx(),
     stream: {
       url: "/stream/live.m3u8",
@@ -721,9 +1202,266 @@ function publicProgram() {
   };
 }
 
+function publicProgramVotePoll(live) {
+  if (!live?.id || !live.source) return null;
+  if (isClearlyPornographicArchiveCandidate({ ...live.source, title: live.title || live.source.title })) return null;
+  const poll = ensureProgramVotePoll(live);
+  maybeQueueComparableFilmSuggestions(poll, live);
+  return publicVotePoll(poll);
+}
+
+function ensureProgramVotePoll(live) {
+  state.programVotes ||= [];
+  const pollId = `program:${live.id}`;
+  let poll = state.programVotes.find((item) => item.id === pollId);
+  if (!poll) {
+    poll = {
+      id: pollId,
+      programId: live.id,
+      sourceId: live.source.id,
+      title: live.title || live.source.title || "Current program",
+      startAt: live.startAt,
+      duration: live.duration,
+      weeklyBlockId: live.weeklyBlockId || "",
+      weeklyBlockName: live.weeklyBlockName || "",
+      isMovie: isMovieLikeProgram(live),
+      isShow: isShowLikeProgram(live),
+      suggestionsStatus: "idle",
+      suggestions: [],
+      votes: [],
+      createdAt: Date.now()
+    };
+    state.programVotes.push(poll);
+    state.programVotes = state.programVotes
+      .filter((item) => Date.now() - Number(item.createdAt || 0) < 1000 * 60 * 60 * 24 * 45)
+      .slice(-200);
+    timelineSaveNeeded = true;
+  }
+  const isMovie = isMovieLikeProgram(live);
+  const isShow = isShowLikeProgram(live);
+  if (poll.isMovie !== isMovie || poll.isShow !== isShow) {
+    poll.isMovie = isMovie;
+    poll.isShow = isShow;
+    timelineSaveNeeded = true;
+  }
+  return poll;
+}
+
+function isMovieLikeProgram(live = {}) {
+  const source = live.source || {};
+  const title = `${live.title || ""} ${source.title || ""}`.toLowerCase();
+  return source.type === "internet-archive"
+    && Number(live.duration || source.duration || 0) >= 40 * 60
+    && !/(episode|ep\.?\s*\d+|cartoon|short|music video|talk show|interview)/i.test(title);
+}
+
+function isShowLikeProgram(live = {}) {
+  if (isMovieLikeProgram(live)) return false;
+  const source = live.source || {};
+  const title = `${live.title || ""} ${source.title || ""} ${source.archiveFile || ""}`.toLowerCase();
+  return source.type === "internet-archive"
+    && (Number(live.duration || source.duration || 0) < 40 * 60
+      || /(episode|ep\.?\s*\d+|cartoon|short|series|show|talk show|interview|ova|serial)/i.test(title));
+}
+
+function publicVotePoll(poll = {}) {
+  const options = votePollOptions(poll);
+  const counts = Object.fromEntries(options.map((option) => [option.id, 0]));
+  for (const vote of poll.votes || []) {
+    if (vote?.optionId in counts) counts[vote.optionId] += 1;
+  }
+  const totalVotes = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  return {
+    id: poll.id,
+    title: poll.title,
+    weeklyBlockName: poll.weeklyBlockName,
+    isMovie: Boolean(poll.isMovie),
+    isShow: Boolean(poll.isShow),
+    suggestionsStatus: poll.suggestionsStatus || "idle",
+    options: options.map((option) => ({
+      ...option,
+      votes: counts[option.id] || 0
+    })),
+    totalVotes
+  };
+}
+
+function votePollOptions(poll = {}) {
+  const options = [
+    ...(poll.isShow ? [{
+      id: "next-episode",
+      type: "slot",
+      label: "Next episode",
+      description: "Continue"
+    }] : []),
+    {
+      id: "keep-slot",
+      type: "slot",
+      label: "More like this",
+      description: "Same vibe"
+    },
+    {
+      id: "open-slot",
+      type: "slot",
+      label: "Open slot",
+      description: "Change it up"
+    }
+  ];
+  if (poll.isMovie) {
+    for (const suggestion of cleanVoteSuggestions(poll.suggestions || [])) {
+      options.push({
+        id: `archive:${suggestion.archiveId}:${suggestion.archiveFile}`,
+        type: "archive-film",
+        label: suggestion.title || suggestion.fileTitle || "Comparable film",
+        description: [suggestion.year, suggestion.creator].filter(Boolean).join(" - "),
+        url: suggestion.url,
+        archiveId: suggestion.archiveId,
+        archiveFile: suggestion.archiveFile,
+        duration: suggestion.duration
+      });
+    }
+  }
+  return options.slice(0, PROGRAM_VOTE_MAX_OPTIONS);
+}
+
+function maybeQueueComparableFilmSuggestions(poll, live) {
+  if (!poll?.isMovie || poll.suggestionsStatus !== "idle" || (poll.suggestions || []).length) return;
+  poll.suggestionsStatus = "loading";
+  timelineSaveNeeded = true;
+  comparableFilmSuggestions(live)
+    .then(async (suggestions) => {
+      const current = (state.programVotes || []).find((item) => item.id === poll.id);
+      if (!current) return;
+      current.suggestions = cleanVoteSuggestions(suggestions);
+      current.suggestionsStatus = current.suggestions.length ? "ready" : "empty";
+      await saveState();
+      broadcastProgram();
+    })
+    .catch(async () => {
+      const current = (state.programVotes || []).find((item) => item.id === poll.id);
+      if (!current) return;
+      current.suggestions = [];
+      current.suggestionsStatus = "error";
+      await saveState();
+      broadcastProgram();
+    });
+}
+
+async function comparableFilmSuggestions(live = {}) {
+  const source = live.source || {};
+  const query = comparableArchiveQuery(live);
+  const candidates = await searchInternetArchiveSources(query, 20);
+  const currentKey = `${source.archiveId || ""}:${source.archiveFile || ""}`;
+  return candidates
+    .filter((candidate) => Number(candidate.duration || 0) >= 40 * 60)
+    .filter((candidate) => `${candidate.archiveId}:${candidate.archiveFile}` !== currentKey)
+    .filter((candidate) => comparableFilmCandidateFits(live, candidate))
+    .filter((candidate) => !isClearlyPornographicArchiveCandidate(candidate))
+    .slice(0, PROGRAM_VOTE_MAX_OPTIONS - 2);
+}
+
+function comparableArchiveQuery(live = {}) {
+  const block = `${live.weeklyBlockId || ""} ${live.weeklyBlockName || ""}`.toLowerCase();
+  if (block.includes("anime")) return "anime ova";
+  const title = live.title || live.source?.title || "";
+  return String(title || "")
+    .replace(/\b(19|20)\d{2}\b/g, "")
+    .replace(/\b(vhs|dubbed|english|espanol|spanish|full|movie|film|feature|late|night|anime)\b/gi, " ")
+    .replace(/[^a-z0-9 ]+/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter((word) => word.length > 2)
+    .slice(0, 5)
+    .join(" ") || "feature film";
+}
+
+function comparableFilmCandidateFits(live = {}, candidate = {}) {
+  const haystack = [
+    candidate.title,
+    candidate.fileTitle,
+    candidate.creator,
+    candidate.subject,
+    candidate.description,
+    candidate.archiveId
+  ].join(" ").toLowerCase();
+  if (isClearlyPornographicArchiveCandidate(candidate)) return false;
+  if (/(gamevideoarchive|video game|commercials?|miniseries|episode|newsreel|trailer|sample reel|conference)/i.test(haystack)) return false;
+  const block = `${live.weeklyBlockId || ""} ${live.weeklyBlockName || ""}`.toLowerCase();
+  if (block.includes("anime")) return /(anime|ova|manga|japan|japanese|toonami|animation)/i.test(haystack);
+  return true;
+}
+
+function cleanVoteSuggestions(suggestions = []) {
+  const seen = new Set();
+  return suggestions.filter((suggestion) => {
+    const key = `${suggestion.archiveId || ""}:${suggestion.archiveFile || ""}`;
+    if (!suggestion.archiveId || !suggestion.archiveFile || seen.has(key)) return false;
+    seen.add(key);
+    return !isClearlyPornographicArchiveCandidate(suggestion);
+  });
+}
+
+function isClearlyPornographicArchiveCandidate(candidate = {}) {
+  const haystack = [
+    candidate.title,
+    candidate.fileTitle,
+    candidate.creator,
+    candidate.subject,
+    candidate.description,
+    candidate.archiveId,
+    candidate.archiveFile,
+    candidate.url
+  ].filter(Boolean).join(" ");
+  return EXPLICIT_ARCHIVE_PATTERN.test(haystack);
+}
+
+async function castProgramVote(body = {}) {
+  const live = programSnapshot().live;
+  if (!live) throw new Error("There is no live program to vote on.");
+  if (isClearlyPornographicArchiveCandidate({ ...live.source, title: live.title || live.source?.title })) {
+    throw new Error("Voting is not available for this program.");
+  }
+  const poll = ensureProgramVotePoll(live);
+  const optionId = String(body.optionId || "").trim();
+  if (!votePollOptions(poll).some((option) => option.id === optionId)) throw new Error("That vote option is not available.");
+  const voterId = String(body.voterId || "").replace(/[^a-z0-9-]/gi, "").slice(0, 80);
+  if (!voterId) throw new Error("Missing voter id.");
+  poll.votes = (poll.votes || []).filter((vote) => vote.voterId !== voterId);
+  poll.votes.push({ voterId, optionId, createdAt: Date.now() });
+  await saveState();
+  broadcastProgram();
+  return publicVotePoll(poll);
+}
+
+function publicAudience() {
+  return {
+    online: friendlyOnlineCount()
+  };
+}
+
+function friendlyOnlineCount() {
+  const realConnections = sseClients.size;
+  const windowSeed = Math.floor(Date.now() / (1000 * 60 * 5));
+  const vibeByte = crypto
+    .createHash("sha1")
+    .update(`doinktv:${windowSeed}`)
+    .digest()[0];
+  const houseBoost = 4 + (vibeByte % 5);
+  return realConnections + houseBoost;
+}
+
+function hasAdminOnline() {
+  return adminSseClients.size > 0 || Date.now() < adminActivityUntil;
+}
+
 function activeBroadcastFx() {
   const now = Date.now();
-  state.activeFx = (state.activeFx || []).filter((fx) => !Number.isFinite(Number(fx.expiresAt)) || fx.expiresAt > now);
+  const beforeCount = (state.activeFx || []).length;
+  state.activeFx = hasAdminOnline()
+    ? (state.activeFx || []).filter((fx) => !Number.isFinite(Number(fx.expiresAt)) || fx.expiresAt > now)
+    : [];
+  if (state.activeFx.length !== beforeCount) timelineSaveNeeded = true;
   return state.activeFx;
 }
 
@@ -743,13 +1481,17 @@ function programSnapshot() {
   return {
     serverTime: now,
     mode: state.broadcastMode,
-    live: live
-      ? {
+        live: live
+          ? {
           id: live.id,
           title: live.title || live.source.title,
         startAt: live.startAt,
-        duration: live.duration,
+          duration: live.duration,
         offset: Math.max(0, (now - live.startAt) / 1000),
+        sourceOffset: Math.max(0, Number(live.sourceOffset || 0)),
+        lane: live.broadcastLane || "scheduled",
+        weeklyBlockId: live.weeklyBlockId || "",
+        weeklyBlockName: live.weeklyBlockName || "",
         source: live.source
         }
       : null,
@@ -759,6 +1501,10 @@ function programSnapshot() {
           title: next.title || next.source.title,
           startAt: next.startAt,
           duration: next.duration,
+          sourceOffset: Math.max(0, Number(next.sourceOffset || 0)),
+          lane: next.broadcastLane || "scheduled",
+          weeklyBlockId: next.weeklyBlockId || "",
+          weeklyBlockName: next.weeklyBlockName || "",
           source: next.source
         }
       : null
@@ -868,6 +1614,7 @@ function createAutoBumpSource(afterEntryEnd, upcomingEntries = null) {
     folderId: "",
     duration: AUTO_BUMP_DURATION,
     bump: {
+      kind: "auto-bump",
       heading: "coming up",
       lines,
       alignment: "left",
@@ -895,6 +1642,283 @@ function autoBumpLines(afterEntryEnd, upcoming) {
     : [{ title: "More DoinkTV shortly", time: formatEstTime(afterEntryEnd) }];
 }
 
+function queueFadeBreakDetectionForProgram(program = {}) {
+  const now = Date.now();
+  const entries = activeBroadcastEntries()
+    .map((entry) => ({
+      ...entry,
+      source: state.sources.find((source) => source.id === entry.sourceId)
+    }))
+    .filter((entry) => entry.source && entryEnd(entry) > now)
+    .filter((entry) => fadeBreakEntryEligible(entry, entry.source))
+    .slice(0, 3);
+
+  if (program.live?.source && fadeBreakEntryEligible(program.live, program.live.source)) {
+    entries.unshift(program.live);
+  }
+  if (program.next?.source && fadeBreakEntryEligible(program.next, program.next.source)) {
+    entries.push(program.next);
+  }
+
+  const seen = new Set();
+  for (const entry of entries) {
+    const source = entry.source;
+    if (!source?.id || seen.has(source.id)) continue;
+    seen.add(source.id);
+    const cached = state.fadeBreaks?.[source.id];
+    if (cached?.status === "ready" || cached?.status === "none") continue;
+    if (cached?.status === "pending" && fadeBreakDetectionInFlight.has(source.id)) continue;
+    if (fadeBreakDetectionInFlight.size >= FADE_BREAK_MAX_CONCURRENT_PROBES) break;
+    startFadeBreakDetection(source);
+  }
+}
+
+function fadeBreakEntryEligible(entry = {}, source = {}) {
+  if (!source || isBumpSource(source) || source.type === "youtube") return false;
+  if (!["local", "internet-archive"].includes(source.type)) return false;
+  if (entry.autoBump || entry.blockBump || entry.fadeBreakBump || entry.fadeBreakResume || entry.fadeBreakSplit) return false;
+  const sourceDuration = Number(source.duration || entry.duration || 0);
+  const entryDuration = Number(entry.duration || 0);
+  if (sourceDuration < FADE_BREAK_MIN_SOURCE_DURATION || entryDuration < FADE_BREAK_MIN_SOURCE_DURATION) return false;
+  const sourceOffset = Number(entry.sourceOffset || 0);
+  return sourceOffset < sourceDuration - FADE_BREAK_MIN_REMAINING_SECONDS;
+}
+
+function startFadeBreakDetection(source = {}) {
+  if (!source.id || fadeBreakDetectionInFlight.has(source.id)) return;
+  if (fadeBreakDetectionInFlight.size >= FADE_BREAK_MAX_CONCURRENT_PROBES) return;
+  fadeBreakDetectionInFlight.add(source.id);
+  state.fadeBreaks ||= {};
+  state.fadeBreaks[source.id] = {
+    status: "pending",
+    updatedAt: Date.now()
+  };
+  timelineSaveNeeded = true;
+
+  detectSourceFadeBreak(source)
+    .then(async (breakAt) => {
+      state.fadeBreaks[source.id] = breakAt
+        ? { status: "ready", breakAt, updatedAt: Date.now() }
+        : { status: "none", updatedAt: Date.now() };
+      fadeBreakDetectionInFlight.delete(source.id);
+      applyDetectedFadeBreaks();
+      await saveState();
+      broadcastProgram();
+    })
+    .catch(async (error) => {
+      state.fadeBreaks[source.id] = {
+        status: "error",
+        message: String(error.message || "Fade detection failed.").slice(0, 180),
+        updatedAt: Date.now()
+      };
+      fadeBreakDetectionInFlight.delete(source.id);
+      await saveState();
+    });
+}
+
+async function detectSourceFadeBreak(source = {}) {
+  const inputPath = fadeBreakInputPath(source);
+  if (!inputPath) return null;
+  const duration = Number(source.duration || 0);
+  const scanStart = FADE_BREAK_MIN_SECONDS;
+  const scanDuration = Math.min(FADE_BREAK_SCAN_SECONDS, Math.max(0, duration - scanStart - FADE_BREAK_MIN_REMAINING_SECONDS));
+  if (scanDuration < 45) return null;
+  const networkInputArgs = source.type === "internet-archive"
+    ? ["-reconnect", "1", "-reconnect_streamed", "1", "-reconnect_delay_max", "5", "-rw_timeout", "15000000"]
+    : [];
+  const stderr = await runFadeBreakProbe([
+    "-hide_banner",
+    "-nostdin",
+    "-loglevel", "info",
+    ...networkInputArgs,
+    "-ss", String(scanStart),
+    "-i", inputPath,
+    "-t", String(scanDuration),
+    "-an",
+    "-vf", "blackdetect=d=0.22:pix_th=0.10",
+    "-f", "null",
+    "-"
+  ], 1000 * 55);
+  return parseFadeBreakProbe(stderr, scanStart, duration);
+}
+
+function fadeBreakInputPath(source = {}) {
+  if (source.type === "internet-archive") return source.fileUrl || (source.archiveId && source.archiveFile ? archiveDownloadUrl(source.archiveId, source.archiveFile) : "");
+  if (source.type === "local") {
+    const filePath = mediaPathFromSource(source.path);
+    return filePath && existsSync(filePath) ? filePath : "";
+  }
+  return "";
+}
+
+function runFadeBreakProbe(args, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(ffmpegPath, args, { windowsHide: true });
+    let stderr = "";
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      child.kill("SIGTERM");
+      resolve(stderr);
+    }, timeoutMs);
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+      if (stderr.length > 20000) stderr = stderr.slice(-20000);
+    });
+    child.on("error", (error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(error);
+    });
+    child.on("exit", () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(stderr);
+    });
+  });
+}
+
+function parseFadeBreakProbe(stderr = "", scanStart = FADE_BREAK_MIN_SECONDS, duration = 0) {
+  const matches = [...String(stderr).matchAll(/black_start:([\d.]+)\s+black_end:([\d.]+)\s+black_duration:([\d.]+)/g)];
+  for (const match of matches) {
+    const rawStart = Number(match[1]);
+    const rawEnd = Number(match[2]);
+    const blackDuration = Number(match[3]);
+    if (!Number.isFinite(rawEnd) || !Number.isFinite(blackDuration) || blackDuration < 0.18) continue;
+    const absoluteEnd = rawEnd < scanStart - 1 ? rawEnd + scanStart : rawEnd;
+    if (absoluteEnd < FADE_BREAK_MIN_SECONDS) continue;
+    if (duration && absoluteEnd > duration - FADE_BREAK_MIN_REMAINING_SECONDS) continue;
+    return Math.round(absoluteEnd);
+  }
+  return null;
+}
+
+function applyDetectedFadeBreaks() {
+  state.fadeBreaks ||= {};
+  const changed = applyDetectedFadeBreaksToCollection("schedule") || applyDetectedFadeBreaksToCollection("liveQueue");
+  if (!changed) return false;
+  timelineSaveNeeded = true;
+  refreshAutoBumpLines(state.liveQueue);
+  return true;
+}
+
+function applyDetectedFadeBreaksToCollection(collectionName) {
+  const entries = Array.isArray(state[collectionName]) ? state[collectionName] : [];
+  let changed = false;
+  const rebuilt = [];
+  let timelineShiftMs = 0;
+  const now = Date.now();
+
+  for (const originalEntry of entries.sort((a, b) => a.startAt - b.startAt)) {
+    const entry = {
+      ...originalEntry,
+      startAt: Number(originalEntry.startAt || 0) + timelineShiftMs
+    };
+    const source = state.sources.find((item) => item.id === entry.sourceId);
+    const cached = source?.id ? state.fadeBreaks[source.id] : null;
+    const breakAt = Number(cached?.breakAt);
+    if (cached?.status !== "ready" || !Number.isFinite(breakAt) || !fadeBreakEntryEligible(entry, source)) {
+      rebuilt.push(entry);
+      continue;
+    }
+
+    const sourceOffset = Math.max(0, Number(entry.sourceOffset || 0));
+    const entryDuration = Math.max(0, Number(entry.duration || 0));
+    const firstDuration = Math.round(breakAt - sourceOffset);
+    const breakStartAt = Number(entry.startAt || 0) + firstDuration * 1000;
+    if (
+      firstDuration < FADE_BREAK_MIN_SECONDS
+      || firstDuration > entryDuration - FADE_BREAK_MIN_REMAINING_SECONDS
+      || breakStartAt <= now + 10000
+    ) {
+      rebuilt.push(entry);
+      continue;
+    }
+
+    const bumpSource = createFadeBreakBumpSource(source, entry);
+    state.sources.push(bumpSource);
+    const firstEntry = {
+      ...entry,
+      duration: firstDuration,
+      fadeBreakSplit: true,
+      fadeBreakAt: breakAt
+    };
+    const bumpEntry = {
+      id: crypto.randomUUID(),
+      sourceId: bumpSource.id,
+      title: bumpSource.title,
+      startAt: breakStartAt,
+      duration: bumpSource.duration,
+      queuedAt: entry.queuedAt || now,
+      autoBump: true,
+      fadeBreakBump: true,
+      fadeBreakOf: entry.id,
+      weeklyBlockId: entry.weeklyBlockId || "",
+      weeklyBlockName: entry.weeklyBlockName || ""
+    };
+    const resumeEntry = {
+      ...entry,
+      id: crypto.randomUUID(),
+      startAt: breakStartAt + bumpSource.duration * 1000,
+      duration: Math.max(5, Math.round(entryDuration - firstDuration)),
+      sourceOffset: breakAt,
+      fadeBreakResume: true,
+      fadeBreakOf: entry.id
+    };
+    rebuilt.push(firstEntry, bumpEntry, resumeEntry);
+    timelineShiftMs += bumpSource.duration * 1000;
+    changed = true;
+  }
+
+  if (changed) state[collectionName] = rebuilt.sort((a, b) => a.startAt - b.startAt);
+  return changed;
+}
+
+function createFadeBreakBumpSource(source = {}, entry = {}) {
+  const music = randomBumpMusic(FADE_BREAK_BUMP_DURATION);
+  const blockName = entry.weeklyBlockName || "";
+  const returnLine = source.title ? `WE RETURN TO: ${source.title}` : "WE NOW RETURN TO THE PROGRAM";
+  return {
+    id: crypto.randomUUID(),
+    type: "bump",
+    title: blockName ? `${blockName}: break bump` : "Break bump",
+    duration: FADE_BREAK_BUMP_DURATION,
+    randomEligible: false,
+    weeklyBlockId: entry.weeklyBlockId || "",
+    bump: {
+      kind: "fade-break-bump",
+      bumpClass: "fade-break",
+      heading: sample(["we'll be right back", "station break", "hold that thought", "do not adjust your set"]),
+      lines: [
+        blockName || "DOINKTV",
+        returnLine,
+        "RIGHT AFTER THIS"
+      ],
+      alignment: sample(["left", "center", "right"]),
+      placement: sample(["top", "middle", "bottom"]),
+      tone: sample(["classic", "caption", "washed"]),
+      secondsPerLine: 1.45,
+      tintStrength: 24,
+      creditText: "UNSCHEDULED BREAK\nSIGNAL WILL RESUME",
+      creditSize: 18,
+      creditPosition: "bottom-right",
+      wallpaper: {
+        shapes: sample(["checkerboard", "stripes", "starburst", "memphis", "diamonds"]),
+        scheme: sample(["broadcast", "warning", "arcade", "miami", "ruby"]),
+        spacing: 58 + Math.floor(Math.random() * 70),
+        seed: Math.floor(Math.random() * 100000)
+      },
+      effects: sampleMany(["noise", "vhs", "scanlines", "chromatic", "flicker", "letterbox"], 2),
+      effectIntensity: 42,
+      audio: music.path,
+      audioStart: music.start
+    }
+  };
+}
+
 function createManualBumpSource(body = {}) {
   const duration = Number(body.duration || AUTO_BUMP_DURATION);
   if (!Number.isFinite(duration) || duration < 3 || duration > 120) {
@@ -911,6 +1935,7 @@ function createManualBumpSource(body = {}) {
   const audio = body.audio
     ? { path: String(body.audio), start: Math.max(0, Number(body.audioStart) || 0) }
     : randomBumpMusic(Math.round(duration));
+  const background = normalizeBumpBackground(body.background);
 
   const source = {
     id: crypto.randomUUID(),
@@ -919,6 +1944,7 @@ function createManualBumpSource(body = {}) {
     folderId: "",
     duration: Math.round(duration),
     bump: {
+      kind: "manual-bump",
       heading: String(body.heading || "bump").trim() || "bump",
       lines: lines.length ? lines : [{ time: "", title: "DoinkTV continues shortly" }],
       secondsPerLine: Math.max(0.5, Math.min(30, Number(body.secondsPerLine) || Math.max(1, duration / Math.max(1, lines.length || 1)))),
@@ -937,12 +1963,20 @@ function createManualBumpSource(body = {}) {
       effects: Array.isArray(body.effects) ? body.effects.slice(0, 2) : [],
       effectIntensity: Math.max(0, Math.min(100, Number(body.effectIntensity) || 0)),
       audio: audio.path,
-      audioStart: audio.start
+      audioStart: audio.start,
+      background
     },
     generatedAt: Date.now()
   };
   state.sources.push(source);
   return source;
+}
+
+function normalizeBumpBackground(backgroundPath = "") {
+  const value = String(backgroundPath || "").trim();
+  if (!value || !BUMP_BACKGROUND_EXTENSIONS.test(value)) return "";
+  const filePath = mediaPathFromSource(value);
+  return filePath && existsSync(filePath) ? value : "";
 }
 
 function randomBumpMusic(requiredSeconds = AUTO_BUMP_DURATION) {
@@ -988,6 +2022,124 @@ async function refreshBumpMusic() {
     duration: await readAudioDuration(path.join(BUMP_MUSIC_DIR, fileName))
   }))))
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function bumpGeneratorAssets() {
+  await refreshBumpMusic();
+  return {
+    classes: BUMP_CLASSES,
+    music: state.bumpMusic,
+    backgrounds: await listBumpBackgroundAssets()
+  };
+}
+
+async function loadDjSoundboardManifest() {
+  try {
+    const manifest = JSON.parse(await readFile(DJ_SOUNDBOARD_MANIFEST, "utf8"));
+    manifest.sounds = Array.isArray(manifest.sounds) ? manifest.sounds : [];
+    manifest.groups = manifest.groups || {};
+    return manifest;
+  } catch {
+    return await buildDjSoundboardManifestFromFiles();
+  }
+}
+
+async function buildDjSoundboardManifestFromFiles() {
+  const groups = {
+    quotes: { label: "Quotes", color: "#f2b84a" },
+    radio: { label: "Radio Dirt", color: "#68c3b7" },
+    crowd: { label: "Crowd", color: "#d68a37" },
+    scratches: { label: "Scratches", color: "#c968ff" },
+    sfx: { label: "SFX", color: "#7db7ff" },
+    sirens: { label: "Sirens", color: "#ff715f" },
+    stings: { label: "Stings", color: "#8fd06d" },
+    misc: { label: "Misc", color: "#a9b4bd" }
+  };
+  try {
+    const files = await readdir(DJ_SOUNDBOARD_DIR, { withFileTypes: true });
+    const sounds = files
+      .filter((entry) => entry.isFile() && /\.(wav|mp3|m4a|ogg|flac)$/i.test(entry.name))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((entry) => {
+        const base = entry.name.replace(/\.[^.]+$/, "");
+        const clean = base.replace(/^\d+[-_ ]*/, "");
+        const [maybeGroup, ...labelParts] = clean.split(/[-_]+/);
+        const group = groups[maybeGroup] ? maybeGroup : "misc";
+        const labelSource = group === "misc" ? clean : labelParts.join(" ");
+        return {
+          id: clean.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || base,
+          label: titleCase(labelSource || clean),
+          group,
+          path: `/media/dj-soundboard/${encodeURIComponent(entry.name)}`,
+          duration: 8
+        };
+      });
+    return { version: 1, groups, sounds };
+  } catch {
+    return { version: 1, groups, sounds: [] };
+  }
+}
+
+function titleCase(value) {
+  return String(value || "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+async function djSoundboardSample(soundId) {
+  const manifest = await loadDjSoundboardManifest();
+  const sound = manifest.sounds.find((item) => item.id === soundId);
+  if (!sound) throw new Error("Unknown soundboard sound.");
+  const soundPath = String(sound.path || "");
+  if (!soundPath.startsWith("/media/dj-soundboard/")) throw new Error("Invalid soundboard path.");
+  const filePath = mediaPathFromSource(soundPath);
+  if (!filePath || !existsSync(filePath)) throw new Error("Soundboard file is missing.");
+  const group = manifest.groups[sound.group] || {};
+  return {
+    id: sound.id,
+    label: sound.label || sound.id,
+    group: sound.group || "misc",
+    groupLabel: group.label || sound.group || "Misc",
+    color: group.color || "#f2b84a",
+    path: soundPath,
+    duration: Math.max(1, Math.min(60, Number(sound.duration || 8)))
+  };
+}
+
+async function listBumpBackgroundAssets() {
+  await mkdir(MEDIA_DIR, { recursive: true });
+  const assets = [];
+  await collectBumpBackgroundAssets(MEDIA_DIR, "", assets);
+  return assets.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function collectBumpBackgroundAssets(directory, relativeDirectory, assets) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.name.startsWith(".")) continue;
+    if (entry.isDirectory()) {
+      if (relativeDirectory === "" && entry.name === "bump-music") continue;
+      await collectBumpBackgroundAssets(path.join(directory, entry.name), path.join(relativeDirectory, entry.name), assets);
+      continue;
+    }
+    if (!entry.isFile() || !BUMP_BACKGROUND_EXTENSIONS.test(entry.name)) continue;
+    const relativePath = path.join(relativeDirectory, entry.name).replace(/\\/g, "/");
+    assets.push({
+      name: entry.name.replace(/\.[^/.]+$/, ""),
+      fileName: entry.name,
+      path: `/media/${encodeMediaPath(relativePath)}`,
+      type: /\.(mp4|mov|m4v|webm)$/i.test(entry.name) ? "video" : "image"
+    });
+  }
+}
+
+function encodeMediaPath(relativePath) {
+  return String(relativePath)
+    .split("/")
+    .map((part) => encodeURIComponent(part))
+    .join("/");
 }
 
 async function readAudioDuration(filePath) {
@@ -1062,8 +2214,13 @@ function queueEntryFromItem(item, startAt, now = Date.now()) {
     title: item.title || "",
     startAt,
     duration: item.duration,
+    sourceOffset: Math.max(0, Number(item.sourceOffset || 0)),
     queuedAt: item.queuedAt || now,
-    autoQueued: item.autoQueued
+    autoQueued: item.autoQueued,
+    fadeBreakSplit: item.fadeBreakSplit,
+    fadeBreakResume: item.fadeBreakResume,
+    fadeBreakOf: item.fadeBreakOf,
+    fadeBreakAt: item.fadeBreakAt
   };
 }
 
@@ -1230,12 +2387,36 @@ function stripQueueSource(entry) {
 }
 
 function pruneUnusedBumpSources() {
-  const queuedSourceIds = new Set(state.liveQueue.map((entry) => entry.sourceId));
+  const queuedSourceIds = new Set([...state.liveQueue, ...state.schedule].map((entry) => entry.sourceId));
   state.sources = state.sources.filter((source) => !isBumpSource(source) || queuedSourceIds.has(source.id));
 }
 
+function entryEnd(entry) {
+  return Number(entry.startAt || 0) + Number(entry.duration || 0) * 1000;
+}
+
+function entriesOverlap(first, second) {
+  return Number(first.startAt || 0) < entryEnd(second) && Number(second.startAt || 0) < entryEnd(first);
+}
+
+function protectQueueEntryAgainstSchedule(entry, scheduled = state.schedule) {
+  const conflict = scheduled
+    .filter((scheduleEntry) => entriesOverlap(entry, scheduleEntry))
+    .sort((a, b) => a.startAt - b.startAt)[0];
+  if (!conflict) return entry;
+  if (entry.startAt >= conflict.startAt) return null;
+  const duration = Math.floor((conflict.startAt - entry.startAt) / 1000);
+  return duration >= 5 ? { ...entry, duration, clippedBySchedule: true } : null;
+}
+
 function activeBroadcastEntries() {
-  return state.broadcastMode === "queue" ? state.liveQueue : state.schedule;
+  const scheduled = state.schedule.map((entry) => ({ ...entry, broadcastLane: "scheduled" }));
+  if (state.broadcastMode !== "queue") return scheduled;
+  const protectedQueue = state.liveQueue
+    .map((entry) => protectQueueEntryAgainstSchedule(entry, scheduled))
+    .filter(Boolean)
+    .map((entry) => ({ ...entry, broadcastLane: "queue" }));
+  return [...scheduled, ...protectedQueue].sort((a, b) => a.startAt - b.startAt);
 }
 
 function broadcastProgram() {
@@ -1378,6 +2559,7 @@ function stopHlsPlayout() {
 function hlsArgsForProgram(live) {
   const id = live.id.replace(/[^a-zA-Z0-9_-]/g, "");
   const remaining = Math.max(1, Math.ceil((live.duration || 3600) - (live.offset || 0)));
+  const mediaOffset = Math.max(0, Number(live.sourceOffset || 0) + Number(live.offset || 0));
   const segmentPattern = path.join(HLS_DIR, `${id}_%05d.ts`);
   const playlist = path.join(HLS_DIR, "live.m3u8");
 
@@ -1393,7 +2575,7 @@ function hlsArgsForProgram(live) {
         "-loglevel", "warning",
         "-re",
         ...networkInputArgs,
-        "-ss", String(Math.max(0, live.offset || 0)),
+        "-ss", String(mediaOffset),
         "-i", inputPath,
         "-t", String(remaining),
         "-map", "0:v:0",
@@ -1435,6 +2617,13 @@ function hlsArgsForProgram(live) {
 function hlsSlateArgs(live, remaining, segmentPattern, playlist) {
   const source = live.source || {};
   const bump = source.bump || {};
+  const backgroundPath = bump.background ? mediaPathFromSource(bump.background) : "";
+  const hasBackground = backgroundPath && existsSync(backgroundPath) && BUMP_BACKGROUND_EXTENSIONS.test(backgroundPath);
+  const videoArgs = hasBackground
+    ? /\.(mp4|mov|m4v|webm)$/i.test(backgroundPath)
+      ? ["-stream_loop", "-1", "-re", "-i", backgroundPath]
+      : ["-loop", "1", "-framerate", "30", "-re", "-i", backgroundPath]
+    : ["-f", "lavfi", "-re", "-i", "color=c=0x090b10:s=1280x720:r=30"];
   const audioPath = bump.audio ? mediaPathFromSource(bump.audio) : "";
   const audioArgs = audioPath && existsSync(audioPath)
     ? ["-stream_loop", "-1", "-ss", String(Math.max(0, Number(bump.audioStart) || 0)), "-i", audioPath]
@@ -1448,9 +2637,7 @@ function hlsSlateArgs(live, remaining, segmentPattern, playlist) {
   return [
     "-hide_banner",
     "-loglevel", "warning",
-    "-f", "lavfi",
-    "-re",
-    "-i", "color=c=0x090b10:s=1280x720:r=30",
+    ...videoArgs,
     ...audioArgs,
     "-t", String(remaining),
     "-map", "0:v:0",
@@ -1476,7 +2663,7 @@ function hlsSlateArgs(live, remaining, segmentPattern, playlist) {
 }
 
 function isManualBump(bump = {}) {
-  return Boolean(bump.secondsPerLine || bump.fontSize || bump.creditText || bump.tintStrength || bump.format);
+  return Boolean(bump.secondsPerLine || bump.fontSize || bump.creditText || bump.tintStrength || bump.format || bump.background);
 }
 
 function mediaPathFromSource(sourcePath = "") {
@@ -1507,12 +2694,20 @@ function manualBumpVideoFilter(lines = [], bump = {}) {
   const safeLines = lines.map((line) => String(line || " ")).filter((line) => line.trim()).length ? lines : [" "];
   const maxWrapped = 4;
   const creditLines = String(bump.creditText || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean).slice(0, 4);
-  const filters = [
-    "format=yuv420p",
-    `drawbox=x=0:y=0:w=1280:h=720:color=${palette.bg[0]}@1:t=fill`,
-    `drawbox=x=0:y=0:w=1280:h=720:color=${palette.bg[1]}@0.36:t=fill`,
-    ...wallpaperFilters(wallpaper, palette)
-  ];
+  const hasBackground = Boolean(bump.background);
+  const filters = hasBackground
+    ? [
+        "scale=1280:720:force_original_aspect_ratio=increase",
+        "crop=1280:720",
+        "format=yuv420p",
+        "drawbox=x=0:y=0:w=1280:h=720:color=black@0.18:t=fill"
+      ]
+    : [
+        "format=yuv420p",
+        `drawbox=x=0:y=0:w=1280:h=720:color=${palette.bg[0]}@1:t=fill`,
+        `drawbox=x=0:y=0:w=1280:h=720:color=${palette.bg[1]}@0.36:t=fill`,
+        ...wallpaperFilters(wallpaper, palette)
+      ];
 
   if (tone === "classic") filters.push(`drawbox=x=0:y=0:w=1280:h=720:color=black@${Math.max(0, Math.min(1, Number(bump.tintStrength || 0) / 100))}:t=fill`);
   if (tone === "washed") filters.push("drawbox=x=0:y=0:w=1280:h=720:color=white@0.08:t=fill");
@@ -1898,6 +3093,24 @@ async function createUniqueSourceFolder(baseName) {
   return folder;
 }
 
+async function findOrCreateSourceFolder(baseName) {
+  const name = String(baseName || "Weekly block").replace(/\s+/g, " ").trim().slice(0, 48);
+  const existing = state.sourceFolders.find((folder) => folder.name.toLowerCase() === name.toLowerCase());
+  if (existing) {
+    existing.randomEligible = true;
+    return existing;
+  }
+  const folder = {
+    id: crypto.randomUUID(),
+    name,
+    createdAt: Date.now(),
+    randomEligible: true
+  };
+  state.sourceFolders.push(folder);
+  state.sourceFolders.sort((a, b) => a.name.localeCompare(b.name));
+  return folder;
+}
+
 async function updateSource(id, body) {
   const source = state.sources.find((item) => item.id === id);
   if (!source) throw new Error("Unknown source.");
@@ -1976,12 +3189,288 @@ async function createScheduleEntry(body, immediate = false) {
   return entry;
 }
 
+async function updateScheduleEntry(id, body = {}) {
+  const entry = state.schedule.find((item) => item.id === id);
+  if (!entry) throw new Error("Unknown schedule entry.");
+  if ("title" in body) {
+    entry.title = String(body.title || "").trim();
+  }
+  if ("startAt" in body) {
+    const startAt = Date.parse(body.startAt);
+    if (!Number.isFinite(startAt)) throw new Error("Enter a valid start time.");
+    entry.startAt = startAt;
+  }
+  if ("duration" in body) {
+    const duration = Number(body.duration);
+    if (!Number.isFinite(duration) || duration < 5) throw new Error("Duration must be at least 5 seconds.");
+    entry.duration = Math.round(duration);
+  }
+  state.schedule.sort((a, b) => a.startAt - b.startAt);
+  await saveState();
+  broadcastProgram();
+  return entry;
+}
+
 function librarySources(folderId) {
   const id = String(folderId || "").trim();
   if (id && !state.sourceFolders.some((folder) => folder.id === id)) throw new Error("Unknown source folder.");
   return state.sources
     .filter((source) => source.type !== "bump" && (source.folderId || "") === id)
     .sort((a, b) => state.sources.indexOf(a) - state.sources.indexOf(b));
+}
+
+function weeklyBlockTemplates() {
+  syncWeeklyBlockTemplates();
+  return state.weeklyBlocks.filter((block) => block.enabled !== false);
+}
+
+async function seedWeeklyArchiveSchedule(options = {}) {
+  syncWeeklyBlockTemplates();
+  const blockIds = Array.isArray(options.blockIds) ? new Set(options.blockIds.map(String)) : null;
+  const blocks = weeklyBlockTemplates().filter((block) => !blockIds || blockIds.has(block.id));
+  resetWeeklyGeneratedContent(blockIds);
+  const imports = [];
+  for (const block of blocks) {
+    const folder = await findOrCreateSourceFolder(block.folderName);
+    const existingCount = state.sources.filter((source) => source.folderId === folder.id && source.type !== "bump").length;
+    let imported = 0;
+    let skipped = 0;
+    const seen = new Set(
+      state.sources
+        .filter((source) => source.folderId === folder.id)
+        .map((source) => `${source.archiveId || source.youtubeId || source.title}:${source.archiveFile || ""}`)
+    );
+
+    for (const query of block.queries || []) {
+      if (existingCount + imported >= WEEKLY_ARCHIVE_IMPORT_LIMIT) break;
+      const candidates = await searchInternetArchiveSources(query, 8).catch(() => []);
+      for (const candidate of candidates) {
+        if (existingCount + imported >= WEEKLY_ARCHIVE_IMPORT_LIMIT) break;
+        if (!weeklyArchiveCandidateFitsBlock(block, candidate)) {
+          skipped += 1;
+          continue;
+        }
+        const key = `${candidate.archiveId}:${candidate.archiveFile}`;
+        if (seen.has(key)) {
+          skipped += 1;
+          continue;
+        }
+        seen.add(key);
+        state.sources.push({
+          id: crypto.randomUUID(),
+          type: "internet-archive",
+          title: candidate.title || candidate.fileTitle || candidate.archiveId,
+          folderId: folder.id,
+          duration: candidate.duration,
+          archiveId: candidate.archiveId,
+          archiveFile: candidate.archiveFile,
+          fileUrl: candidate.fileUrl,
+          url: candidate.url,
+          randomEligible: true,
+          weeklyBlockId: block.id
+        });
+        imported += 1;
+      }
+    }
+    imports.push({ blockId: block.id, name: block.name, folder, imported, skipped, total: existingCount + imported });
+  }
+
+  const materialized = materializeWeeklySchedule();
+  state.broadcastMode = "scheduled";
+  cleanSchedule();
+  await saveState();
+  broadcastProgram();
+  queueAutoIngestSourceIds(materialized.entries.map((entry) => entry.sourceId), "weekly schedule seed", { force: true });
+  return { imports, ...materialized };
+}
+
+async function materializeWeeklyScheduleFromExisting(options = {}) {
+  syncWeeklyBlockTemplates();
+  const blockIds = Array.isArray(options.blockIds) ? new Set(options.blockIds.map(String)) : null;
+  resetWeeklyGeneratedContent(blockIds);
+  const materialized = materializeWeeklySchedule();
+  state.broadcastMode = "scheduled";
+  cleanSchedule();
+  await saveState();
+  broadcastProgram();
+  queueAutoIngestSourceIds(materialized.entries.map((entry) => entry.sourceId), "weekly schedule materialize", { force: false });
+  return { imports: [], ...materialized };
+}
+
+function resetWeeklyGeneratedContent(blockIds = null) {
+  const selectedBlockIds = blockIds || new Set(weeklyBlockTemplates().map((block) => block.id));
+  const generatedSourceIds = new Set(
+    state.sources
+      .filter((source) => selectedBlockIds.has(source.weeklyBlockId))
+      .map((source) => source.id)
+  );
+  state.sources = state.sources.filter((source) => !generatedSourceIds.has(source.id));
+  state.schedule = state.schedule.filter((entry) => !selectedBlockIds.has(entry.weeklyBlockId) && !generatedSourceIds.has(entry.sourceId));
+}
+
+function weeklyArchiveCandidateFitsBlock(block, candidate = {}) {
+  const haystack = [
+    candidate.title,
+    candidate.fileTitle,
+    candidate.creator,
+    candidate.description,
+    candidate.archiveId
+  ].join(" ").toLowerCase();
+  if (WEEKLY_ARCHIVE_EXCLUDE_TERMS.some((term) => haystack.includes(term))) return false;
+  if (Number(candidate.duration || 0) < Number(block.minDuration || 45)) return false;
+  if (Array.isArray(block.requireAny) && block.requireAny.length) {
+    return block.requireAny.some((term) => haystack.includes(term));
+  }
+  return true;
+}
+
+function materializeWeeklySchedule({ lookaheadDays = WEEKLY_SCHEDULE_LOOKAHEAD_DAYS } = {}) {
+  syncWeeklyBlockTemplates();
+  const now = Date.now();
+  const horizon = now + lookaheadDays * 24 * 60 * 60 * 1000;
+  state.schedule = state.schedule.filter((entry) => {
+    if (!entry.weeklyBlockId) return true;
+    return entry.startAt < now - 12 * 60 * 60 * 1000 || entry.startAt > horizon;
+  });
+
+  const entries = [];
+  for (const block of weeklyBlockTemplates()) {
+    const folder = state.sourceFolders.find((item) => item.name === block.folderName);
+    const sources = folder ? librarySources(folder.id).filter((source) => source.duration >= 5) : [];
+    if (!sources.length) continue;
+    for (const startAt of weeklyBlockStartTimes(block, lookaheadDays)) {
+      if (startAt + block.durationMinutes * 60 * 1000 <= now) continue;
+      const blockEntries = scheduleSourcesIntoBlock(block, sources, startAt);
+      entries.push(...blockEntries);
+    }
+  }
+  state.schedule.push(...entries);
+  state.schedule.sort((a, b) => a.startAt - b.startAt);
+  return { entries, scheduledBlocks: new Set(entries.map((entry) => entry.weeklyBlockId)).size };
+}
+
+function weeklyBlockStartTimes(block, lookaheadDays) {
+  const [hour, minute] = String(block.time || "20:00").split(":").map((part) => Number(part));
+  const starts = [];
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  for (let offset = 0; offset < lookaheadDays; offset += 1) {
+    const date = new Date(cursor);
+    date.setDate(cursor.getDate() + offset);
+    if (!(block.days || []).includes(date.getDay())) continue;
+    date.setHours(Number.isFinite(hour) ? hour : 20, Number.isFinite(minute) ? minute : 0, 0, 0);
+    starts.push(date.getTime());
+  }
+  return starts;
+}
+
+function scheduleSourcesIntoBlock(block, sources, startAt) {
+  const blockMs = block.durationMinutes * 60 * 1000;
+  const blockEnd = startAt + blockMs;
+  let cursor = startAt;
+  let index = Math.abs(hashString(`${block.id}:${new Date(startAt).toDateString()}`)) % sources.length;
+  const entries = [];
+  let contentCount = 0;
+
+  const addBlockBump = (kind, nextSource = null) => {
+    const remaining = Math.round((blockEnd - cursor) / 1000);
+    if (remaining < BLOCK_BUMP_DURATION + 5) return false;
+    const bumpSource = createWeeklyBlockBumpSource(block, kind, cursor, nextSource, contentCount);
+    state.sources.push(bumpSource);
+    entries.push({
+      id: crypto.randomUUID(),
+      sourceId: bumpSource.id,
+      title: bumpSource.title,
+      startAt: cursor,
+      duration: bumpSource.duration,
+      weeklyBlockId: block.id,
+      weeklyBlockName: block.name,
+      autoBump: true,
+      blockBump: true
+    });
+    cursor += bumpSource.duration * 1000;
+    return true;
+  };
+
+  addBlockBump("intro", sources[index % sources.length]);
+  while (cursor < blockEnd - 5000 && entries.length < 80) {
+    const source = sources[index % sources.length];
+    const remaining = Math.round((blockEnd - cursor) / 1000);
+    const duration = Math.max(5, Math.min(Math.round(source.duration), remaining));
+    entries.push({
+      id: crypto.randomUUID(),
+      sourceId: source.id,
+      title: `${block.name}: ${source.title}`,
+      startAt: cursor,
+      duration,
+      weeklyBlockId: block.id,
+      weeklyBlockName: block.name
+    });
+    cursor += duration * 1000;
+    index += 1;
+    contentCount += 1;
+    if (contentCount % 2 === 1) addBlockBump("station-id", sources[index % sources.length]);
+  }
+  return entries;
+}
+
+function createWeeklyBlockBumpSource(block, kind, startAt, nextSource = null, bumpIndex = 0) {
+  const identity = weeklyBlockIdentity(block);
+  const tagline = identity.taglines[Math.abs(hashString(`${block.id}:${kind}:${startAt}:${bumpIndex}`)) % identity.taglines.length];
+  const music = randomBumpMusic(BLOCK_BUMP_DURATION);
+  const seed = Math.abs(hashString(`${block.id}:${startAt}:${kind}:${bumpIndex}`)) % 100000;
+  const nextLine = nextSource?.title ? `NEXT: ${nextSource.title}` : "MORE STRANGE PROGRAMMING SHORTLY";
+  const kindLabel = kind === "intro" ? "BLOCK START" : "STATION ID";
+  return {
+    id: crypto.randomUUID(),
+    type: "bump",
+    title: `${block.name}: ${kind === "intro" ? "block intro" : "block bump"}`,
+    duration: BLOCK_BUMP_DURATION,
+    randomEligible: false,
+    weeklyBlockId: block.id,
+    bump: {
+      kind: "block-bump",
+      blockId: block.id,
+      blockName: block.name,
+      bumpClass: kind,
+      heading: identity.heading,
+      lines: [
+        identity.heading,
+        tagline,
+        nextLine
+      ],
+      placement: identity.placement,
+      alignment: identity.alignment,
+      tone: identity.tone,
+      fontSize: identity.fontSize,
+      secondsPerLine: 1.65,
+      tintStrength: kind === "intro" ? 18 : 28,
+      creditText: `${kindLabel}\n${identity.creditText}`,
+      creditSize: 19,
+      creditPosition: "bottom-right",
+      effects: identity.effects,
+      effectIntensity: kind === "intro" ? 52 : 38,
+      format: "landscape",
+      seed,
+      wallpaper: {
+        shapes: identity.shapes,
+        scheme: identity.scheme,
+        spacing: kind === "intro" ? 76 : 108,
+        seed
+      },
+      audio: music.path,
+      audioStart: music.start
+    }
+  };
+}
+
+function hashString(value) {
+  let hash = 0;
+  const text = String(value || "");
+  for (let index = 0; index < text.length; index += 1) {
+    hash = Math.imul(31, hash) + text.charCodeAt(index) | 0;
+  }
+  return hash;
 }
 
 async function reorderLibrarySources(body) {
@@ -2248,10 +3737,6 @@ function playableArchiveFile(file) {
   return /(mpeg4|h\.264|webm|quicktime)/i.test(format) && !/\.(gif|jpg|png|txt|xml|json)$/i.test(name);
 }
 
-function encodeArchiveFilePath(fileName) {
-  return String(fileName || "").split("/").map((part) => encodeURIComponent(part)).join("/");
-}
-
 async function createScheduleLibrary(body) {
   const sources = librarySources(body.folderId);
   if (!sources.length) throw new Error("That source library is empty.");
@@ -2394,16 +3879,16 @@ async function queueManualBump(body = {}) {
 }
 
 async function clearLiveQueue() {
+  const now = Date.now();
+  const removed = state.liveQueue.length;
+  const protectedScheduleCount = state.schedule.filter((entry) => entryEnd(entry) > now).length;
   state.liveQueue = [];
-  state.broadcastMode = "queue";
+  state.broadcastMode = "scheduled";
   pruneAutoIngestQueueToLiveQueue();
   pruneUnusedBumpSources();
-  if (!backfillLiveQueue(MIN_QUEUE_VIDEO_ITEMS, { leadingAutoBump: true })) {
-    queueStandaloneScheduleBump();
-  }
   await saveState();
   broadcastProgram();
-  return { ok: true };
+  return { ok: true, removed, protectedScheduleCount, mode: state.broadcastMode };
 }
 
 async function moveQueueEntry(id, direction) {
@@ -2432,14 +3917,7 @@ async function moveQueueEntry(id, direction) {
   let cursor = current ? current.startAt + current.duration * 1000 : now;
   const reordered = current ? [current] : [];
   for (const item of pending) {
-    reordered.push({
-      id: item.id,
-      sourceId: item.sourceId,
-      title: item.title || "",
-      startAt: cursor,
-      duration: item.duration,
-      queuedAt: item.queuedAt || now
-    });
+    reordered.push(queueEntryFromItem(item, cursor, now));
     cursor += item.duration * 1000;
   }
 
@@ -2473,14 +3951,7 @@ async function reorderLiveQueue(body) {
   let cursor = current ? current.startAt + current.duration * 1000 : now;
   const reordered = current ? [current] : [];
   for (const item of ordered) {
-    reordered.push({
-      id: item.id,
-      sourceId: item.sourceId,
-      title: item.title || "",
-      startAt: cursor,
-      duration: item.duration,
-      queuedAt: item.queuedAt || now
-    });
+    reordered.push(queueEntryFromItem(item, cursor, now));
     cursor += item.duration * 1000;
   }
 
@@ -2502,11 +3973,34 @@ async function setBroadcastMode(body) {
 }
 
 async function triggerBroadcastFx(body = {}) {
+  if (!hasAdminOnline()) {
+    state.activeFx = [];
+    timelineSaveNeeded = true;
+    broadcastProgram();
+    return { ok: true, fx: state.activeFx, inactive: true };
+  }
   const id = String(body.id || "").trim();
   const preset = FX_PRESETS[id];
   if (!preset) throw new Error("Unknown FX button.");
-  const maxDuration = ["av-warp", "delay", "source-overlay", "playlist-audio", "visual-adjust", "theme-cycle"].includes(id) ? 180 : 30;
-  const duration = Math.max(2, Math.min(maxDuration, Number(body.duration || preset.duration)));
+  const toggleFx = new Set([
+    "signal-loss",
+    "tape-warp",
+    "vhs",
+    "color-bars",
+    "aspect-bad",
+    "crop-bad",
+    "pixelate",
+    "glass",
+    "source-overlay",
+    "playlist-audio",
+    "theme-cycle",
+    "dj-mic",
+    "frequency-drift",
+    "party-damage"
+  ]);
+  const isToggle = body.toggle === true || body.mode === "toggle" || toggleFx.has(id);
+  const maxDuration = ["av-warp", "delay", "source-overlay", "playlist-audio", "visual-adjust", "theme-cycle", "dj-mic", "frequency-drift", "party-damage"].includes(id) ? 180 : id === "soundboard-sample" ? 60 : 30;
+  let duration = Math.max(2, Math.min(maxDuration, Number(body.duration || preset.duration)));
   const now = Date.now();
   const commandFx = new Set([
     "looper-capture",
@@ -2522,10 +4016,20 @@ async function triggerBroadcastFx(body = {}) {
     "source-overlay",
     "playlist-audio",
     "visual-adjust",
-    "theme-random"
+    "theme-random",
+    "legal-id",
+    "cart-wall",
+    "record-scratch",
+    "caller-line",
+    "dub-siren",
+    "soundboard-sample"
   ]);
   const active = activeBroadcastFx();
   let params = typeof body.params === "object" && body.params ? body.params : {};
+  if (id === "soundboard-sample") {
+    params = await djSoundboardSample(String(params.soundId || params.id || ""));
+    duration = Math.max(2, Math.min(maxDuration, params.duration || duration));
+  }
   if (id === "source-overlay") {
     const source = state.sources.find((item) => item.id === params.sourceId);
     if (!source || source.type === "bump") throw new Error("Choose a valid source to overlay.");
@@ -2564,11 +4068,35 @@ async function triggerBroadcastFx(body = {}) {
   if (id === "theme-aero-blast") {
     params = { ...params, theme: "frutiger-aero" };
   }
+  if (id === "legal-id") {
+    const cart = LEGAL_ID_CARTS[Math.floor(Math.random() * LEGAL_ID_CARTS.length)];
+    params = { ...params, ...cart, legalId: `${cart.call} ${cart.city}` };
+  }
+  if (id === "cart-wall") {
+    params = { ...params, cart: params.cart || CART_WALL_PRESETS[Math.floor(Math.random() * CART_WALL_PRESETS.length)] };
+  }
+  if (id === "caller-line") {
+    const message = [...state.chat].reverse().find((item) => item.text && item.username);
+    if (!message) throw new Error("No chat messages available for the caller line.");
+    params = {
+      ...params,
+      username: message.username,
+      text: message.text,
+      role: message.role,
+      createdAt: message.createdAt
+    };
+  }
   if (id === "delay" && params.enabled === false) {
     state.activeFx = active.filter((item) => item.id !== "delay");
     await saveState();
     broadcastProgram();
     return { ok: true, fx: state.activeFx };
+  }
+  if (isToggle && active.some((item) => item.id === id)) {
+    state.activeFx = active.filter((item) => item.id !== id);
+    await saveState();
+    broadcastProgram();
+    return { ok: true, toggledOff: true, fx: state.activeFx };
   }
   const existing = commandFx.has(id) ? null : active.find((item) => item.id === id);
   if (existing) {
@@ -2587,7 +4115,7 @@ async function triggerBroadcastFx(body = {}) {
     id,
     label: preset.label,
     startedAt: now,
-    expiresAt: id === "delay" && params.enabled === true ? null : now + duration * 1000,
+    expiresAt: (id === "delay" && params.enabled === true) || isToggle ? null : now + duration * 1000,
     seed: crypto.randomUUID(),
     level: Math.max(1, Number(preset.level || 1)),
     hits: 1,
@@ -2695,6 +4223,23 @@ async function handleApi(req, res, pathname) {
       return;
     }
 
+    if (req.method === "GET" && pathname === "/api/captions") {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      sendJson(res, 200, await captionInfoForSourceId(url.searchParams.get("sourceId")));
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/captions/file") {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const text = await captionFileForRequest(url.searchParams.get("sourceId"), url.searchParams.get("file"));
+      res.writeHead(200, {
+        "content-type": "text/vtt; charset=utf-8",
+        "cache-control": "public, max-age=3600"
+      });
+      res.end(text);
+      return;
+    }
+
     if (req.method === "GET" && pathname === "/api/internet-archive-search") {
       if (!requireAdmin(req, res)) return;
       const url = new URL(req.url, `http://${req.headers.host}`);
@@ -2710,9 +4255,17 @@ async function handleApi(req, res, pathname) {
         "cache-control": "no-cache, no-transform",
         connection: "keep-alive"
       });
-      res.write(`data: ${JSON.stringify(publicProgram())}\n\n`);
+      const isAdminClient = isAdmin(req);
+      if (isAdminClient) markAdminActivity();
       sseClients.add(res);
-      req.on("close", () => sseClients.delete(res));
+      if (isAdminClient) adminSseClients.add(res);
+      res.write(`data: ${JSON.stringify(publicProgram())}\n\n`);
+      broadcastProgram();
+      req.on("close", () => {
+        sseClients.delete(res);
+        if (isAdminClient) adminSseClients.delete(res);
+        broadcastProgram();
+      });
       return;
     }
 
@@ -2730,6 +4283,11 @@ async function handleApi(req, res, pathname) {
       res.write(`data: ${JSON.stringify(publicChat())}\n\n`);
       chatClients.add(res);
       req.on("close", () => chatClients.delete(res));
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/program-vote") {
+      sendJson(res, 200, await castProgramVote(await readJson(req)));
       return;
     }
 
@@ -2777,6 +4335,16 @@ async function handleApi(req, res, pathname) {
       return;
     }
 
+    if (req.method === "GET" && pathname === "/api/bump-assets") {
+      sendJson(res, 200, await bumpGeneratorAssets());
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/dj-soundboard") {
+      sendJson(res, 200, await loadDjSoundboardManifest());
+      return;
+    }
+
     if (req.method === "POST" && pathname === "/api/logout") {
       const token = parseCookies(req).doink_session;
       if (token) sessions.delete(token);
@@ -2792,6 +4360,8 @@ async function handleApi(req, res, pathname) {
         sourceFolders: state.sourceFolders,
         sources: state.sources,
         schedule: state.schedule,
+        weeklyBlocks: state.weeklyBlocks,
+        bumpClasses: BUMP_CLASSES,
         liveQueue: state.liveQueue,
         broadcastMode: state.broadcastMode,
         bumpMusic: state.bumpMusic
@@ -2815,6 +4385,22 @@ async function handleApi(req, res, pathname) {
     if (req.method === "POST" && pathname === "/api/import-internet-archive-collection") {
       if (!requireAdmin(req, res)) return;
       sendJson(res, 201, await importInternetArchiveCollection(await readJson(req)));
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/weekly-schedule/seed") {
+      if (!requireAdmin(req, res)) return;
+      const body = await readJson(req);
+      const blockIds = body.blockId ? [body.blockId] : body.blockIds;
+      sendJson(res, 201, await seedWeeklyArchiveSchedule({ blockIds }));
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/weekly-schedule/materialize-existing") {
+      if (!requireAdmin(req, res)) return;
+      const body = await readJson(req);
+      const blockIds = body.blockId ? [body.blockId] : body.blockIds;
+      sendJson(res, 201, await materializeWeeklyScheduleFromExisting({ blockIds }));
       return;
     }
 
@@ -2875,6 +4461,13 @@ async function handleApi(req, res, pathname) {
     if (req.method === "POST" && pathname === "/api/schedule-library") {
       if (!requireAdmin(req, res)) return;
       sendJson(res, 201, await createScheduleLibrary(await readJson(req)));
+      return;
+    }
+
+    const updateScheduleMatch = pathname.match(/^\/api\/schedule\/([^/]+)$/);
+    if (req.method === "PATCH" && updateScheduleMatch) {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await updateScheduleEntry(updateScheduleMatch[1], await readJson(req)));
       return;
     }
 

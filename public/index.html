@@ -10,6 +10,10 @@
     <header class="topbar">
       <div class="brand-lockup">
         <div class="brand">DOINKTV</div>
+        <a class="support-link" href="https://www.patreon.com/c/DoinkWizard" target="_blank" rel="noopener noreferrer">
+          <span>Support</span>
+          <strong>Patreon</strong>
+        </a>
       </div>
 
       <div class="top-actions">
@@ -31,6 +35,11 @@
             <option value="mall-kiosk">Mall Kiosk</option>
           </select>
         </label>
+        <div id="onlineBadge" class="online-badge" aria-live="polite">
+          <span>Online</span>
+          <strong>--</strong>
+        </div>
+        <button id="peaceModeToggle" class="peace-toggle" type="button" aria-pressed="false">Peace</button>
         <div id="liveBadge" class="badge">Waiting for signal</div>
         <button id="adminToggle" class="ghost-button" type="button" aria-expanded="false">Log In</button>
       </div>
@@ -85,20 +94,37 @@
           <a id="youtubeLink" class="youtube-link hidden" href="#" target="_blank" rel="noopener noreferrer">Open original on YouTube</a>
         </div>
         <div class="viewer-controls" aria-label="Playback controls">
+          <div class="viewer-now-playing" aria-live="polite">
+            <span class="viewer-now-label">Now playing</span>
+            <div class="program-channel viewer-program-channel">
+              <span id="viewerNowBlock" class="block-chip hidden"></span>
+              <div class="title-marquee">
+                <strong id="viewerNowTitle">No active program</strong>
+              </div>
+            </div>
+            <small id="viewerNowProgress">00:00 / 00:00</small>
+          </div>
           <label class="volume-control">
             <span>Volume</span>
             <input id="volumeSlider" type="range" min="0" max="100" value="70">
             <output id="volumeValue">70%</output>
           </label>
+          <button id="captionsToggle" class="secondary captions-toggle" type="button" aria-pressed="false" disabled>CC</button>
           <button id="fullscreenButton" class="secondary" type="button">Fullscreen</button>
         </div>
       </section>
 
+      <div id="railResizer" class="rail-resizer" role="separator" aria-orientation="vertical" aria-label="Resize broadcast and chat columns" tabindex="0">
+        <span aria-hidden="true"></span>
+      </div>
+
       <aside id="chatPanel" class="chat-panel" aria-label="Global chat">
         <div class="rail-tabs hidden" data-admin-rail-tabs>
-          <button id="showBroadcastPanelButton" class="auth-tab" type="button">Broadcast</button>
+          <button id="showBroadcastPanelButton" class="auth-tab" type="button">Cast</button>
+          <button id="showSchedulePanelButton" class="auth-tab" type="button">Schedule</button>
           <button id="showQueuePanelButton" class="auth-tab" type="button">Queue</button>
           <button id="showBumpPanelButton" class="auth-tab" type="button">Bumps</button>
+          <button id="showSoundboardPanelButton" class="auth-tab" type="button">Board</button>
           <button id="showFxPanelButton" class="auth-tab" type="button">FX</button>
           <button id="showChatPanelButton" class="auth-tab active" type="button">Chat</button>
         </div>
@@ -115,15 +141,47 @@
             <input id="chatInput" name="text" maxlength="280" autocomplete="off" placeholder="Log in to chat" disabled>
             <button id="chatSendButton" type="submit" disabled>Send</button>
           </form>
+          <div class="chat-emoji-keyboard" aria-label="Chat emoji keyboard">
+            <button type="button" data-chat-emoji="📺" title="TV" disabled>📺</button>
+            <button type="button" data-chat-emoji="🍿" title="Snack" disabled>🍿</button>
+            <button type="button" data-chat-emoji="🍕" title="Pizza" disabled>🍕</button>
+            <button type="button" data-chat-emoji="🥤" title="Soda" disabled>🥤</button>
+            <button type="button" data-chat-emoji="😂" title="Laughing" disabled>😂</button>
+            <button type="button" data-chat-emoji="😵‍💫" title="Dizzy" disabled>😵‍💫</button>
+            <button type="button" data-chat-emoji="🤯" title="Mind blown" disabled>🤯</button>
+            <button type="button" data-chat-emoji="🫠" title="Melting" disabled>🫠</button>
+            <button type="button" data-chat-emoji="👀" title="Watching" disabled>👀</button>
+            <button type="button" data-chat-emoji="🔥" title="Fire" disabled>🔥</button>
+            <button type="button" data-chat-emoji="✨" title="Sparkle" disabled>✨</button>
+            <button type="button" data-chat-emoji="🛸" title="Strange" disabled>🛸</button>
+          </div>
           <p id="chatMessage" class="message"></p>
+          <section id="programVotePanel" class="program-vote-panel hidden" aria-live="polite">
+            <div class="program-vote-heading">
+              <span>This slot next week</span>
+              <strong id="programVoteTitle">Vote on this slot</strong>
+            </div>
+            <div id="programVoteOptions" class="program-vote-options"></div>
+            <p id="programVoteMessage" class="message"></p>
+          </section>
           <div class="broadcast-meta">
             <div>
               <span class="label">Now</span>
-              <strong id="nowTitle">No active program</strong>
+              <div class="program-channel">
+                <span id="nowBlock" class="block-chip hidden"></span>
+                <div class="title-marquee">
+                  <strong id="nowTitle">No active program</strong>
+                </div>
+              </div>
             </div>
             <div>
               <span class="label">Next</span>
-              <strong id="nextTitle">Unscheduled</strong>
+              <div class="program-channel">
+                <span id="nextBlock" class="block-chip hidden"></span>
+                <div class="title-marquee">
+                  <strong id="nextTitle">Unscheduled</strong>
+                </div>
+              </div>
             </div>
             <div>
               <span class="label">Progress</span>
@@ -135,9 +193,11 @@
 
       <aside id="adminPanel" class="admin-panel hidden" aria-label="Admin controls">
         <div class="rail-tabs hidden" data-admin-rail-tabs>
-          <button id="showBroadcastPanelButtonAlt" class="auth-tab active" type="button">Broadcast</button>
+          <button id="showBroadcastPanelButtonAlt" class="auth-tab active" type="button">Cast</button>
+          <button id="showSchedulePanelButtonAlt" class="auth-tab" type="button">Schedule</button>
           <button id="showQueuePanelButtonAlt" class="auth-tab" type="button">Queue</button>
           <button id="showBumpPanelButtonAlt" class="auth-tab" type="button">Bumps</button>
+          <button id="showSoundboardPanelButtonAlt" class="auth-tab" type="button">Board</button>
           <button id="showFxPanelButtonAlt" class="auth-tab" type="button">FX</button>
           <button id="showChatPanelButtonAlt" class="auth-tab" type="button">Chat</button>
         </div>
@@ -150,6 +210,25 @@
         </div>
 
         <div id="adminTools" class="admin-tools hidden">
+          <form id="sourceSearchForm" class="stack compact-stack source-search">
+            <h3>Find Internet Archive media</h3>
+            <div class="inline-form">
+              <input name="query" placeholder="Search playable Archive media" autocomplete="off">
+              <button type="submit">Search</button>
+            </div>
+            <p id="sourceSearchMessage" class="message"></p>
+            <div id="sourceSearchResults" class="search-results"></div>
+          </form>
+
+          <form id="archiveImportForm" class="stack compact-stack">
+            <h3>Import Internet Archive collection</h3>
+            <input name="url" placeholder="Archive collection or item URL" required>
+            <input name="folderName" placeholder="Folder name (optional)">
+            <input name="rows" type="number" min="1" max="100" value="50" placeholder="Max videos">
+            <button type="submit">Import archive</button>
+            <p id="archiveImportMessage" class="message"></p>
+          </form>
+
           <form id="sourceFolderForm" class="stack compact-stack">
             <h3>Source folders</h3>
             <div class="inline-form">
@@ -167,41 +246,22 @@
             <p id="playlistImportMessage" class="message"></p>
           </form>
 
-          <form id="archiveImportForm" class="stack compact-stack">
-            <h3>Import Internet Archive</h3>
-            <input name="url" placeholder="Archive collection or item URL" required>
-            <input name="folderName" placeholder="Folder name (optional)">
-            <input name="rows" type="number" min="1" max="100" value="50" placeholder="Max videos">
-            <button type="submit">Import archive</button>
-            <p id="archiveImportMessage" class="message"></p>
-          </form>
-
-          <form id="sourceSearchForm" class="stack compact-stack source-search">
-            <h3>Source Search</h3>
-            <div class="inline-form">
-              <input name="query" placeholder="Search Internet Archive media" autocomplete="off">
-              <button type="submit">Search</button>
-            </div>
-            <p id="sourceSearchMessage" class="message"></p>
-            <div id="sourceSearchResults" class="search-results"></div>
-          </form>
-
           <form id="sourceForm" class="stack">
             <h3>Add source</h3>
             <select name="type">
-              <option value="youtube">YouTube</option>
               <option value="internet-archive">Internet Archive</option>
+              <option value="youtube">YouTube</option>
               <option value="local">Server file</option>
             </select>
             <select name="folderId">
               <option value="">Unfiled sources</option>
             </select>
-            <div class="source-field" data-source-field="youtube">
-              <input name="youtube" placeholder="YouTube URL or ID">
-            </div>
-            <div class="source-field hidden" data-source-field="internet-archive">
+            <div class="source-field" data-source-field="internet-archive">
               <input name="archive" placeholder="Archive item URL or identifier">
               <input name="archiveFile" type="hidden">
+            </div>
+            <div class="source-field hidden" data-source-field="youtube">
+              <input name="youtube" placeholder="YouTube URL or ID">
             </div>
             <div class="source-field hidden" data-source-field="local">
               <input name="path" placeholder="media/example.mp4">
@@ -232,6 +292,7 @@
             <button type="submit">Schedule</button>
             <button id="addQueueButton" type="button" class="secondary">Add to queue</button>
             <button id="playNowButton" type="button" class="secondary">Play immediately</button>
+            <button id="seedWeeklyScheduleButton" type="button" class="secondary fx-wide">Seed weekly IA blocks</button>
             <p id="scheduleMessage" class="message"></p>
           </form>
 
@@ -252,11 +313,34 @@
         </div>
       </aside>
 
+      <aside id="schedulePanel" class="admin-panel hidden" aria-label="Weekly schedule editor">
+        <div class="rail-tabs hidden" data-admin-rail-tabs>
+          <button id="showBroadcastPanelButtonSchedule" class="auth-tab" type="button">Cast</button>
+          <button id="showSchedulePanelButtonSchedule" class="auth-tab active" type="button">Schedule</button>
+          <button id="showQueuePanelButtonSchedule" class="auth-tab" type="button">Queue</button>
+          <button id="showBumpPanelButtonSchedule" class="auth-tab" type="button">Bumps</button>
+          <button id="showSoundboardPanelButtonSchedule" class="auth-tab" type="button">Board</button>
+          <button id="showFxPanelButtonSchedule" class="auth-tab" type="button">FX</button>
+          <button id="showChatPanelButtonSchedule" class="auth-tab" type="button">Chat</button>
+        </div>
+        <div class="panel-top">
+          <div>
+            <h2>Weekly Schedule</h2>
+            <p>Edit generated and manual schedule entries</p>
+          </div>
+          <button id="refreshScheduleWeekButton" class="secondary compact" type="button">Refresh</button>
+        </div>
+        <div id="weeklyScheduleGrid" class="weekly-schedule-grid"></div>
+        <p id="weeklyScheduleMessage" class="message"></p>
+      </aside>
+
       <aside id="queuePanel" class="admin-panel hidden" aria-label="Queue controls">
         <div class="rail-tabs hidden" data-admin-rail-tabs>
-          <button id="showBroadcastPanelButtonQueue" class="auth-tab" type="button">Broadcast</button>
+          <button id="showBroadcastPanelButtonQueue" class="auth-tab" type="button">Cast</button>
+          <button id="showSchedulePanelButtonQueue" class="auth-tab" type="button">Schedule</button>
           <button id="showQueuePanelButtonQueue" class="auth-tab active" type="button">Queue</button>
           <button id="showBumpPanelButtonQueue" class="auth-tab" type="button">Bumps</button>
+          <button id="showSoundboardPanelButtonQueue" class="auth-tab" type="button">Board</button>
           <button id="showFxPanelButtonQueue" class="auth-tab" type="button">FX</button>
           <button id="showChatPanelButtonQueue" class="auth-tab" type="button">Chat</button>
         </div>
@@ -273,9 +357,11 @@
 
       <aside id="bumpPanel" class="admin-panel hidden" aria-label="Bump generator">
         <div class="rail-tabs hidden" data-admin-rail-tabs>
-          <button id="showBroadcastPanelButtonBump" class="auth-tab" type="button">Broadcast</button>
+          <button id="showBroadcastPanelButtonBump" class="auth-tab" type="button">Cast</button>
+          <button id="showSchedulePanelButtonBump" class="auth-tab" type="button">Schedule</button>
           <button id="showQueuePanelButtonBump" class="auth-tab" type="button">Queue</button>
           <button id="showBumpPanelButtonBump" class="auth-tab active" type="button">Bumps</button>
+          <button id="showSoundboardPanelButtonBump" class="auth-tab" type="button">Board</button>
           <button id="showFxPanelButtonBump" class="auth-tab" type="button">FX</button>
           <button id="showChatPanelButtonBump" class="auth-tab" type="button">Chat</button>
         </div>
@@ -288,25 +374,51 @@
         <iframe class="bump-frame" src="/bumpgenerator/" title="Bump Generator"></iframe>
       </aside>
 
+      <aside id="soundboardPanel" class="admin-panel hidden" aria-label="DJ soundboard">
+        <div class="rail-tabs hidden" data-admin-rail-tabs>
+          <button id="showBroadcastPanelButtonSoundboard" class="auth-tab" type="button">Cast</button>
+          <button id="showSchedulePanelButtonSoundboard" class="auth-tab" type="button">Schedule</button>
+          <button id="showQueuePanelButtonSoundboard" class="auth-tab" type="button">Queue</button>
+          <button id="showBumpPanelButtonSoundboard" class="auth-tab" type="button">Bumps</button>
+          <button id="showSoundboardPanelButtonSoundboard" class="auth-tab active" type="button">Board</button>
+          <button id="showFxPanelButtonSoundboard" class="auth-tab" type="button">FX</button>
+          <button id="showChatPanelButtonSoundboard" class="auth-tab" type="button">Chat</button>
+        </div>
+        <div class="panel-top">
+          <div>
+            <h2>DJ Soundboard</h2>
+            <p>Server carts for live broadcast hits</p>
+          </div>
+        </div>
+        <section class="stack soundboard-panel-stack">
+          <h3>Cart wall</h3>
+          <div id="djSoundboardGrid" class="dj-soundboard-grid">
+            <p class="message">Loading carts...</p>
+          </div>
+        </section>
+      </aside>
+
       <aside id="fxPanel" class="admin-panel hidden" aria-label="FX controls">
         <div class="rail-tabs hidden" data-admin-rail-tabs>
-          <button id="showBroadcastPanelButtonFx" class="auth-tab" type="button">Broadcast</button>
+          <button id="showBroadcastPanelButtonFx" class="auth-tab" type="button">Cast</button>
+          <button id="showSchedulePanelButtonFx" class="auth-tab" type="button">Schedule</button>
           <button id="showQueuePanelButtonFx" class="auth-tab" type="button">Queue</button>
           <button id="showBumpPanelButtonFx" class="auth-tab" type="button">Bumps</button>
+          <button id="showSoundboardPanelButtonFx" class="auth-tab" type="button">Board</button>
           <button id="showFxPanelButtonFx" class="auth-tab active" type="button">FX</button>
           <button id="showChatPanelButtonFx" class="auth-tab" type="button">Chat</button>
         </div>
         <div class="panel-top">
           <div>
-            <h2>FX Soundboard</h2>
+            <h2>FX BOARD</h2>
             <p>Throw synchronized chaos into the broadcast</p>
           </div>
           <button id="clearFxButton" class="danger compact" type="button">Clear FX</button>
         </div>
         <div class="fx-board">
-          <section>
+          <section class="fx-device fx-device-looper" data-fx-section="signal-looper">
             <h3 class="looper-heading">
-              <span>Signal Looper</span>
+              <span class="fx-device-title"><i aria-hidden="true"></i><span>Looper / Beat Repeat</span><small>clip cells</small></span>
               <span class="looper-bpm-display">
                 <span id="looperBeatLight" class="looper-beat-light" aria-hidden="true"></span>
                 <output id="looperBpmValue">120 BPM</output>
@@ -418,10 +530,10 @@
               <option value="whole-triplet">whole triplet</option>
               <option value="dotted-whole">dotted whole</option>
             </select>
-            <button class="fx-wide" data-fx="seed-skip">Seed skip</button>
+            <button class="fx-wide" data-fx="seed-skip">Beat repeat / seed skip</button>
           </section>
-          <section>
-            <h3>A/V Warp</h3>
+          <section class="fx-device fx-device-warp" data-fx-section="av-warp">
+            <h3><span class="fx-device-title"><i aria-hidden="true"></i><span>A/V Warp</span><small>transpose + track delay</small></span></h3>
             <label class="fx-slider">
               <span>Speed <output id="warpSpeedValue">1.00x</output></span>
               <input id="warpSpeedSlider" type="range" min="0.25" max="2" step="0.01" value="1">
@@ -436,8 +548,8 @@
             </label>
             <button id="warpResetButton" class="fx-wide secondary" type="button">Reset warp</button>
           </section>
-          <section>
-            <h3>Delay</h3>
+          <section class="fx-device fx-device-delay" data-fx-section="delay">
+            <h3><span class="fx-device-title"><i aria-hidden="true"></i><span>Delay</span><small>sync, feedback, filter</small></span></h3>
             <label class="fx-slider">
               <span>Time <output id="delayTimeValue">375ms</output></span>
               <input id="delayTimeSlider" type="range" min="40" max="2000" step="5" value="375">
@@ -475,24 +587,46 @@
               <option value="dub">Dub darken</option>
               <option value="slap">Slapback</option>
             </select>
+            <select id="delayTargetSelect" class="fx-wide">
+              <option value="both" selected>Audio + video</option>
+              <option value="audio">Audio only</option>
+              <option value="video">Video only</option>
+            </select>
             <button id="delayToggleButton" class="fx-wide" type="button" aria-pressed="false">Delay off</button>
+          </section>
+          <section class="fx-device fx-device-visual" data-fx-section="visual-abuse">
+            <h3><span class="fx-device-title"><i aria-hidden="true"></i><span>Visual Abuse</span><small>auto filter + utility</small></span></h3>
+            <label class="fx-slider">
+              <span>Brightness <output id="visualBrightnessValue">100%</output></span>
+              <input id="visualBrightnessSlider" type="range" min="-100" max="300" step="1" value="100">
+            </label>
+            <label class="fx-slider">
+              <span>Contrast <output id="visualContrastValue">100%</output></span>
+              <input id="visualContrastSlider" type="range" min="-100" max="300" step="1" value="100">
+            </label>
+            <label class="fx-slider">
+              <span>Saturation <output id="visualSaturationValue">100%</output></span>
+              <input id="visualSaturationSlider" type="range" min="-100" max="300" step="1" value="100">
+            </label>
+            <button data-fx="auto-filter-sweep" type="button">Auto filter sweep</button>
+            <button id="visualResetButton" class="fx-wide secondary" type="button">Reset visuals</button>
           </section>
           <section>
             <h3>Signal Damage</h3>
             <button data-fx="glitch">Glitch</button>
-            <button data-fx="signal-loss">Signal loss</button>
-            <button data-fx="tape-warp">Tape warp</button>
-            <button data-fx="vhs">VHS distortion</button>
+            <button data-fx="signal-loss" data-fx-mode="toggle">Signal loss</button>
+            <button data-fx="tape-warp" data-fx-mode="toggle">Tape warp</button>
+            <button data-fx="vhs" data-fx-mode="toggle">VHS distortion</button>
             <button data-fx="dvd-skip">DVD skip</button>
             <button data-fx="frozen">Frozen frame</button>
           </section>
           <section>
             <h3>Format Crimes</h3>
-            <button data-fx="color-bars">Color bars</button>
-            <button data-fx="aspect-bad">Wrong aspect</button>
-            <button data-fx="crop-bad">Fake crop issue</button>
-            <button data-fx="pixelate">Pixelate</button>
-            <button data-fx="glass">Glass block</button>
+            <button data-fx="color-bars" data-fx-mode="toggle">Color bars</button>
+            <button data-fx="aspect-bad" data-fx-mode="toggle">Wrong aspect</button>
+            <button data-fx="crop-bad" data-fx-mode="toggle">Fake crop issue</button>
+            <button data-fx="pixelate" data-fx-mode="toggle">Pixelate</button>
+            <button data-fx="glass" data-fx-mode="toggle">Glass block</button>
             <button data-fx="melt">Melt</button>
           </section>
           <section>
@@ -506,7 +640,7 @@
           </section>
           <section>
             <h3>Page Warps</h3>
-            <button data-fx="theme-cycle">Theme cycle</button>
+            <button data-fx="theme-cycle" data-fx-mode="toggle">Theme cycle</button>
             <button data-fx="theme-random">Random theme</button>
             <button data-fx="theme-aero-blast">Aero blast</button>
             <button data-fx="ui-tilt">Tilt room</button>
@@ -522,22 +656,6 @@
             <button data-fx="ui-z-index-slip">Stacking slip</button>
             <button data-fx="ui-scroll-sick">Scroll sickness</button>
             <button data-fx="ui-css-panic">CSS panic</button>
-          </section>
-          <section>
-            <h3>Visual Abuse</h3>
-            <label class="fx-slider">
-              <span>Brightness <output id="visualBrightnessValue">100%</output></span>
-              <input id="visualBrightnessSlider" type="range" min="-100" max="300" step="1" value="100">
-            </label>
-            <label class="fx-slider">
-              <span>Contrast <output id="visualContrastValue">100%</output></span>
-              <input id="visualContrastSlider" type="range" min="-100" max="300" step="1" value="100">
-            </label>
-            <label class="fx-slider">
-              <span>Saturation <output id="visualSaturationValue">100%</output></span>
-              <input id="visualSaturationSlider" type="range" min="-100" max="300" step="1" value="100">
-            </label>
-            <button id="visualResetButton" class="fx-wide secondary" type="button">Reset visuals</button>
           </section>
           <section>
             <h3>Screen Fill</h3>
@@ -558,8 +676,8 @@
             <button data-fx="retro-os">Old OS shell</button>
             <button data-fx="illegal-operation">Illegal operation</button>
           </section>
-          <section>
-            <h3>Source Overlay</h3>
+          <section class="fx-device fx-device-overlay" data-fx-section="source-overlay">
+            <h3><span class="fx-device-title"><i aria-hidden="true"></i><span>Source Overlay</span><small>rack chain</small></span></h3>
             <select id="overlaySourceSelect" class="fx-wide">
               <option value="">Choose source...</option>
             </select>
@@ -596,16 +714,22 @@
             <h3>DJ Stingers</h3>
             <button data-fx="amen-break">Amen break</button>
             <button data-fx="radio-sting">FM morning radio</button>
+            <button data-fx="legal-id">Legal ID</button>
+            <button data-fx="cart-wall">Cart wall</button>
+            <button data-fx="record-scratch">Record scratch</button>
+            <button data-fx="dub-siren">Dub siren</button>
+            <button data-fx="dj-mic" data-fx-mode="toggle">DJ mic live</button>
+            <button data-fx="caller-line">Latest caller</button>
+            <button data-fx="frequency-drift" data-fx-mode="toggle">Frequency drift</button>
+            <button data-fx="party-damage" data-fx-mode="toggle">Party damage</button>
             <button data-fx="hum">Audio hum</button>
             <button data-fx="countdown">Countdown</button>
             <button data-fx="gun">Shoot stream</button>
             <button data-fx="gif-loops">GIF loops</button>
-            <button class="fx-wide" data-fx="playlist-audio">Random playlist audio</button>
+            <button class="fx-wide" data-fx="playlist-audio" data-fx-mode="toggle">Random playlist audio</button>
           </section>
           <section>
-            <h3>Memes + Intoxicated</h3>
-            <button data-fx="meme-jazz">You like jazz?</button>
-            <button data-fx="meme-done">Done this</button>
+            <h3>Intoxicated</h3>
             <button data-fx="weed">Weed</button>
             <button data-fx="beer">Beer</button>
             <button data-fx="lsd">LSD</button>

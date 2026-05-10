@@ -1,24 +1,36 @@
 const frame = document.querySelector("#playerFrame");
+const stage = document.querySelector(".stage");
 const streamPlayer = document.querySelector("#streamPlayer");
 const streamLoading = document.querySelector("#streamLoading");
 const playOverlayButton = document.querySelector("#playOverlayButton");
 const liveBadge = document.querySelector("#liveBadge");
+const onlineBadge = document.querySelector("#onlineBadge");
+const peaceModeToggle = document.querySelector("#peaceModeToggle");
 const nowTitle = document.querySelector("#nowTitle");
+const nowBlock = document.querySelector("#nowBlock");
+const viewerNowTitle = document.querySelector("#viewerNowTitle");
+const viewerNowBlock = document.querySelector("#viewerNowBlock");
 const nextTitle = document.querySelector("#nextTitle");
+const nextBlock = document.querySelector("#nextBlock");
 const progressText = document.querySelector("#progressText");
+const viewerNowProgress = document.querySelector("#viewerNowProgress");
 const youtubeLink = document.querySelector("#youtubeLink");
 const crtBrand = document.querySelector(".crt-brand");
 const volumeSlider = document.querySelector("#volumeSlider");
 const volumeValue = document.querySelector("#volumeValue");
+const captionsToggle = document.querySelector("#captionsToggle");
 const fullscreenButton = document.querySelector("#fullscreenButton");
 const themeSelect = document.querySelector("#themeSelect");
 const shell = document.querySelector(".shell");
+const railResizer = document.querySelector("#railResizer");
 const adminToggle = document.querySelector("#adminToggle");
 const loginPopover = document.querySelector("#loginPopover");
 const adminPanel = document.querySelector("#adminPanel");
+const schedulePanel = document.querySelector("#schedulePanel");
 const chatPanel = document.querySelector("#chatPanel");
 const bumpPanel = document.querySelector("#bumpPanel");
 const queuePanel = document.querySelector("#queuePanel");
+const soundboardPanel = document.querySelector("#soundboardPanel");
 const fxPanel = document.querySelector("#fxPanel");
 const fxOverlay = document.querySelector("#fxOverlay");
 const fxAudioLayer = document.querySelector("#fxAudioLayer");
@@ -27,36 +39,64 @@ const adminRailTabs = document.querySelectorAll("[data-admin-rail-tabs]");
 const showBroadcastPanelButtons = [
   document.querySelector("#showBroadcastPanelButton"),
   document.querySelector("#showBroadcastPanelButtonAlt"),
+  document.querySelector("#showBroadcastPanelButtonSchedule"),
   document.querySelector("#showBroadcastPanelButtonQueue"),
   document.querySelector("#showBroadcastPanelButtonBump"),
+  document.querySelector("#showBroadcastPanelButtonSoundboard"),
   document.querySelector("#showBroadcastPanelButtonFx")
+];
+const showSchedulePanelButtons = [
+  document.querySelector("#showSchedulePanelButton"),
+  document.querySelector("#showSchedulePanelButtonAlt"),
+  document.querySelector("#showSchedulePanelButtonSchedule"),
+  document.querySelector("#showSchedulePanelButtonQueue"),
+  document.querySelector("#showSchedulePanelButtonBump"),
+  document.querySelector("#showSchedulePanelButtonSoundboard"),
+  document.querySelector("#showSchedulePanelButtonFx")
 ];
 const showQueuePanelButtons = [
   document.querySelector("#showQueuePanelButton"),
   document.querySelector("#showQueuePanelButtonAlt"),
+  document.querySelector("#showQueuePanelButtonSchedule"),
   document.querySelector("#showQueuePanelButtonQueue"),
   document.querySelector("#showQueuePanelButtonBump"),
+  document.querySelector("#showQueuePanelButtonSoundboard"),
   document.querySelector("#showQueuePanelButtonFx")
 ];
 const showBumpPanelButtons = [
   document.querySelector("#showBumpPanelButton"),
   document.querySelector("#showBumpPanelButtonAlt"),
+  document.querySelector("#showBumpPanelButtonSchedule"),
   document.querySelector("#showBumpPanelButtonQueue"),
   document.querySelector("#showBumpPanelButtonBump"),
+  document.querySelector("#showBumpPanelButtonSoundboard"),
   document.querySelector("#showBumpPanelButtonFx")
+];
+const showSoundboardPanelButtons = [
+  document.querySelector("#showSoundboardPanelButton"),
+  document.querySelector("#showSoundboardPanelButtonAlt"),
+  document.querySelector("#showSoundboardPanelButtonSchedule"),
+  document.querySelector("#showSoundboardPanelButtonQueue"),
+  document.querySelector("#showSoundboardPanelButtonBump"),
+  document.querySelector("#showSoundboardPanelButtonSoundboard"),
+  document.querySelector("#showSoundboardPanelButtonFx")
 ];
 const showFxPanelButtons = [
   document.querySelector("#showFxPanelButton"),
   document.querySelector("#showFxPanelButtonAlt"),
+  document.querySelector("#showFxPanelButtonSchedule"),
   document.querySelector("#showFxPanelButtonQueue"),
   document.querySelector("#showFxPanelButtonBump"),
+  document.querySelector("#showFxPanelButtonSoundboard"),
   document.querySelector("#showFxPanelButtonFx")
 ];
 const showChatPanelButtons = [
   document.querySelector("#showChatPanelButton"),
   document.querySelector("#showChatPanelButtonAlt"),
+  document.querySelector("#showChatPanelButtonSchedule"),
   document.querySelector("#showChatPanelButtonQueue"),
   document.querySelector("#showChatPanelButtonBump"),
+  document.querySelector("#showChatPanelButtonSoundboard"),
   document.querySelector("#showChatPanelButtonFx")
 ];
 const chatStatus = document.querySelector("#chatStatus");
@@ -64,7 +104,12 @@ const chatMessages = document.querySelector("#chatMessages");
 const chatForm = document.querySelector("#chatForm");
 const chatInput = document.querySelector("#chatInput");
 const chatSendButton = document.querySelector("#chatSendButton");
+const chatEmojiButtons = document.querySelectorAll("[data-chat-emoji]");
 const chatMessage = document.querySelector("#chatMessage");
+const programVotePanel = document.querySelector("#programVotePanel");
+const programVoteTitle = document.querySelector("#programVoteTitle");
+const programVoteOptions = document.querySelector("#programVoteOptions");
+const programVoteMessage = document.querySelector("#programVoteMessage");
 const showLoginButton = document.querySelector("#showLoginButton");
 const showRegisterButton = document.querySelector("#showRegisterButton");
 const loginForm = document.querySelector("#loginForm");
@@ -82,6 +127,7 @@ const sourceForm = document.querySelector("#sourceForm");
 const scheduleForm = document.querySelector("#scheduleForm");
 const scheduledModeButton = document.querySelector("#scheduledModeButton");
 const queueModeButton = document.querySelector("#queueModeButton");
+const seedWeeklyScheduleButton = document.querySelector("#seedWeeklyScheduleButton");
 const pickModeButtons = document.querySelectorAll("[data-pick-mode]");
 const addQueueButton = document.querySelector("#addQueueButton");
 const playNowButton = document.querySelector("#playNowButton");
@@ -97,6 +143,7 @@ const queueMessage = document.querySelector("#queueMessage");
 const fxMessage = document.querySelector("#fxMessage");
 const clearFxButton = document.querySelector("#clearFxButton");
 const fxButtons = document.querySelectorAll("[data-fx]");
+const djSoundboardGrid = document.querySelector("#djSoundboardGrid");
 const looperBpmValue = document.querySelector("#looperBpmValue");
 const looperBeatLight = document.querySelector("#looperBeatLight");
 const looperStatus = document.querySelector("#looperStatus");
@@ -149,6 +196,7 @@ const delayToneValue = document.querySelector("#delayToneValue");
 const delaySyncToggle = document.querySelector("#delaySyncToggle");
 const delayDivisionSelect = document.querySelector("#delayDivisionSelect");
 const delayRepitchSelect = document.querySelector("#delayRepitchSelect");
+const delayTargetSelect = document.querySelector("#delayTargetSelect");
 const delayToggleButton = document.querySelector("#delayToggleButton");
 const overlaySourceSelect = document.querySelector("#overlaySourceSelect");
 const overlayBlendSelect = document.querySelector("#overlayBlendSelect");
@@ -166,6 +214,9 @@ const timingDurationInput = scheduleForm.elements.duration;
 const sourcesList = document.querySelector("#sourcesList");
 const ingestAllSourcesButton = document.querySelector("#ingestAllSourcesButton");
 const scheduleList = document.querySelector("#scheduleList");
+const weeklyScheduleGrid = document.querySelector("#weeklyScheduleGrid");
+const weeklyScheduleMessage = document.querySelector("#weeklyScheduleMessage");
+const refreshScheduleWeekButton = document.querySelector("#refreshScheduleWeekButton");
 const queueList = document.querySelector("#queueList");
 const clearQueueButton = document.querySelector("#clearQueueButton");
 const sourceTypeSelect = sourceForm.elements.type;
@@ -189,6 +240,7 @@ const youtubeMetadataReadyPromise = new Promise((resolve) => {
 });
 let currentProgramId = "";
 let currentProgram = null;
+let programEvents = null;
 let clockDelta = 0;
 let loadedYouTubeProgramId = "";
 let youtubeSyncTimer = 0;
@@ -203,15 +255,23 @@ let schedulePickMode = "source";
 let draggedQueueId = "";
 let draggedSourceId = "";
 let adminDataCache = { sourceFolders: [], sources: [] };
+let programVotePoll = null;
+let railResizeDrag = null;
 const expandedSourceFolders = new Set(JSON.parse(localStorage.getItem("doink_expanded_source_folders") || "[]"));
 const collapsedFxSections = new Set(JSON.parse(localStorage.getItem("doink_collapsed_fx_sections") || "[]"));
 const availableThemeList = ["station", "woodsy", "mountain", "deep-ocean", "rainforest", "frutiger-aero", "aero-lime", "aero-sunset", "candy-static", "terminal-green", "hotdog-stand", "midnight-laundromat", "mall-kiosk"];
 const chaosThemeList = ["woodsy", "mountain", "deep-ocean", "rainforest", "frutiger-aero", "aero-lime", "aero-sunset", "candy-static", "terminal-green", "hotdog-stand", "midnight-laundromat", "mall-kiosk"];
 const availableThemes = new Set(availableThemeList);
+let programVoterId = localStorage.getItem("doink_program_voter_id");
+if (!programVoterId) {
+  programVoterId = crypto.randomUUID();
+  localStorage.setItem("doink_program_voter_id", programVoterId);
+}
 let currentTheme = localStorage.getItem("doink_theme") || "station";
 if (!availableThemes.has(currentTheme)) currentTheme = "station";
+const storedPlaybackUnlocked = localStorage.getItem("doink_playback_unlocked") === "true";
 let audioUnlocked = true;
-let playbackUnlocked = false;
+let playbackUnlocked = storedPlaybackUnlocked;
 let pendingPlaybackUnlock = false;
 let viewerVolume = Number(localStorage.getItem("doink_volume") || 70);
 if (!Number.isFinite(viewerVolume)) viewerVolume = 70;
@@ -224,6 +284,10 @@ let streamBlankSince = 0;
 let streamProgressSeenAt = Date.now();
 let lastStreamTime = 0;
 let hlsResetAt = 0;
+let captionsEnabled = localStorage.getItem("doink_captions_enabled") === "true";
+let captionProgramId = "";
+let captionRequestId = 0;
+let currentCaptionInfo = null;
 let sourceSearchTimer = 0;
 let sourceSearchRequestId = 0;
 let sourceSearchCache = [];
@@ -258,20 +322,72 @@ let avWarpTarget = { speed: 1, pitch: 1, desync: 0 };
 let avWarpTweenTimer = 0;
 let lastYoutubeWarpRate = 1;
 let visualPostTimer = 0;
-let delayPostTimer = 0;
-let delayActive = false;
-let delayNodes = null;
-let delayLfoTimer = 0;
-let activePageFxSignature = "";
-let delayState = {
+const DELAY_DEFAULTS = {
   timeMs: 375,
   feedback: 0.35,
   mix: 0.32,
   tone: 4800,
   sync: true,
   division: "dotted-eighth",
-  repitch: "tape"
+  repitch: "tape",
+  target: "both"
 };
+const DELAY_LIMITS = {
+  timeMs: [40, 2000],
+  seconds: [0.04, 2.5],
+  feedback: [0, 0.88],
+  mix: [0, 1],
+  tone: [800, 12000],
+  visualCaptureMs: [120, 420]
+};
+const DELAY_VISUAL_FRAME_LIMIT = 8;
+const DELAY_VISUAL_RENDER_LIMIT = 5;
+const DELAY_VISUAL_CAPTURE_WIDTH = 240;
+const DELAY_VISUAL_JPEG_QUALITY = 0.42;
+const DELAY_TAPE_MODULATION_MS = 420;
+const DELAY_TARGETS = new Set(["audio", "video", "both"]);
+const DELAY_REPITCH_MODES = new Set(["digital", "tape", "dub", "slap"]);
+const DELAY_DIVISIONS = new Set([
+  "sixteenth",
+  "sixteenth-triplet",
+  "dotted-sixteenth",
+  "eighth",
+  "eighth-triplet",
+  "dotted-eighth",
+  "quarter",
+  "quarter-triplet",
+  "dotted-quarter",
+  "half",
+  "half-triplet",
+  "dotted-half",
+  "whole",
+  "whole-triplet",
+  "dotted-whole"
+]);
+let delayPostTimer = 0;
+let delayActive = false;
+let delayNodes = null;
+let delayLfoTimer = 0;
+let delayVisualTimer = 0;
+let delayVisualFrames = [];
+let activePageFxSignature = "";
+let stingerAudioContext = null;
+let broadcastAudioDuck = 1;
+let delayState = { ...DELAY_DEFAULTS };
+let peaceMode = localStorage.getItem("doink_peace_mode") === "true";
+const soundboardAudioInstances = new Set();
+const DJ_STINGER_FX = new Set([
+  "amen-break",
+  "radio-sting",
+  "legal-id",
+  "cart-wall",
+  "record-scratch",
+  "caller-line",
+  "dub-siren",
+  "hum",
+  "gun",
+  "countdown"
+]);
 
 window.onYouTubeIframeAPIReady = () => {
   youtubePlayer = new YT.Player("youtubePlayer", {
@@ -279,7 +395,8 @@ window.onYouTubeIframeAPIReady = () => {
     height: "100%",
     playerVars: {
       autoplay: 1,
-      cc_load_policy: 0,
+      cc_load_policy: captionsEnabled ? 1 : 0,
+      cc_lang_pref: "en",
       controls: 1,
       disablekb: 1,
       fs: 0,
@@ -293,6 +410,7 @@ window.onYouTubeIframeAPIReady = () => {
       onReady: () => {
         youtubeReady = true;
         applyViewerVolume();
+        applyCaptionMode();
         applyAvWarpToPlayers();
         if (currentProgram?.live?.source?.type === "youtube") syncYouTube(currentProgram.live, { force: true });
         if (pendingPlaybackUnlock) unlockPlayback();
@@ -336,6 +454,51 @@ function setMessage(node, text, isError = false) {
   node.classList.toggle("error", isError);
 }
 
+function setProgramBlock(node, blockName = "") {
+  if (!node) return;
+  const label = String(blockName || "").trim();
+  node.textContent = label;
+  node.classList.toggle("hidden", !label);
+}
+
+function setProgramTitle(node, title = "") {
+  if (!node) return;
+  node.textContent = title;
+  node.title = title;
+}
+
+function escapeRegExp(value = "") {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function programDisplayTitle(program = {}) {
+  let title = String(program.title || program.source?.title || "Untitled").trim();
+  const blockName = String(program.weeklyBlockName || "").trim();
+  if (blockName) {
+    title = title.replace(new RegExp(`^${escapeRegExp(blockName)}\\s*[:|\\-]+\\s*`, "i"), "").trim();
+  }
+  return title || "Untitled";
+}
+
+function refreshTitleMarquees() {
+  requestAnimationFrame(() => {
+    document.querySelectorAll(".title-marquee").forEach((container) => {
+      const title = container.querySelector("strong");
+      if (!title) return;
+      const distance = Math.ceil(title.scrollWidth - container.clientWidth);
+      const shouldScroll = distance > 5;
+      container.classList.toggle("is-overflowing", shouldScroll);
+      if (shouldScroll) {
+        container.style.setProperty("--marquee-distance", `${distance}px`);
+        container.style.setProperty("--marquee-duration", `${Math.max(9, Math.min(24, 8 + distance / 18))}s`);
+      } else {
+        container.style.removeProperty("--marquee-distance");
+        container.style.removeProperty("--marquee-duration");
+      }
+    });
+  });
+}
+
 function setTheme(theme, { persist = true } = {}) {
   currentTheme = availableThemes.has(theme) ? theme : "station";
   document.body.dataset.theme = currentTheme;
@@ -345,6 +508,88 @@ function setTheme(theme, { persist = true } = {}) {
 
 function displayTheme(theme) {
   document.body.dataset.theme = availableThemes.has(theme) ? theme : currentTheme;
+}
+
+function railLayoutMetrics() {
+  const rect = shell.getBoundingClientRect();
+  const style = getComputedStyle(shell);
+  const contentWidth = rect.width
+    - Number.parseFloat(style.paddingLeft || "0")
+    - Number.parseFloat(style.paddingRight || "0");
+  const splitterWidth = railResizer?.offsetWidth || 8;
+  const gapWidth = Number.parseFloat(style.columnGap || style.gap || "8") || 8;
+  return { contentWidth, splitterWidth, gapWidth };
+}
+
+function stageWidthBounds() {
+  const { contentWidth, splitterWidth, gapWidth } = railLayoutMetrics();
+  const minRail = adminAuthenticated ? 330 : 260;
+  const controlFloor = Math.max(720, Math.min(820, contentWidth * 0.58));
+  const minStage = Math.max(
+    controlFloor,
+    Math.ceil((stage?.scrollWidth || 0) + 2),
+    Math.ceil((frame?.offsetWidth || 0) * 0.72)
+  );
+  const availableForColumns = contentWidth - splitterWidth - gapWidth * 2;
+  const idealStage = Math.max(minStage, availableForColumns - (adminAuthenticated ? 390 : 320));
+  const travel = Math.min(96, Math.max(32, availableForColumns - minStage - minRail));
+  const min = Math.max(minStage, idealStage - travel);
+  const max = Math.min(availableForColumns - minRail, idealStage + travel);
+  return { min, max };
+}
+
+function railWidthBounds() {
+  const { contentWidth, splitterWidth, gapWidth } = railLayoutMetrics();
+  const stageBounds = stageWidthBounds();
+  const minRail = adminAuthenticated ? 330 : 260;
+  const maxRail = contentWidth - stageBounds.min - splitterWidth - gapWidth * 2;
+  return { min: minRail, max: Math.max(minRail, maxRail) };
+}
+
+function setStageWidth(width, { persist = true } = {}) {
+  if (!shell || !Number.isFinite(width)) return;
+  const bounds = stageWidthBounds();
+  const nextWidth = Math.max(bounds.min, Math.min(bounds.max, Math.round(width)));
+  shell.style.setProperty("--stage-width", `${nextWidth}px`);
+  railResizer?.setAttribute("aria-valuenow", String(nextWidth));
+  railResizer?.setAttribute("aria-valuemin", String(bounds.min));
+  railResizer?.setAttribute("aria-valuemax", String(bounds.max));
+  if (persist) localStorage.setItem("doink_stage_width", String(nextWidth));
+  refreshTitleMarquees();
+}
+
+function currentStageWidth() {
+  const stored = Number(localStorage.getItem("doink_stage_width"));
+  if (Number.isFinite(stored) && stored > 0) return stored;
+  const { contentWidth, splitterWidth, gapWidth } = railLayoutMetrics();
+  return contentWidth - splitterWidth - gapWidth * 2 - (adminAuthenticated ? 390 : 320);
+}
+
+function applyStoredRailWidth() {
+  if (!shell || window.matchMedia("(max-width: 1040px)").matches) return;
+  setStageWidth(currentStageWidth(), { persist: true });
+}
+
+function beginRailResize(event) {
+  if (!railResizer || event.button !== 0 || window.matchMedia("(max-width: 1040px)").matches) return;
+  railResizeDrag = { startX: event.clientX, startStageWidth: currentStageWidth() };
+  document.body.classList.add("rail-resizing");
+  railResizer.classList.add("active");
+  railResizer.setPointerCapture?.(event.pointerId);
+  event.preventDefault();
+}
+
+function moveRailResize(event) {
+  if (!railResizeDrag) return;
+  setStageWidth(railResizeDrag.startStageWidth + event.clientX - railResizeDrag.startX);
+}
+
+function endRailResize(event) {
+  if (!railResizeDrag) return;
+  railResizeDrag = null;
+  document.body.classList.remove("rail-resizing");
+  railResizer?.classList.remove("active");
+  railResizer?.releasePointerCapture?.(event.pointerId);
 }
 
 function setLoginOpen(isOpen) {
@@ -363,6 +608,7 @@ function setAuthMode(mode) {
 }
 
 function setUserState(user) {
+  const previousAdminState = adminAuthenticated;
   currentUser = user;
   adminAuthenticated = user?.role === "admin";
   setLoginOpen(false);
@@ -374,18 +620,23 @@ function setUserState(user) {
   if (user) adminIdentity.textContent = `Signed in as ${user.username}`;
   chatInput.disabled = !user;
   chatSendButton.disabled = !user;
+  chatEmojiButtons.forEach((button) => { button.disabled = !user; });
   chatInput.placeholder = user ? "Message global chat" : "Log in to chat";
   chatStatus.textContent = user ? `Chatting as ${user.username}` : "Log in to join";
   if (adminAuthenticated) {
     setAdminRailView(adminRailView || "broadcast");
   } else {
     adminPanel.classList.add("hidden");
+    schedulePanel.classList.add("hidden");
     queuePanel.classList.add("hidden");
     bumpPanel.classList.add("hidden");
+    soundboardPanel.classList.add("hidden");
     fxPanel.classList.add("hidden");
     chatPanel.classList.remove("hidden");
     shell.classList.remove("bump-workspace");
   }
+  if (previousAdminState !== adminAuthenticated) reconnectProgramEvents();
+  applyStoredRailWidth();
 }
 
 function setChatCollapsed(isCollapsed) {
@@ -395,27 +646,35 @@ function setChatCollapsed(isCollapsed) {
   shell.classList.toggle("chat-collapsed", isCollapsed);
   chatToggle.textContent = isCollapsed ? "Chat" : "Minimize";
   chatToggle.setAttribute("aria-expanded", String(!isCollapsed));
+  if (!isCollapsed) applyStoredRailWidth();
 }
 
 function setAdminRailView(view) {
-  adminRailView = ["broadcast", "queue", "bump", "fx", "chat"].includes(view) ? view : "broadcast";
+  adminRailView = ["broadcast", "schedule", "queue", "bump", "soundboard", "fx", "chat"].includes(view) ? view : "broadcast";
   const showingBroadcast = adminRailView === "broadcast";
+  const showingSchedule = adminRailView === "schedule";
   const showingQueue = adminRailView === "queue";
   const showingBump = adminRailView === "bump";
+  const showingSoundboard = adminRailView === "soundboard";
   const showingFx = adminRailView === "fx";
   adminPanel.classList.toggle("hidden", !showingBroadcast);
+  schedulePanel.classList.toggle("hidden", !showingSchedule);
   queuePanel.classList.toggle("hidden", !showingQueue);
   bumpPanel.classList.toggle("hidden", !showingBump);
+  soundboardPanel.classList.toggle("hidden", !showingSoundboard);
   fxPanel.classList.toggle("hidden", !showingFx);
-  chatPanel.classList.toggle("hidden", showingBroadcast || showingQueue || showingBump || showingFx);
+  chatPanel.classList.toggle("hidden", showingBroadcast || showingSchedule || showingQueue || showingBump || showingSoundboard || showingFx);
   chatPanel.classList.remove("collapsed");
   shell.classList.remove("chat-collapsed");
   shell.classList.toggle("bump-workspace", showingBump);
   showBroadcastPanelButtons.forEach((button) => button.classList.toggle("active", showingBroadcast));
+  showSchedulePanelButtons.forEach((button) => button.classList.toggle("active", showingSchedule));
   showQueuePanelButtons.forEach((button) => button.classList.toggle("active", showingQueue));
   showBumpPanelButtons.forEach((button) => button.classList.toggle("active", showingBump));
+  showSoundboardPanelButtons.forEach((button) => button.classList.toggle("active", showingSoundboard));
   showFxPanelButtons.forEach((button) => button.classList.toggle("active", showingFx));
   showChatPanelButtons.forEach((button) => button.classList.toggle("active", adminRailView === "chat"));
+  applyStoredRailWidth();
 }
 
 function setBroadcastModeUI(mode) {
@@ -463,7 +722,7 @@ function initFxCollapsibles() {
   fxPanel?.querySelectorAll(".fx-board section").forEach((section) => {
     const heading = section.querySelector("h3");
     if (!heading || section.dataset.fxCollapseReady) return;
-    const id = fxSectionStorageId(section);
+    const id = section.dataset.fxSection || fxSectionStorageId(section);
     section.dataset.fxSection = id;
     section.id ||= `fx-section-${id}`;
     section.dataset.fxCollapseReady = "true";
@@ -710,7 +969,7 @@ function attachHlsStream() {
     streamPlayer.src = streamUrl;
     streamPlayer.addEventListener("loadedmetadata", () => {
       markStreamProgress();
-      streamPlayer.play().catch(() => {});
+      playStreamPlayer();
     }, { once: true });
   } else if (window.Hls?.isSupported()) {
     hlsPlayer = new Hls({
@@ -724,7 +983,7 @@ function attachHlsStream() {
     hlsPlayer.attachMedia(streamPlayer);
     hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
       markStreamProgress();
-      streamPlayer.play().catch(() => {});
+      playStreamPlayer();
     });
     hlsPlayer.on(Hls.Events.FRAG_LOADED, markStreamProgress);
     hlsPlayer.on(Hls.Events.ERROR, (_event, data) => {
@@ -741,7 +1000,8 @@ function attachHlsStream() {
       }
     });
   } else {
-    nowTitle.textContent = "This browser cannot play the HLS stream.";
+    setProgramTitle(nowTitle, "This browser cannot play the HLS stream.");
+    refreshTitleMarquees();
   }
 }
 
@@ -774,15 +1034,51 @@ function resumeHlsStream() {
   loadHlsStream();
   if (!hasStreamStarted()) scheduleStreamLoading();
   applyAvWarpToPlayers();
-  streamPlayer.play().catch(() => {});
+  playStreamPlayer();
+}
+
+function playStreamPlayer({ retry = true } = {}) {
+  applyViewerVolume();
+  const attempt = streamPlayer.play();
+  if (!attempt?.catch) return;
+  attempt.catch((error) => {
+    if (error?.name === "AbortError" && retry) {
+      setTimeout(() => playStreamPlayer({ retry: false }), 300);
+      return;
+    }
+    if (playbackUnlocked) {
+      if (error?.name === "NotAllowedError") {
+        audioUnlocked = false;
+        applyViewerVolume();
+        streamPlayer.muted = true;
+        streamPlayer.play()
+          .then(() => setPlayOverlay(true, "Tap for sound"))
+          .catch(() => setPlayOverlay(true, "Play broadcast"));
+        return;
+      }
+      if (retry) {
+        setTimeout(() => playStreamPlayer({ retry: false }), 300);
+      } else {
+        setPlayOverlay(true, "Play broadcast");
+      }
+      return;
+    }
+    audioUnlocked = false;
+    applyViewerVolume();
+    streamPlayer.muted = true;
+    streamPlayer.play()
+      .then(() => setPlayOverlay(true, "Tap for sound"))
+      .catch(() => setPlayOverlay(true, "Play broadcast"));
+  });
 }
 
 function applyViewerVolume({ unlock = false } = {}) {
   if (unlock) {
     audioUnlocked = true;
     playbackUnlocked = true;
+    localStorage.setItem("doink_playback_unlocked", "true");
   }
-  const volume = Math.max(0, Math.min(1, viewerVolume / 100));
+  const volume = Math.max(0, Math.min(1, viewerVolume / 100)) * broadcastAudioDuck;
   const muted = !audioUnlocked || volume <= 0;
 
   streamPlayer.volume = volume;
@@ -792,7 +1088,7 @@ function applyViewerVolume({ unlock = false } = {}) {
   volumeValue.textContent = `${Math.round(viewerVolume)}%`;
 
   if (youtubeReady) {
-    youtubePlayer.setVolume?.(Math.round(viewerVolume));
+    youtubePlayer.setVolume?.(Math.round(viewerVolume * broadcastAudioDuck));
     if (muted) {
       youtubePlayer.mute?.();
     } else {
@@ -801,10 +1097,92 @@ function applyViewerVolume({ unlock = false } = {}) {
   }
 }
 
+function clearCaptionTracks() {
+  streamPlayer.querySelectorAll("track[data-doink-caption]").forEach((track) => track.remove());
+  currentCaptionInfo = null;
+}
+
+function applyCaptionMode() {
+  captionsToggle?.classList.toggle("active", captionsEnabled);
+  captionsToggle?.setAttribute("aria-pressed", String(captionsEnabled));
+  captionsToggle?.setAttribute("title", currentCaptionInfo?.available
+    ? captionsEnabled ? "English captions on" : "English captions available"
+    : "No easy English captions found for this video");
+
+  for (const track of streamPlayer.textTracks || []) {
+    track.mode = captionsEnabled && currentCaptionInfo?.available ? "showing" : "disabled";
+  }
+
+  if (youtubeReady) {
+    try {
+      if (captionsEnabled) {
+        youtubePlayer.setOption?.("captions", "track", { languageCode: "en" });
+        youtubePlayer.setOption?.("captions", "reload", true);
+      } else {
+        youtubePlayer.unloadModule?.("captions");
+      }
+    } catch {
+      // YouTube captions are best-effort and not available for every embed.
+    }
+  }
+}
+
+async function syncCaptions(live) {
+  const requestId = ++captionRequestId;
+  captionProgramId = live?.id || "";
+  clearCaptionTracks();
+  captionsToggle.disabled = true;
+  applyCaptionMode();
+  if (!live?.source) return;
+
+  if (live.source.type === "youtube") {
+    currentCaptionInfo = { available: true };
+    captionsToggle.disabled = false;
+    applyCaptionMode();
+    return;
+  }
+
+  if (live.source.type !== "internet-archive" || !live.source.id) return;
+
+  try {
+    const info = await api(`/api/captions?${new URLSearchParams({ sourceId: live.source.id })}`);
+    if (requestId !== captionRequestId || live.id !== captionProgramId) return;
+    currentCaptionInfo = info?.available ? info : null;
+    captionsToggle.disabled = !currentCaptionInfo;
+    if (!currentCaptionInfo) {
+      applyCaptionMode();
+      return;
+    }
+    const track = document.createElement("track");
+    track.dataset.doinkCaption = "true";
+    track.kind = "captions";
+    track.label = currentCaptionInfo.label || "English";
+    track.srclang = currentCaptionInfo.srclang || "en";
+    track.src = currentCaptionInfo.src;
+    track.default = captionsEnabled;
+    streamPlayer.append(track);
+    track.addEventListener("load", applyCaptionMode, { once: true });
+    applyCaptionMode();
+  } catch {
+    if (requestId !== captionRequestId) return;
+    clearCaptionTracks();
+    captionsToggle.disabled = true;
+    applyCaptionMode();
+  }
+}
+
+function toggleCaptions() {
+  captionsEnabled = !captionsEnabled;
+  localStorage.setItem("doink_captions_enabled", String(captionsEnabled));
+  applyCaptionMode();
+  if (currentProgram?.live) syncCaptions(currentProgram.live);
+}
+
 function unlockPlayback() {
   pendingPlaybackUnlock = true;
   playbackUnlocked = true;
   audioUnlocked = true;
+  localStorage.setItem("doink_playback_unlocked", "true");
   setPlayOverlay(false);
   applyViewerVolume({ unlock: true });
   if (!currentProgram?.live) {
@@ -909,6 +1287,7 @@ function syncYouTube(live, { force = false, fromGesture = false } = {}) {
 function attemptYouTubePlay(delayMs = 0) {
   if (!youtubeReady) return;
   const play = () => {
+    if (!playbackUnlocked) youtubePlayer.mute?.();
     youtubePlayer.playVideo?.();
     setTimeout(checkYouTubeBlocked, 900);
   };
@@ -927,6 +1306,13 @@ function checkYouTubeBlocked() {
   } else {
     setPlayOverlay(!playbackUnlocked && youtubePlayer.isMuted?.(), "Tap for sound");
   }
+}
+
+function unlockPlaybackFromGesture() {
+  if (viewerVolume <= 0) return;
+  const youtubeMuted = youtubeReady && Boolean(youtubePlayer.isMuted?.());
+  if (playbackUnlocked && !streamPlayer.muted && !youtubeMuted) return;
+  unlockPlayback();
 }
 
 function enterYouTubeMode(live) {
@@ -953,12 +1339,69 @@ function enterStreamMode() {
   resumeHlsStream();
 }
 
+function setPeaceMode(enabled, { persist = true } = {}) {
+  peaceMode = Boolean(enabled);
+  document.body.classList.toggle("peace-mode", peaceMode);
+  peaceModeToggle?.classList.toggle("active", peaceMode);
+  peaceModeToggle?.setAttribute("aria-pressed", String(peaceMode));
+  peaceModeToggle?.setAttribute("title", peaceMode ? "Peace mode on: broadcast FX muted for you" : "Peace mode off");
+  if (persist) localStorage.setItem("doink_peace_mode", String(peaceMode));
+  if (peaceMode) resetChaosForPeace();
+  if (currentProgram) applyBroadcastFx(currentProgram.fx || []);
+}
+
+function resetChaosForPeace() {
+  if (broadcastAudioDuck !== 1) {
+    broadcastAudioDuck = 1;
+    applyViewerVolume();
+  }
+  stopSeedSkipper();
+  resetAvWarp(false);
+  disableDelay(false);
+  syncPlaylistAudio(null);
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  for (const audio of soundboardAudioInstances) {
+    audio.pause();
+    audio.currentTime = 0;
+  }
+  soundboardAudioInstances.clear();
+  activePageFxSignature = "";
+  document.body.className = document.body.className
+    .split(/\s+/)
+    .filter((name) => name && !name.startsWith("page-fx-"))
+    .join(" ");
+  document.body.style.removeProperty("--page-damage");
+  document.body.style.removeProperty("--page-damage-px");
+  document.body.style.removeProperty("--page-damage-rot");
+  displayTheme(currentTheme);
+  streamPlayer.style.filter = "";
+  const youtubeElement = youtubePlayerElement();
+  if (youtubeElement) youtubeElement.style.filter = "";
+  frame.className = frame.className
+    .split(/\s+/)
+    .filter((name) => name && !name.startsWith("fx-"))
+    .join(" ");
+  fxOverlay.innerHTML = "";
+  if (fxAudioLayer) fxAudioLayer.innerHTML = "";
+}
+
 function fxIsActive(fx) {
   return !Number.isFinite(Number(fx.expiresAt)) || fx.expiresAt > Date.now() + clockDelta;
 }
 
 function applyBroadcastFx(effects = []) {
   const active = effects.filter(fxIsActive);
+  if (peaceMode) {
+    updateFxButtonStates(active);
+    resetChaosForPeace();
+    return;
+  }
+  const nextDuck = active.some((fx) => ["dj-mic", "caller-line"].includes(fx.id)) ? 0.38 : 1;
+  if (nextDuck !== broadcastAudioDuck) {
+    broadcastAudioDuck = nextDuck;
+    applyViewerVolume();
+  }
+  updateFxButtonStates(active);
   applyPageFx(active);
   handleFxCommands(active);
   if (!active.some((fx) => fx.id === "seed-skip")) stopSeedSkipper();
@@ -998,6 +1441,18 @@ function applyBroadcastFx(effects = []) {
   if (active.length > 1) frame.classList.add("fx-chaos-stack");
   fxOverlay.innerHTML = `${renderFxTexture(active)}${active.map(renderFxOverlay).join("")}${renderFrozenFrame()}`;
   renderLooperLayers();
+}
+
+function updateFxButtonStates(active = []) {
+  const activeIds = new Set(active.map((fx) => fx.id));
+  fxButtons.forEach((button) => {
+    const isToggle = button.dataset.fxMode === "toggle";
+    const isActive = isToggle && activeIds.has(button.dataset.fx);
+    button.classList.toggle("active", isActive);
+    if (isToggle) button.setAttribute("aria-pressed", String(isActive));
+  });
+  overlaySourceButton?.classList.toggle("active", activeIds.has("source-overlay"));
+  overlaySourceButton?.setAttribute("aria-pressed", String(activeIds.has("source-overlay")));
 }
 
 function applyStackedFxFilter(active = [], intensity = 0, chaos = 1) {
@@ -1042,6 +1497,11 @@ function applyStackedFxFilter(active = [], intensity = 0, chaos = 1) {
     if (fx.id === "glitch") { contrast += 0.32 * amount; saturate += 0.28 * amount; }
     if (fx.id === "glass") blur += 2.4 * amount;
     if (fx.id === "frozen") grayscale = Math.min(1, grayscale + 0.35 * amount);
+    if (fx.id === "frequency-drift") { hue += 18 * chaos; blur += 0.42 * amount; contrast += 0.18 * amount; }
+    if (fx.id === "party-damage") { saturate += 0.68 * amount; contrast += 0.3 * amount; brightness += 0.08 * amount; }
+    if (fx.id === "caller-line") { grayscale = Math.min(1, grayscale + 0.25); sepia += 0.18; }
+    if (fx.id === "dub-siren") { hue += 52; saturate += 0.28 * amount; }
+    if (fx.id === "auto-filter-sweep") { hue += 120; contrast += 0.28 * amount; saturate += 0.42 * amount; }
     if (fx.id === "weed") { hue += 85; blur += 0.6 * amount; }
     if (fx.id === "beer") { sepia += 0.55 * amount; saturate += 0.22 * amount; }
     if (fx.id === "lsd") { hue += 36 * chaos; saturate += 0.85 * amount; }
@@ -1158,12 +1618,169 @@ function handleFxCommands(active) {
     if (fx.id === "av-warp") applyAvWarp(fx.params);
     if (fx.id === "delay") applyDelayFx(fx.params);
     if (fx.id === "frozen") captureFrozenFrame(fx);
+    if (DJ_STINGER_FX.has(fx.id)) triggerAudioStinger(fx);
+    if (fx.id === "soundboard-sample") playSoundboardSample(fx);
   }
+}
+
+function stingerContext() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  stingerAudioContext ||= new AudioContextClass();
+  stingerAudioContext.resume?.();
+  return stingerAudioContext;
+}
+
+function stingerGain(context, level = 0.24) {
+  const gain = context.createGain();
+  gain.gain.value = level * (viewerVolume / 100);
+  gain.connect(context.destination);
+  return gain;
+}
+
+function playTone(context, { frequency = 440, duration = 0.2, type = "square", start = 0, level = 0.2, endFrequency = frequency } = {}) {
+  const oscillator = context.createOscillator();
+  const gain = stingerGain(context, level);
+  const now = context.currentTime + start;
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, now);
+  oscillator.frequency.exponentialRampToValueAtTime(Math.max(20, endFrequency), now + duration);
+  gain.gain.setValueAtTime(level * (viewerVolume / 100), now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+  oscillator.connect(gain);
+  oscillator.start(now);
+  oscillator.stop(now + duration + 0.03);
+}
+
+function playNoise(context, { duration = 0.22, start = 0, level = 0.18, filter = 1800 } = {}) {
+  const length = Math.max(1, Math.floor(context.sampleRate * duration));
+  const buffer = context.createBuffer(1, length, context.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < length; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+  const source = context.createBufferSource();
+  const tone = context.createBiquadFilter();
+  const gain = stingerGain(context, level);
+  tone.type = "bandpass";
+  tone.frequency.value = filter;
+  tone.Q.value = 1.4;
+  source.buffer = buffer;
+  source.connect(tone);
+  tone.connect(gain);
+  source.start(context.currentTime + start);
+}
+
+function speakFxLine(text, { pitch = 0.8, rate = 1.05, volume = 0.85 } = {}) {
+  if (!("speechSynthesis" in window) || !text) return;
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.pitch = pitch;
+  utterance.rate = rate;
+  utterance.volume = volume * (viewerVolume / 100);
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+}
+
+function playScratch(context, start = 0, level = 0.2) {
+  [0, 0.04, 0.08, 0.14, 0.2].forEach((offset, index) => {
+    playNoise(context, { start: start + offset, duration: 0.05 + index * 0.012, level: level * (1 - index * 0.08), filter: index % 2 ? 4800 : 2600 });
+    playTone(context, { start: start + offset, frequency: 900 - index * 130, endFrequency: 180 + index * 60, duration: 0.055, type: "sawtooth", level: level * 0.42 });
+  });
+}
+
+function triggerAudioStinger(fx) {
+  if (peaceMode) return;
+  const context = stingerContext();
+  if (!context) return;
+  if (fx.id === "amen-break") {
+    [0, 0.11, 0.2, 0.28, 0.42, 0.52].forEach((start, index) => {
+      playNoise(context, { start, duration: index % 2 ? 0.07 : 0.11, level: 0.18, filter: index % 2 ? 4200 : 900 });
+      playTone(context, { start, frequency: index % 2 ? 920 : 140, endFrequency: index % 2 ? 220 : 70, duration: 0.08, type: "triangle", level: 0.08 });
+    });
+    return;
+  }
+  if (fx.id === "radio-sting") {
+    playNoise(context, { duration: 0.55, level: 0.12, filter: 2600 });
+    playTone(context, { frequency: 880, endFrequency: 1320, duration: 0.16, type: "sawtooth", level: 0.09 });
+    playTone(context, { frequency: 660, endFrequency: 330, duration: 0.28, start: 0.18, type: "square", level: 0.08 });
+    return;
+  }
+  if (fx.id === "legal-id") {
+    const legalId = fx.params?.legalId || "WDOINK Low Power Basement";
+    playNoise(context, { duration: 0.24, level: 0.1, filter: 3200 });
+    playTone(context, { frequency: 520, endFrequency: 1040, duration: 0.16, type: "triangle", level: 0.1 });
+    playTone(context, { frequency: 780, endFrequency: 390, duration: 0.18, start: 0.18, type: "square", level: 0.08 });
+    speakFxLine(`${legalId}. You are listening to Doink TV after hours.`, { pitch: 0.65, rate: 0.94, volume: 0.72 });
+    return;
+  }
+  if (fx.id === "cart-wall") {
+    const cart = fx.params?.cart || "airhorn";
+    playNoise(context, { duration: 0.12, level: 0.14, filter: 3400 });
+    if (cart === "rewind") playScratch(context, 0.04, 0.24);
+    if (cart === "siren") [0, 0.18, 0.36].forEach((start) => playTone(context, { start, frequency: 580, endFrequency: 980, duration: 0.16, type: "sawtooth", level: 0.1 }));
+    if (cart === "needle-drop") playScratch(context, 0.02, 0.16);
+    if (cart === "laser") [0, 0.08, 0.16].forEach((start) => playTone(context, { start, frequency: 1680, endFrequency: 420, duration: 0.08, type: "square", level: 0.08 }));
+    if (cart === "bad-jingle") [440, 554, 659, 880].forEach((frequency, index) => playTone(context, { start: index * 0.1, frequency, duration: 0.09, type: "triangle", level: 0.08 }));
+    if (cart === "panic-button" || cart === "airhorn") [0, 0.12].forEach((start) => playTone(context, { start, frequency: 330, endFrequency: 520, duration: 0.28, type: "sawtooth", level: 0.14 }));
+    return;
+  }
+  if (fx.id === "record-scratch") {
+    playScratch(context, 0, 0.28);
+    return;
+  }
+  if (fx.id === "caller-line") {
+    playNoise(context, { duration: 0.8, level: 0.06, filter: 1400 });
+    playTone(context, { frequency: 440, endFrequency: 440, duration: 0.08, type: "sine", level: 0.08 });
+    playTone(context, { frequency: 440, endFrequency: 440, duration: 0.08, start: 0.14, type: "sine", level: 0.08 });
+    speakFxLine(`${fx.params?.username || "Caller"} says: ${fx.params?.text || "hello from the chat"}`, { pitch: 0.72, rate: 1.12, volume: 0.72 });
+    return;
+  }
+  if (fx.id === "dub-siren") {
+    [0, 0.34, 0.68].forEach((start) => {
+      playTone(context, { start, frequency: 360, endFrequency: 980, duration: 0.28, type: "sawtooth", level: 0.14 });
+      playNoise(context, { start, duration: 0.22, level: 0.05, filter: 900 });
+    });
+    return;
+  }
+  if (fx.id === "hum") {
+    playTone(context, { frequency: 60, duration: 1.8, type: "sine", level: 0.18 });
+    playTone(context, { frequency: 120, duration: 1.8, type: "sine", level: 0.06 });
+    return;
+  }
+  if (fx.id === "gun") {
+    playNoise(context, { duration: 0.18, level: 0.28, filter: 1200 });
+    playTone(context, { frequency: 92, endFrequency: 36, duration: 0.24, type: "triangle", level: 0.2 });
+    return;
+  }
+  if (fx.id === "countdown") {
+    [0, 0.5, 1].forEach((start) => playTone(context, { start, frequency: 880, duration: 0.08, type: "square", level: 0.12 }));
+  }
+}
+
+function playSoundboardSample(fx) {
+  if (peaceMode) return;
+  const src = fx.params?.path;
+  if (!src) return;
+  const audio = new Audio(src);
+  audio.volume = Math.max(0, Math.min(1, viewerVolume / 100));
+  soundboardAudioInstances.add(audio);
+  audio.addEventListener("ended", () => soundboardAudioInstances.delete(audio), { once: true });
+  audio.addEventListener("error", () => soundboardAudioInstances.delete(audio), { once: true });
+  audio.play().catch(() => {});
+  showSoundboardToast(fx.params?.label || "Soundboard cart", fx.params?.color || "#f2b84a");
+}
+
+function showSoundboardToast(label, color) {
+  if (!fxAudioLayer || peaceMode) return;
+  const toast = document.createElement("div");
+  toast.className = "fx-audio-toast soundboard-toast";
+  toast.style.setProperty("--cart-color", color);
+  toast.textContent = `Cart: ${label}`;
+  fxAudioLayer.append(toast);
+  setTimeout(() => toast.remove(), 2400);
 }
 
 function syncPlaylistAudio(fx) {
   if (!fxAudioLayer) return;
-  if (!fx || fx.expiresAt <= Date.now() + clockDelta) {
+  if (peaceMode || !fx || fx.expiresAt <= Date.now() + clockDelta) {
     activePlaylistAudioSeed = "";
     fxAudioLayer.innerHTML = "";
     return;
@@ -1651,14 +2268,14 @@ function randomSeedText() {
 
 function renderFxTexture(active = []) {
   const osIds = new Set(["os-popups", "blue-screen", "floppy-prompt", "retro-os", "illegal-operation"]);
-  const noisyIds = new Set(["glitch", "signal-loss", "tape-warp", "vhs", "dvd-skip", "frozen", "hum", "radio-sting", ...osIds]);
+  const noisyIds = new Set(["glitch", "signal-loss", "tape-warp", "vhs", "dvd-skip", "frozen", "hum", "radio-sting", "legal-id", "cart-wall", "record-scratch", "dj-mic", "frequency-drift", "caller-line", "party-damage", "dub-siren", "auto-filter-sweep", ...osIds]);
   const colorIds = ["palette-swap", "kaleidoscope", "invert", "color-acid", "color-hot", "color-ice"];
   const hasNoise = active.length > 2 || active.some((fx) => noisyIds.has(fx.id));
   const hasChroma = active.length > 1 || active.some((fx) => ["glitch", "vhs", ...colorIds].includes(fx.id));
   const hasDropout = active.length > 3 || active.some((fx) => ["signal-loss", "dvd-skip", "frozen"].includes(fx.id));
   const hasPixels = active.some((fx) => ["glitch", "dvd-skip", "pixelate", "glass", "melt", "retro-os", "blue-screen"].includes(fx.id)) || active.length > 3;
-  const hasMagnetic = active.some((fx) => ["tape-warp", "vhs", "signal-loss", "kaleidoscope", "lsd", "floppy-prompt"].includes(fx.id)) || active.length > 2;
-  const hasDegauss = active.some((fx) => ["palette-swap", "color-acid", "color-hot", "color-ice", "invert", "kaleidoscope", "lsd"].includes(fx.id));
+  const hasMagnetic = active.some((fx) => ["tape-warp", "vhs", "signal-loss", "kaleidoscope", "lsd", "floppy-prompt", "frequency-drift", "dub-siren"].includes(fx.id)) || active.length > 2;
+  const hasDegauss = active.some((fx) => ["palette-swap", "color-acid", "color-hot", "color-ice", "invert", "kaleidoscope", "lsd", "party-damage", "auto-filter-sweep"].includes(fx.id));
   const visualDamage = normalizedVisualValues(active.find((fx) => fx.id === "visual-adjust")?.params || {}).damage;
   const hasVisualDamage = visualDamage > 0.08;
   const fillIds = new Set(["fill-water", "fill-shapes", "fill-marbles", "fill-stickers", "fill-confetti", "fill-popups", "fill-bubbles", "fill-static-panels"]);
@@ -1674,6 +2291,10 @@ function renderFxTexture(active = []) {
     .filter((fx) => osIds.has(fx.id))
     .map(renderOsPanic)
     .join("");
+  const detailLayers = active
+    .map(renderFxDetailLayer)
+    .join("");
+  const delayFx = active.find((fx) => fx.id === "delay");
   return [
     (hasNoise || hasVisualDamage) ? `<div class="fx-texture fx-fine-noise" style="--visual-damage:${visualDamage.toFixed(2)}"></div>` : "",
     (hasPixels || visualDamage > 0.28) ? `<div class="fx-texture fx-coarse-pixels" style="--visual-damage:${visualDamage.toFixed(2)}"></div>` : "",
@@ -1683,8 +2304,106 @@ function renderFxTexture(active = []) {
     hasDropout ? `<div class="fx-texture fx-dropout"></div>` : "",
     fillLayers,
     osLayers,
+    detailLayers,
+    delayFx ? renderDelayTrails(delayFx) : "",
     sourceLayers
   ].join("");
+}
+
+function renderDelayTrails(fx) {
+  const state = normalizedDelayState(fx.params || delayState);
+  if (!delayUsesVideo(state)) return "";
+  const frames = delayVisualFrames.filter((frame) => frame.image);
+  const mix = Math.max(0.08, Math.min(0.86, state.mix));
+  if (!frames.length) return `<div class="fx-detail fx-video-delay fx-video-delay-live" style="--delay-mix:${mix};"><i></i><i></i><i></i></div>`;
+  return `<div class="fx-detail fx-video-delay" style="--delay-mix:${mix};">${frames.slice(-DELAY_VISUAL_RENDER_LIMIT).reverse().map((frame, index) =>
+    `<img src="${frame.image}" alt="" style="--n:${index};--age:${Math.max(1, Date.now() - frame.at)}ms;">`
+  ).join("")}</div>`;
+}
+
+function renderFxDetailLayer(fx) {
+  const level = Math.max(1, Number(fx.level || 1));
+  const seed = String(fx.seed || fx.id);
+  if (fx.id === "glitch") {
+    return `<div class="fx-detail fx-glitch-tears">${Array.from({ length: Math.min(18, 6 + level * 3) }, (_, index) => `<i style="${tearStyle(seed, index)}"></i>`).join("")}</div>`;
+  }
+  if (fx.id === "tape-warp") {
+    return `<div class="fx-detail fx-tape-curl"><i></i><i></i><i></i></div>`;
+  }
+  if (fx.id === "vhs") {
+    return `<div class="fx-detail fx-vhs-tracking"><i></i><i></i><i></i></div>`;
+  }
+  if (fx.id === "aspect-bad") {
+    return `<div class="fx-detail fx-aspect-guides"><b>4:3</b><span></span><b>16:9?</b></div>`;
+  }
+  if (fx.id === "crop-bad") {
+    return `<div class="fx-detail fx-crop-mattes"><i></i><i></i><i></i><i></i></div>`;
+  }
+  if (fx.id === "glass") {
+    return `<div class="fx-detail fx-glass-tiles">${Array.from({ length: 36 }, (_, index) => `<i style="--n:${index}"></i>`).join("")}</div>`;
+  }
+  if (fx.id === "melt") {
+    return `<div class="fx-detail fx-melt-drips">${Array.from({ length: 9 }, (_, index) => `<i style="${dripStyle(seed, index)}"></i>`).join("")}</div>`;
+  }
+  if (fx.id === "kaleidoscope") {
+    return `<div class="fx-detail fx-kaleido-shards">${Array.from({ length: 8 }, (_, index) => `<i style="--n:${index}"></i>`).join("")}</div>`;
+  }
+  if (fx.id === "gif-loops") {
+    return `<div class="fx-detail fx-gif-storm">${Array.from({ length: Math.min(18, 7 + level * 3) }, (_, index) => screenFillItem(seed, index, ["LOOP", "GIF", "BUFFER", "AGAIN"][index % 4])).join("")}</div>`;
+  }
+  if (fx.id === "gun") {
+    return `<div class="fx-detail fx-screen-hit"><i></i><b>BANG</b></div>`;
+  }
+  if (fx.id === "legal-id") {
+    const legalId = fx.params?.legalId || "WDOINK basement";
+    const note = fx.params?.note || "not actually your license";
+    return `<div class="fx-detail fx-legal-id"><strong>${escapeHtml(legalId)}</strong><span>${escapeHtml(note)}</span></div>`;
+  }
+  if (fx.id === "cart-wall" || fx.id === "record-scratch" || fx.id === "dub-siren") {
+    const label = fx.id === "record-scratch" ? "SCRATCH" : fx.id === "dub-siren" ? "DUB SIREN" : String(fx.params?.cart || "cart").replaceAll("-", " ");
+    return `<div class="fx-detail fx-cart-wall">${Array.from({ length: 7 }, (_, index) => `<i style="${cartBurstStyle(seed, index)}">${escapeHtml(label)}</i>`).join("")}</div>`;
+  }
+  if (fx.id === "dj-mic") {
+    return `<div class="fx-detail fx-dj-mic"><strong>MIC LIVE</strong><span>stream ducked - host is probably making it worse</span></div>`;
+  }
+  if (fx.id === "frequency-drift") {
+    return `<div class="fx-detail fx-frequency-drift"><b>88.1</b><i></i><b>107.9</b><span>${Array.from({ length: 18 }, (_, index) => `<em style="--n:${index}"></em>`).join("")}</span></div>`;
+  }
+  if (fx.id === "caller-line") {
+    const username = fx.params?.username || "caller";
+    const text = fx.params?.text || "open line";
+    return `<div class="fx-detail fx-caller-line"><strong>CALLER: ${escapeHtml(username)}</strong><span>${escapeHtml(text)}</span></div>`;
+  }
+  if (fx.id === "party-damage") {
+    return `<div class="fx-detail fx-party-damage">${Array.from({ length: 26 }, (_, index) => screenFillItem(seed, index, ["DANCE", "SPILL", "LOUD", "ONE MORE", "REDLINE"][index % 5])).join("")}</div>`;
+  }
+  if (fx.id === "auto-filter-sweep") {
+    return `<div class="fx-detail fx-auto-filter-sweep"><i></i><span>FILTER SWEEP</span></div>`;
+  }
+  return "";
+}
+
+function tearStyle(seed, index) {
+  const y = Math.round(seededNumber(seed, index, 1) * 92);
+  const h = 2 + Math.round(seededNumber(seed, index, 2) * 7);
+  const x = Math.round((seededNumber(seed, index, 3) - 0.5) * 16);
+  const delay = (seededNumber(seed, index, 4) * -0.9).toFixed(2);
+  return `--y:${y}%;--h:${h}px;--x:${x}px;--delay:${delay}s;`;
+}
+
+function dripStyle(seed, index) {
+  const x = 4 + Math.round(seededNumber(seed, index, 1) * 92);
+  const h = 16 + Math.round(seededNumber(seed, index, 2) * 52);
+  const delay = (seededNumber(seed, index, 3) * -2).toFixed(2);
+  return `--x:${x}%;--h:${h}px;--delay:${delay}s;`;
+}
+
+function cartBurstStyle(seed, index) {
+  const x = Math.round(seededNumber(seed, index, 1) * 88);
+  const y = Math.round(seededNumber(seed, index, 2) * 82);
+  const rotate = Math.round((seededNumber(seed, index, 3) - 0.5) * 28);
+  const delay = (seededNumber(seed, index, 4) * -0.5).toFixed(2);
+  return `--x:${x}%;--y:${y}%;--r:${rotate}deg;--delay:${delay}s;`;
 }
 
 function renderSourceOverlay(fx) {
@@ -1961,32 +2680,88 @@ async function resetVisualAdjust() {
   }).catch(() => {});
 }
 
+function delayControlNumber(control, fallback) {
+  return Number(control?.value ?? fallback);
+}
+
+function delayChoice(value, allowed, fallback) {
+  return allowed.has(value) ? value : fallback;
+}
+
+function setDelayControlValue(control, value) {
+  if (control) control.value = String(value);
+}
+
+function clearDelayTimer(timer) {
+  clearInterval(timer);
+  return 0;
+}
+
 function readDelayControls() {
+  return normalizedDelayState({
+    timeMs: delayControlNumber(delayTimeSlider, DELAY_DEFAULTS.timeMs),
+    feedback: delayControlNumber(delayFeedbackSlider, DELAY_DEFAULTS.feedback * 100) / 100,
+    mix: delayControlNumber(delayMixSlider, DELAY_DEFAULTS.mix * 100) / 100,
+    tone: delayControlNumber(delayToneSlider, DELAY_DEFAULTS.tone),
+    sync: delaySyncToggle?.checked ?? DELAY_DEFAULTS.sync,
+    division: delayDivisionSelect?.value,
+    repitch: delayRepitchSelect?.value,
+    target: delayTargetSelect?.value
+  }, DELAY_DEFAULTS);
+}
+
+function normalizedDelayState(params = {}, fallback = delayState) {
+  const base = { ...DELAY_DEFAULTS, ...fallback };
+  const division = delayChoice(params.division, DELAY_DIVISIONS, base.division);
+  const repitch = delayChoice(params.repitch, DELAY_REPITCH_MODES, base.repitch);
+  const target = delayChoice(params.target, DELAY_TARGETS, base.target);
   return {
-    timeMs: Number(delayTimeSlider.value || 375),
-    feedback: Number(delayFeedbackSlider.value || 35) / 100,
-    mix: Number(delayMixSlider.value || 32) / 100,
-    tone: Number(delayToneSlider.value || 4800),
-    sync: delaySyncToggle.checked,
-    division: delayDivisionSelect.value,
-    repitch: delayRepitchSelect.value
+    timeMs: clamp(Number(params.timeMs ?? base.timeMs), ...DELAY_LIMITS.timeMs),
+    feedback: clamp(Number(params.feedback ?? base.feedback), ...DELAY_LIMITS.feedback),
+    mix: clamp(Number(params.mix ?? base.mix), ...DELAY_LIMITS.mix),
+    tone: clamp(Number(params.tone ?? base.tone), ...DELAY_LIMITS.tone),
+    sync: params.sync !== undefined ? Boolean(params.sync) : base.sync,
+    division,
+    repitch,
+    target
   };
 }
 
+function syncDelayControls(values = delayState) {
+  setDelayControlValue(delayTimeSlider, values.timeMs);
+  setDelayControlValue(delayFeedbackSlider, Math.round(values.feedback * 100));
+  setDelayControlValue(delayMixSlider, Math.round(values.mix * 100));
+  setDelayControlValue(delayToneSlider, values.tone);
+  if (delaySyncToggle) delaySyncToggle.checked = values.sync;
+  setDelayControlValue(delayDivisionSelect, values.division);
+  setDelayControlValue(delayRepitchSelect, values.repitch);
+  setDelayControlValue(delayTargetSelect, values.target);
+}
+
+function delayUsesAudio(values = delayState) {
+  return values.target !== "video";
+}
+
+function delayUsesVideo(values = delayState) {
+  return values.target !== "audio";
+}
+
 function syncedDelaySeconds(values) {
-  return Math.max(0.04, Math.min(2.5, (60 / looperBpm) * noteDivisionBeats(values.division)));
+  const bpm = clamp(Number(looperBpm), 40, 240);
+  return clamp((60 / bpm) * noteDivisionBeats(values.division), ...DELAY_LIMITS.seconds);
 }
 
 function effectiveDelaySeconds(values = delayState) {
-  return values.sync ? syncedDelaySeconds(values) : Math.max(0.04, Math.min(2.5, values.timeMs / 1000));
+  return values.sync ? syncedDelaySeconds(values) : clamp(values.timeMs / 1000, ...DELAY_LIMITS.seconds);
 }
 
 function updateDelayLabels(values = readDelayControls()) {
-  const seconds = effectiveDelaySeconds(values);
-  delayTimeValue.textContent = values.sync ? `${values.division.replaceAll("-", " ")} (${Math.round(seconds * 1000)}ms)` : `${Math.round(values.timeMs)}ms`;
-  delayFeedbackValue.textContent = `${Math.round(values.feedback * 100)}%`;
-  delayMixValue.textContent = `${Math.round(values.mix * 100)}%`;
-  delayToneValue.textContent = values.tone >= 1000 ? `${(values.tone / 1000).toFixed(1)}k` : `${Math.round(values.tone)}Hz`;
+  const state = normalizedDelayState(values);
+  const seconds = effectiveDelaySeconds(state);
+  if (delayTimeValue) delayTimeValue.textContent = state.sync ? `${state.division.replaceAll("-", " ")} (${Math.round(seconds * 1000)}ms)` : `${Math.round(state.timeMs)}ms`;
+  if (delayFeedbackValue) delayFeedbackValue.textContent = `${Math.round(state.feedback * 100)}%`;
+  if (delayMixValue) delayMixValue.textContent = `${Math.round(state.mix * 100)}%`;
+  if (delayToneValue) delayToneValue.textContent = state.tone >= 1000 ? `${(state.tone / 1000).toFixed(1)}k` : `${Math.round(state.tone)}Hz`;
   updateDelayToggle();
 }
 
@@ -2024,9 +2799,9 @@ async function broadcastSourceOverlay() {
   try {
     const result = await api("/api/fx", {
       method: "POST",
-      body: JSON.stringify({ id: "source-overlay", duration: Number(overlayDurationSlider.value || 45), params })
+      body: JSON.stringify({ id: "source-overlay", duration: Number(overlayDurationSlider.value || 45), params, toggle: true })
     });
-    setMessage(fxMessage, `${result.fx.at(-1)?.label || "Source overlay"} fired.`);
+    setMessage(fxMessage, `Source overlay ${result.toggledOff ? "off" : "on"}.`);
   } catch (error) {
     setMessage(fxMessage, error.message, true);
   }
@@ -2060,27 +2835,18 @@ function ensureDelayGraph() {
 
 function applyDelayFx(params = {}) {
   delayActive = true;
-  delayState = {
-    timeMs: Math.max(40, Math.min(2000, Number(params.timeMs || delayState.timeMs || 375))),
-    feedback: Math.max(0, Math.min(0.88, Number(params.feedback ?? delayState.feedback ?? 0.35))),
-    mix: Math.max(0, Math.min(1, Number(params.mix ?? delayState.mix ?? 0.32))),
-    tone: Math.max(800, Math.min(12000, Number(params.tone || delayState.tone || 4800))),
-    sync: params.sync !== undefined ? Boolean(params.sync) : delayState.sync,
-    division: params.division || delayState.division || "dotted-eighth",
-    repitch: params.repitch || delayState.repitch || "tape"
-  };
-  delayTimeSlider.value = String(delayState.timeMs);
-  delayFeedbackSlider.value = String(Math.round(delayState.feedback * 100));
-  delayMixSlider.value = String(Math.round(delayState.mix * 100));
-  delayToneSlider.value = String(delayState.tone);
-  delaySyncToggle.checked = delayState.sync;
-  delayDivisionSelect.value = delayState.division;
-  delayRepitchSelect.value = delayState.repitch;
+  delayState = normalizedDelayState(params);
+  syncDelayControls(delayState);
   updateDelayLabels(delayState);
   applyDelayToGraph();
+  updateDelayVisualCapture();
 }
 
 function applyDelayToGraph() {
+  if (!delayUsesAudio(delayState)) {
+    silenceDelayGraph();
+    return;
+  }
   const nodes = ensureDelayGraph();
   if (!nodes) return;
   nodes.context.resume?.();
@@ -2089,6 +2855,7 @@ function applyDelayToGraph() {
   const delaySeconds = delayState.repitch === "slap" ? Math.min(0.18, baseDelay) : baseDelay;
   const feedback = delayState.repitch === "slap" ? Math.min(delayState.feedback, 0.28) : delayState.feedback;
   const tone = delayState.repitch === "dub" ? Math.min(delayState.tone, 2600) : delayState.tone;
+  const dryLevel = Math.max(0.45, 1 - delayState.mix * 0.35);
   nodes.delay.delayTime.cancelScheduledValues(now);
   if (delayState.repitch === "digital") {
     nodes.delay.delayTime.setTargetAtTime(delaySeconds, now, 0.015);
@@ -2097,33 +2864,70 @@ function applyDelayToGraph() {
   }
   nodes.feedback.gain.setTargetAtTime(feedback, now, 0.02);
   nodes.wet.gain.setTargetAtTime(delayState.mix, now, 0.02);
-  nodes.dry.gain.setTargetAtTime(Math.max(0.45, 1 - delayState.mix * 0.35), now, 0.02);
+  nodes.dry.gain.setTargetAtTime(dryLevel, now, 0.02);
   nodes.tone.frequency.setTargetAtTime(tone, now, 0.04);
   startDelayModulation();
 }
 
+function silenceDelayGraph() {
+  delayLfoTimer = clearDelayTimer(delayLfoTimer);
+  if (!delayNodes) return;
+  const now = delayNodes.context.currentTime;
+  delayNodes.wet.gain.setTargetAtTime(0, now, 0.03);
+  delayNodes.feedback.gain.setTargetAtTime(0, now, 0.03);
+  delayNodes.dry.gain.setTargetAtTime(1, now, 0.03);
+}
+
+function updateDelayVisualCapture() {
+  delayVisualTimer = clearDelayTimer(delayVisualTimer);
+  if (!delayActive || !delayUsesVideo(delayState)) {
+    delayVisualFrames = [];
+    return;
+  }
+  captureDelayVisualFrame();
+  delayVisualTimer = setInterval(
+    captureDelayVisualFrame,
+    clamp(effectiveDelaySeconds(delayState) * 250, ...DELAY_LIMITS.visualCaptureMs)
+  );
+}
+
+function captureDelayVisualFrame() {
+  if (!delayActive || !delayUsesVideo(delayState)) return;
+  if (frame.dataset.mode === "youtube") return;
+  if (streamPlayer.readyState < 2 || streamPlayer.videoWidth <= 0 || streamPlayer.videoHeight <= 0) return;
+  try {
+    const canvas = document.createElement("canvas");
+    const width = DELAY_VISUAL_CAPTURE_WIDTH;
+    const height = Math.max(1, Math.round(width * (streamPlayer.videoHeight / streamPlayer.videoWidth)));
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d", { alpha: false });
+    context.drawImage(streamPlayer, 0, 0, width, height);
+    delayVisualFrames.push({ image: canvas.toDataURL("image/jpeg", DELAY_VISUAL_JPEG_QUALITY), at: Date.now() });
+    delayVisualFrames = delayVisualFrames.slice(-DELAY_VISUAL_FRAME_LIMIT);
+  } catch {
+    delayVisualFrames = [];
+  }
+}
+
 function startDelayModulation() {
-  clearInterval(delayLfoTimer);
+  delayLfoTimer = clearDelayTimer(delayLfoTimer);
   if (!delayActive || delayState.repitch !== "tape" || !delayNodes) return;
   delayLfoTimer = setInterval(() => {
     if (!delayActive || !delayNodes) return;
     const now = delayNodes.context.currentTime;
     const base = effectiveDelaySeconds(delayState);
-    delayNodes.delay.delayTime.setTargetAtTime(Math.max(0.04, Math.min(2.5, base * (0.985 + Math.random() * 0.03))), now, 0.08);
-  }, 420);
+    delayNodes.delay.delayTime.setTargetAtTime(clamp(base * (0.985 + Math.random() * 0.03), ...DELAY_LIMITS.seconds), now, 0.08);
+  }, DELAY_TAPE_MODULATION_MS);
 }
 
 function disableDelay(updateControls = true) {
-  if (!delayActive && !delayNodes) return;
+  if (!delayActive && !delayNodes && !delayVisualTimer) return;
   delayActive = false;
-  clearInterval(delayLfoTimer);
-  delayLfoTimer = 0;
-  if (delayNodes) {
-    const now = delayNodes.context.currentTime;
-    delayNodes.wet.gain.setTargetAtTime(0, now, 0.03);
-    delayNodes.feedback.gain.setTargetAtTime(0, now, 0.03);
-    delayNodes.dry.gain.setTargetAtTime(1, now, 0.03);
-  }
+  delayLfoTimer = clearDelayTimer(delayLfoTimer);
+  delayVisualTimer = clearDelayTimer(delayVisualTimer);
+  delayVisualFrames = [];
+  silenceDelayGraph();
   if (updateControls) {
     updateDelayLabels(readDelayControls());
   }
@@ -2176,6 +2980,15 @@ function renderFxOverlay(fx) {
     "meme-jazz": "you like jazz?",
     "meme-done": "I can't believe you've done this",
     "radio-sting": "WDOINK FM",
+    "legal-id": fx.params?.legalId || "LEGAL ID",
+    "cart-wall": String(fx.params?.cart || "CART WALL").replaceAll("-", " "),
+    "record-scratch": "SKRRT",
+    "dj-mic": "MIC LIVE",
+    "frequency-drift": "FREQUENCY DRIFT",
+    "caller-line": fx.params?.username ? `CALLER: ${fx.params.username}` : "CALLER LINE",
+    "party-damage": "PARTY DAMAGE",
+    "dub-siren": "DUB SIREN",
+    "auto-filter-sweep": "FILTER SWEEP",
     "amen-break": "AMEN",
     hum: "60Hz",
     weed: "WEED",
@@ -2214,26 +3027,39 @@ function syncProgram(program) {
   if (!program) return;
   currentProgram = program;
   clockDelta = program.serverTime - Date.now();
+  updateAudienceBadge(program.audience);
+  renderProgramVote(program.votePoll);
   applyBroadcastFx(program.fx || []);
   const live = program.live;
   const next = program.next;
+  const liveChanged = live?.id !== currentProgramId;
 
-  nextTitle.textContent = next ? `${next.title} at ${new Date(next.startAt).toLocaleTimeString()}` : "Unscheduled";
+  setProgramBlock(nextBlock, next?.weeklyBlockName);
+  setProgramTitle(nextTitle, next ? `${programDisplayTitle(next)} at ${new Date(next.startAt).toLocaleTimeString()}` : "Unscheduled");
 
   if (!live) {
     currentProgramId = "";
-    nowTitle.textContent = "No active program";
+    syncCaptions(null);
+    setProgramBlock(nowBlock, "");
+    setProgramBlock(viewerNowBlock, "");
+    setProgramTitle(nowTitle, "No active program");
+    setProgramTitle(viewerNowTitle, "No active program");
     progressText.textContent = "00:00 / 00:00";
+    viewerNowProgress.textContent = "00:00 / 00:00";
     liveBadge.textContent = "Waiting";
     liveBadge.classList.add("off");
     hideStreamLoading();
     enterStreamMode();
+    refreshTitleMarquees();
     return;
   }
 
   liveBadge.textContent = "Live";
   liveBadge.classList.remove("off");
-  nowTitle.textContent = live.title;
+  setProgramBlock(nowBlock, live.weeklyBlockName);
+  setProgramBlock(viewerNowBlock, live.weeklyBlockName);
+  setProgramTitle(nowTitle, programDisplayTitle(live));
+  setProgramTitle(viewerNowTitle, programDisplayTitle(live));
   if (live.source.type === "youtube") {
     enterYouTubeMode(live);
     if (!youtubeSyncTimer) youtubeSyncTimer = setInterval(() => {
@@ -2243,7 +3069,73 @@ function syncProgram(program) {
     enterStreamMode();
   }
 
+  if (liveChanged) syncCaptions(live);
   currentProgramId = live.id;
+  refreshTitleMarquees();
+}
+
+function renderProgramVote(poll) {
+  programVotePoll = poll || null;
+  if (!programVotePanel || !programVoteTitle || !programVoteOptions) return;
+  if (!poll) {
+    programVotePanel.classList.add("hidden");
+    programVoteOptions.innerHTML = "";
+    setMessage(programVoteMessage, "");
+    return;
+  }
+
+  programVotePanel.classList.remove("hidden");
+  programVoteTitle.textContent = poll.weeklyBlockName
+    ? `${poll.weeklyBlockName}: ${poll.title}`
+    : poll.title || "Current program";
+  const selected = localVoteOption(poll.id);
+  const total = Number(poll.totalVotes || 0);
+  const status = poll.isMovie && poll.suggestionsStatus === "loading"
+    ? `<p class="program-vote-note">Finding comparable Internet Archive films...</p>`
+    : poll.isMovie && poll.suggestionsStatus === "empty"
+      ? `<p class="program-vote-note">No clean comparable films turned up yet.</p>`
+      : "";
+  programVoteOptions.innerHTML = `${status}${(poll.options || []).map((option) => {
+    const votes = Number(option.votes || 0);
+    const percent = total ? Math.round((votes / total) * 100) : 0;
+    const isSelected = selected === option.id;
+    return `
+      <button class="program-vote-option${isSelected ? " selected" : ""}" data-program-vote="${escapeHtml(option.id)}" type="button">
+        <span>
+          <strong>${escapeHtml(option.label)}</strong>
+          <small>${escapeHtml(option.description || option.type || "")}</small>
+        </span>
+        <em>${votes}${total ? ` / ${percent}%` : ""}</em>
+      </button>`;
+  }).join("")}`;
+}
+
+function localVoteOption(pollId) {
+  try {
+    const votes = JSON.parse(localStorage.getItem("doink_program_votes") || "{}");
+    return votes[pollId] || "";
+  } catch {
+    return "";
+  }
+}
+
+function rememberLocalVote(pollId, optionId) {
+  let votes = {};
+  try {
+    votes = JSON.parse(localStorage.getItem("doink_program_votes") || "{}");
+  } catch {
+    votes = {};
+  }
+  votes[pollId] = optionId;
+  localStorage.setItem("doink_program_votes", JSON.stringify(votes));
+}
+
+function updateAudienceBadge(audience = {}) {
+  if (!onlineBadge) return;
+  const count = Number(audience.online);
+  const displayCount = Number.isFinite(count) ? Math.max(0, Math.round(count)) : 0;
+  onlineBadge.querySelector("strong").textContent = displayCount ? displayCount.toLocaleString() : "--";
+  onlineBadge.classList.toggle("quiet", displayCount <= 0);
 }
 
 function tickProgress() {
@@ -2251,7 +3143,9 @@ function tickProgress() {
   applyBroadcastFx(currentProgram.fx || []);
   keepBroadcastVisible();
   const offset = Math.min(activeOffset(), currentProgram.live.duration);
-  progressText.textContent = `${formatDuration(offset)} / ${formatDuration(currentProgram.live.duration)}`;
+  const progress = `${formatDuration(offset)} / ${formatDuration(currentProgram.live.duration)}`;
+  progressText.textContent = progress;
+  viewerNowProgress.textContent = progress;
   if (currentProgram.live.source.type === "youtube") {
     syncYouTube(currentProgram.live);
   } else {
@@ -2277,6 +3171,9 @@ function renderAdmin(data) {
 
   renderTimingSourcePicker(data);
   renderOverlaySourcePicker(data);
+  if (seedWeeklyScheduleButton) {
+    seedWeeklyScheduleButton.title = weeklyBlockSummary(data.weeklyBlocks || []);
+  }
 
   const folderGroups = [
     { id: "", name: "Unfiled sources", randomEligible: true },
@@ -2370,31 +3267,108 @@ function renderAdmin(data) {
         .join("")
     : `<p class="message">No upcoming entries.</p>`;
 
-  const liveQueue = (data.liveQueue || [])
-    .filter((entry) => entry.startAt + entry.duration * 1000 > Date.now() - 1000)
-    .sort((a, b) => a.startAt - b.startAt);
+  renderWeeklySchedule(data);
 
-  queueList.innerHTML = liveQueue.length
-    ? liveQueue
+  const now = Date.now();
+  const queueTimeline = queueTimelineEntries(data, now);
+  const pendingQueueCount = (data.liveQueue || []).filter((entry) => entry.startAt + entry.duration * 1000 > now - 1000).length;
+  const visibleQueueCount = queueTimeline.filter((entry) => entry.queueLane === "queue").length;
+  const conflictedQueueCount = Math.max(0, pendingQueueCount - visibleQueueCount);
+  const protectedScheduleCount = queueTimeline.filter((entry) => entry.queueLane === "scheduled").length;
+  clearQueueButton.textContent = protectedScheduleCount ? "Clear live queue" : "Clear queue";
+  clearQueueButton.title = protectedScheduleCount
+    ? "Scheduled programming is shown here but protected. This clears only live queue items."
+    : "";
+
+  const conflictWarning = conflictedQueueCount
+    ? `<p class="message queue-warning">${conflictedQueueCount} live queue item${conflictedQueueCount === 1 ? "" : "s"} hidden because scheduled programming has priority.</p>`
+    : "";
+  queueList.innerHTML = queueTimeline.length
+    ? conflictWarning + queueTimeline
         .map((entry, index) => {
           const source = data.sources.find((item) => item.id === entry.sourceId);
+          const isScheduled = entry.queueLane === "scheduled";
           const isBump = source?.type === "bump";
-          const isCurrent = Date.now() >= entry.startAt && Date.now() < entry.startAt + entry.duration * 1000;
-          const canMove = (!isBump || !entry.autoBump) && !isCurrent;
+          const isCurrent = now >= entry.startAt && now < entry.startAt + entry.duration * 1000;
+          const canMove = !isScheduled && (!isBump || !entry.autoBump) && !isCurrent;
           return `
-            <div class="item queue-item" data-queue-item="${entry.id}" draggable="${canMove}">
-              <span class="drag-handle" aria-hidden="true">${canMove ? "Drag" : "Live"}</span>
+            <div class="item queue-item${isScheduled ? " queue-scheduled" : ""}" ${isScheduled ? "" : `data-queue-item="${entry.id}"`} draggable="${canMove}">
+              <span class="drag-handle" aria-hidden="true">${isScheduled ? "Sched" : canMove ? "Drag" : "Live"}</span>
               <div>
-                <strong>${escapeHtml(entry.title || source?.title || "Queued source")}</strong>
-                <small>${new Date(entry.startAt).toLocaleTimeString()} &middot; ${formatDuration(entry.duration)}${isCurrent ? " &middot; On air" : ""}${isBump ? " &middot; Auto bump" : ""}</small>
+                <strong>${escapeHtml(entry.title || source?.title || (isScheduled ? "Scheduled source" : "Queued source"))}</strong>
+                <small>${new Date(entry.startAt).toLocaleTimeString()} &middot; ${formatDuration(entry.duration)}${isCurrent ? " &middot; On air" : ""}${isScheduled ? " &middot; Protected schedule" : ""}${entry.clippedBySchedule ? " &middot; Ends at schedule" : ""}${isBump ? " &middot; Auto bump" : ""}</small>
               </div>
               <div class="queue-actions">
-                <button class="danger compact" data-delete-queue="${entry.id}" type="button">Delete</button>
+                ${isScheduled ? `<button class="secondary compact" disabled type="button">Protected</button>` : `<button class="danger compact" data-delete-queue="${entry.id}" type="button">Delete</button>`}
               </div>
             </div>`;
         })
         .join("")
-    : `<p class="message">Queue is empty.</p>`;
+    : `<p class="message">Queue is empty${pendingQueueCount ? ", but queued items currently conflict with protected scheduled programming." : "."}</p>`;
+}
+
+function queueTimelineEntries(data = adminDataCache, now = Date.now()) {
+  const scheduled = (data.schedule || [])
+    .filter((entry) => entry.startAt + entry.duration * 1000 > now - 1000)
+    .map((entry) => ({ ...entry, queueLane: "scheduled" }));
+  const queued = (data.liveQueue || [])
+    .filter((entry) => entry.startAt + entry.duration * 1000 > now - 1000)
+    .map((entry) => protectQueueEntryUI(entry, scheduled))
+    .filter(Boolean)
+    .map((entry) => ({ ...entry, queueLane: "queue" }));
+  return [...scheduled, ...queued].sort((a, b) => a.startAt - b.startAt);
+}
+
+function entriesOverlapUI(first, second) {
+  return first.startAt < second.startAt + second.duration * 1000 && second.startAt < first.startAt + first.duration * 1000;
+}
+
+function protectQueueEntryUI(entry, scheduled = []) {
+  const conflict = scheduled
+    .filter((scheduleEntry) => entriesOverlapUI(entry, scheduleEntry))
+    .sort((a, b) => a.startAt - b.startAt)[0];
+  if (!conflict) return entry;
+  if (entry.startAt >= conflict.startAt) return null;
+  const duration = Math.floor((conflict.startAt - entry.startAt) / 1000);
+  return duration >= 5 ? { ...entry, duration, clippedBySchedule: true } : null;
+}
+
+async function loadDjSoundboard() {
+  if (!djSoundboardGrid) return;
+  try {
+    const board = await api("/api/dj-soundboard");
+    renderDjSoundboard(board);
+  } catch (error) {
+    djSoundboardGrid.innerHTML = `<p class="message error">${escapeHtml(error.message || "Could not load soundboard.")}</p>`;
+  }
+}
+
+function renderDjSoundboard(board = {}) {
+  const groups = board.groups || {};
+  const sounds = Array.isArray(board.sounds) ? board.sounds : [];
+  if (!sounds.length) {
+    djSoundboardGrid.innerHTML = `<p class="message">No server carts found.</p>`;
+    return;
+  }
+  const groupOrder = Object.keys(groups).length ? Object.keys(groups) : [...new Set(sounds.map((sound) => sound.group || "misc"))];
+  djSoundboardGrid.innerHTML = groupOrder
+    .map((groupId) => {
+      const groupSounds = sounds.filter((sound) => (sound.group || "misc") === groupId);
+      if (!groupSounds.length) return "";
+      const group = groups[groupId] || { label: groupId, color: "#f2b84a" };
+      return `
+        <div class="soundboard-group" style="--cart-color:${escapeHtml(group.color || "#f2b84a")}">
+          <span>${escapeHtml(group.label || groupId)}</span>
+          <div>
+            ${groupSounds.map((sound) => `
+              <button class="soundboard-pad" data-soundboard-sound="${escapeHtml(sound.id)}" type="button" title="${escapeHtml(sound.label)} · ${formatDuration(sound.duration || 0)}">
+                <strong>${escapeHtml(sound.label)}</strong>
+                <small>${formatDuration(sound.duration || 0)}</small>
+              </button>`).join("")}
+          </div>
+        </div>`;
+    })
+    .join("");
 }
 
 function escapeHtml(value) {
@@ -2485,6 +3459,70 @@ function renderTimingSourcePicker(data) {
     .join("");
 }
 
+function weeklyBlockSummary(blocks = []) {
+  if (!blocks.length) return "";
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  return blocks
+    .filter((block) => block.enabled !== false)
+    .map((block) => {
+      const days = (block.days || []).map((day) => dayNames[day] || "").filter(Boolean).join("/");
+      return `${block.name} ${days} ${block.time}`;
+    })
+    .join(" | ");
+}
+
+function weekStartDate(date = new Date()) {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - start.getDay());
+  return start;
+}
+
+function localDatetimeValue(timestamp) {
+  const date = new Date(timestamp);
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function renderWeeklySchedule(data = adminDataCache) {
+  if (!weeklyScheduleGrid) return;
+  const start = weekStartDate();
+  const end = start.getTime() + 7 * 24 * 60 * 60 * 1000;
+  const sources = data.sources || [];
+  const entries = (data.schedule || [])
+    .filter((entry) => entry.startAt >= start.getTime() && entry.startAt < end)
+    .sort((a, b) => a.startAt - b.startAt);
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  weeklyScheduleGrid.innerHTML = dayNames.map((day, index) => {
+    const dayStart = start.getTime() + index * 24 * 60 * 60 * 1000;
+    const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+    const dayEntries = entries.filter((entry) => entry.startAt >= dayStart && entry.startAt < dayEnd);
+    return `
+      <section class="weekly-day">
+        <h3>${day}<span>${new Date(dayStart).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span></h3>
+        <div class="weekly-day-list">
+          ${dayEntries.length ? dayEntries.map((entry) => renderWeeklyScheduleEntry(entry, sources)).join("") : `<p class="message">No scheduled blocks.</p>`}
+        </div>
+      </section>`;
+  }).join("");
+}
+
+function renderWeeklyScheduleEntry(entry, sources = []) {
+  const source = sources.find((item) => item.id === entry.sourceId);
+  return `
+    <form class="weekly-entry${entry.weeklyBlockId ? " weekly-generated" : ""}" data-weekly-schedule-entry="${entry.id}">
+      <strong>${escapeHtml(entry.weeklyBlockName || "Manual")}</strong>
+      <small>${escapeHtml(source?.title || "Unknown source")}</small>
+      <input name="title" value="${escapeHtml(entry.title || "")}" placeholder="${escapeHtml(source?.title || "Title")}">
+      <input name="startAt" type="datetime-local" value="${localDatetimeValue(entry.startAt)}" required>
+      <input name="duration" type="number" min="5" step="1" value="${Math.round(entry.duration)}" required>
+      <div class="weekly-entry-actions">
+        <button class="secondary compact" type="submit">Save</button>
+        <button class="danger compact" data-delete-schedule="${entry.id}" type="button">Delete</button>
+      </div>
+    </form>`;
+}
+
 function renderSourceEditor(sourceId) {
   const source = (adminDataCache.sources || []).find((item) => item.id === sourceId);
   if (!source) return;
@@ -2526,6 +3564,19 @@ function renderChat(data) {
   }
 }
 
+function insertChatEmoji(emoji) {
+  if (!chatInput || chatInput.disabled || !emoji) return;
+  const maxLength = Number(chatInput.maxLength || 280);
+  const prefix = chatInput.value && !/\s$/.test(chatInput.value.slice(0, chatInput.selectionStart || 0)) ? " " : "";
+  const insertion = `${prefix}${emoji} `;
+  const start = chatInput.selectionStart ?? chatInput.value.length;
+  const end = chatInput.selectionEnd ?? start;
+  const nextLength = chatInput.value.length - (end - start) + insertion.length;
+  if (nextLength > maxLength) return;
+  chatInput.setRangeText(insertion, start, end, "end");
+  chatInput.focus();
+}
+
 async function loadAdmin() {
   const data = await api("/api/admin");
   setUserState(data.user);
@@ -2545,15 +3596,25 @@ async function refreshSession() {
   setUserState(data.user);
 }
 
+function reconnectProgramEvents() {
+  programEvents?.close();
+  programEvents = new EventSource("/api/events");
+  programEvents.onmessage = (event) => {
+    syncProgram(JSON.parse(event.data));
+  };
+}
+
 adminToggle.addEventListener("click", () => {
   if (adminAuthenticated) {
     const railOpen = shell.classList.contains("admin-open");
     shell.classList.toggle("admin-open", !railOpen);
     adminPanel.classList.toggle("hidden", railOpen || adminRailView !== "broadcast");
+    schedulePanel.classList.toggle("hidden", railOpen || adminRailView !== "schedule");
     queuePanel.classList.toggle("hidden", railOpen || adminRailView !== "queue");
     bumpPanel.classList.toggle("hidden", railOpen || adminRailView !== "bump");
     chatPanel.classList.toggle("hidden", railOpen || adminRailView !== "chat");
     shell.classList.toggle("bump-workspace", !railOpen && adminRailView === "bump");
+    if (!railOpen) applyStoredRailWidth();
     return;
   }
   if (currentUser) {
@@ -2569,8 +3630,10 @@ adminToggle.addEventListener("click", () => {
 showLoginButton.addEventListener("click", () => setAuthMode("login"));
 showRegisterButton.addEventListener("click", () => setAuthMode("register"));
 showBroadcastPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("broadcast")));
+showSchedulePanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("schedule")));
 showQueuePanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("queue")));
 showBumpPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("bump")));
+showSoundboardPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("soundboard")));
 showFxPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("fx")));
 showChatPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("chat")));
 pickModeButtons.forEach((button) => button.addEventListener("click", () => setSchedulePickMode(button.dataset.pickMode)));
@@ -2697,6 +3760,26 @@ sourceFolderForm.addEventListener("submit", async (event) => {
   }
 });
 
+programVoteOptions?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-program-vote]");
+  if (!button || !programVotePoll) return;
+  const optionId = button.dataset.programVote;
+  try {
+    button.disabled = true;
+    const poll = await api("/api/program-vote", {
+      method: "POST",
+      body: JSON.stringify({ voterId: programVoterId, optionId })
+    });
+    rememberLocalVote(poll.id, optionId);
+    renderProgramVote(poll);
+    setMessage(programVoteMessage, "Vote counted.");
+  } catch (error) {
+    setMessage(programVoteMessage, error.message, true);
+  } finally {
+    button.disabled = false;
+  }
+});
+
 playlistImportForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
@@ -2794,6 +3877,37 @@ playNowButton.addEventListener("click", async () => {
   }
 });
 
+seedWeeklyScheduleButton?.addEventListener("click", async () => {
+  try {
+    seedWeeklyScheduleButton.disabled = true;
+    setMessage(scheduleMessage, "Querying Internet Archive and building the weekly grid...");
+    const result = await api("/api/weekly-schedule/seed", { method: "POST", body: "{}" });
+    const imported = result.imports.reduce((total, item) => total + item.imported, 0);
+    setMessage(scheduleMessage, `Weekly blocks seeded: ${result.entries.length} entries scheduled, ${imported} new archive sources imported.`);
+    await loadAdmin();
+  } catch (error) {
+    setMessage(scheduleMessage, error.message, true);
+  } finally {
+    seedWeeklyScheduleButton.disabled = false;
+  }
+});
+
+refreshScheduleWeekButton?.addEventListener("click", loadAdmin);
+
+weeklyScheduleGrid?.addEventListener("submit", async (event) => {
+  const form = event.target.closest("[data-weekly-schedule-entry]");
+  if (!form) return;
+  event.preventDefault();
+  try {
+    const body = Object.fromEntries(new FormData(form));
+    await api(`/api/schedule/${form.dataset.weeklyScheduleEntry}`, { method: "PATCH", body: JSON.stringify(body) });
+    setMessage(weeklyScheduleMessage, "Schedule entry updated.");
+    await loadAdmin();
+  } catch (error) {
+    setMessage(weeklyScheduleMessage, error.message, true);
+  }
+});
+
 playOverlayButton.addEventListener("click", () => {
   unlockPlayback();
 });
@@ -2806,6 +3920,8 @@ playOverlayButton.addEventListener("keydown", (event) => {
     unlockPlayback();
   }
 });
+document.addEventListener("pointerdown", unlockPlaybackFromGesture, { capture: true });
+document.addEventListener("keydown", unlockPlaybackFromGesture, { capture: true });
 
 themeSelect?.addEventListener("change", () => {
   setTheme(themeSelect.value);
@@ -2826,8 +3942,10 @@ volumeSlider.addEventListener("input", () => {
   localStorage.setItem("doink_volume", String(viewerVolume));
   applyViewerVolume({ unlock: true });
   delayNodes?.context.resume?.();
-  streamPlayer.play().catch(() => {});
+  playStreamPlayer();
 });
+
+captionsToggle?.addEventListener("click", toggleCaptions);
 
 [warpSpeedSlider, warpPitchSlider, warpDesyncSlider].forEach((slider) => {
   slider?.addEventListener("input", broadcastAvWarp);
@@ -2844,7 +3962,7 @@ warpResetButton?.addEventListener("click", async () => {
 
 visualResetButton?.addEventListener("click", resetVisualAdjust);
 
-[delayTimeSlider, delayFeedbackSlider, delayMixSlider, delayToneSlider, delaySyncToggle, delayDivisionSelect, delayRepitchSelect].forEach((control) => {
+[delayTimeSlider, delayFeedbackSlider, delayMixSlider, delayToneSlider, delaySyncToggle, delayDivisionSelect, delayRepitchSelect, delayTargetSelect].forEach((control) => {
   const handleDelayControl = () => {
     updateDelayLabels();
     if (delayActive) broadcastDelay();
@@ -2909,8 +4027,12 @@ window.addEventListener("online", () => {
 
 clearQueueButton?.addEventListener("click", async () => {
   try {
-    await api("/api/queue", { method: "DELETE" });
-    setMessage(queueMessage, "Queue cleared.");
+    const protectedCount = queueTimelineEntries(adminDataCache).filter((entry) => entry.queueLane === "scheduled").length;
+    if (protectedCount && !confirm(`${protectedCount} scheduled item${protectedCount === 1 ? "" : "s"} are shown in this queue view but will stay protected. Clear only live queue items?`)) return;
+    const result = await api("/api/queue", { method: "DELETE" });
+    setMessage(queueMessage, result.protectedScheduleCount
+      ? `Live queue cleared. ${result.protectedScheduleCount} scheduled item${result.protectedScheduleCount === 1 ? "" : "s"} protected.`
+      : "Queue cleared.");
     await loadAdmin();
   } catch (error) {
     setMessage(queueMessage, error.message, true);
@@ -2930,12 +4052,35 @@ fxButtons.forEach((button) => button.addEventListener("click", async () => {
       params.seed = seed;
       params.division = skipperDivisionSelect.value;
     }
-    const result = await api("/api/fx", { method: "POST", body: JSON.stringify({ id: button.dataset.fx, params }) });
-    setMessage(fxMessage, `${result.fx.at(-1)?.label || "FX"} fired.`);
+    const isToggle = button.dataset.fxMode === "toggle";
+    const result = await api("/api/fx", { method: "POST", body: JSON.stringify({ id: button.dataset.fx, params, toggle: isToggle }) });
+    const label = button.textContent.trim() || result.fx.at(-1)?.label || "FX";
+    setMessage(fxMessage, isToggle ? `${label} ${result.toggledOff ? "off" : "on"}.` : `${result.fx.at(-1)?.label || "FX"} fired.`);
   } catch (error) {
     setMessage(fxMessage, error.message, true);
   }
 }));
+
+djSoundboardGrid?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-soundboard-sound]");
+  if (!button) return;
+  try {
+    button.disabled = true;
+    const result = await api("/api/fx", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "soundboard-sample",
+        params: { soundId: button.dataset.soundboardSound },
+      }),
+    });
+    const label = result.fx.at(-1)?.params?.label || button.textContent.trim() || "cart";
+    setMessage(fxMessage, `Cart fired: ${label}.`);
+  } catch (error) {
+    setMessage(fxMessage, error.message, true);
+  } finally {
+    button.disabled = false;
+  }
+});
 
 clearFxButton?.addEventListener("click", async () => {
   try {
@@ -3121,7 +4266,12 @@ document.addEventListener("click", async (event) => {
     if (folderId) await api(`/api/source-folders/${folderId}`, { method: "DELETE" });
     if (sourceId || scheduleId || queueId || folderId) await loadAdmin();
   } catch (error) {
-    setMessage(queueId ? queueMessage : scheduleMessage, error.message, true);
+    const messageTarget = queueId
+      ? queueMessage
+      : scheduleId && event.target.closest("#weeklyScheduleGrid")
+        ? weeklyScheduleMessage
+        : scheduleMessage;
+    setMessage(messageTarget, error.message, true);
   }
 });
 
@@ -3139,11 +4289,33 @@ document.addEventListener("submit", async (event) => {
   }
 });
 
+railResizer?.addEventListener("pointerdown", beginRailResize);
+railResizer?.addEventListener("pointermove", moveRailResize);
+railResizer?.addEventListener("pointerup", endRailResize);
+railResizer?.addEventListener("pointercancel", endRailResize);
+railResizer?.addEventListener("keydown", (event) => {
+  if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+  event.preventDefault();
+  const bounds = stageWidthBounds();
+  const current = currentStageWidth();
+  const step = event.shiftKey ? 32 : 10;
+  if (event.key === "Home") setStageWidth(bounds.min);
+  if (event.key === "End") setStageWidth(bounds.max);
+  if (event.key === "ArrowLeft") setStageWidth(current - step);
+  if (event.key === "ArrowRight") setStageWidth(current + step);
+});
+window.addEventListener("resize", () => {
+  applyStoredRailWidth();
+  refreshTitleMarquees();
+});
+peaceModeToggle?.addEventListener("click", () => setPeaceMode(!peaceMode));
+chatEmojiButtons.forEach((button) => {
+  button.addEventListener("click", () => insertChatEmoji(button.dataset.chatEmoji || ""));
+});
+
 api("/api/program").then(syncProgram).catch(() => {});
 
-new EventSource("/api/events").onmessage = (event) => {
-  syncProgram(JSON.parse(event.data));
-};
+reconnectProgramEvents();
 
 new EventSource("/api/chat/events").onmessage = (event) => {
   renderChat(JSON.parse(event.data));
@@ -3170,6 +4342,12 @@ streamPlayer.addEventListener("stalled", () => setTimeout(enforcePlayback, 500))
 streamPlayer.addEventListener("timeupdate", markStreamProgress);
 streamPlayer.addEventListener("playing", markStreamProgress);
 streamPlayer.addEventListener("canplay", markStreamProgress);
+streamPlayer.addEventListener("canplay", () => {
+  if (playbackUnlocked) playStreamPlayer();
+});
+streamPlayer.addEventListener("loadedmetadata", () => {
+  if (playbackUnlocked) playStreamPlayer();
+});
 streamPlayer.addEventListener("loadeddata", markStreamProgress);
 streamPlayer.addEventListener("waiting", () => setTimeout(keepBroadcastVisible, 1000));
 streamPlayer.addEventListener("error", () => {
@@ -3177,8 +4355,11 @@ streamPlayer.addEventListener("error", () => {
 });
 setInterval(tickProgress, 1000);
 setTheme(currentTheme);
+setPeaceMode(peaceMode, { persist: false });
 setChatCollapsed(false);
+applyStoredRailWidth();
 initFxCollapsibles();
+loadDjSoundboard();
 applyViewerVolume();
 startLooperBeat();
 loadLooperLayerControls(1);

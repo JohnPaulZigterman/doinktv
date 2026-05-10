@@ -293,6 +293,7 @@ select:focus {
 
 input[type="file"] {
   width: 100%;
+  margin-top: 6px;
   padding: 9px 10px;
   border: 1px dashed #525762;
   border-radius: 6px;
