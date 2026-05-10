@@ -11,8 +11,17 @@
     <header>
       <div>
         <h1>bump generator</h1>
+        <div class="workflow-strip" aria-label="Bump workflow">
+          <span class="active">Preset</span>
+          <span>Text</span>
+          <span>Media</span>
+          <span>Air</span>
+        </div>
       </div>
-      <div class="status" id="status">Ready.</div>
+      <div class="header-readout">
+        <div id="bumpSummary" class="bump-summary">5.0s / 1 line / no audio</div>
+        <div class="status" id="status">Ready.</div>
+      </div>
     </header>
 
     <main>
@@ -25,6 +34,11 @@
           <button class="preset-chip" type="button" data-bump-preset="music">Music</button>
           <button class="preset-chip" type="button" data-bump-preset="emergency">Panic</button>
           <button class="preset-chip" type="button" data-bump-preset="silent">Silent</button>
+        </div>
+        <div class="workspace-summary" aria-label="Current bump summary">
+          <span id="summaryPreset">Block bump</span>
+          <span id="summaryMedia">Server media loading</span>
+          <span id="summaryEffects">FX ready</span>
         </div>
 
         <details class="control-section" open>
@@ -98,10 +112,18 @@
           <div class="section-body">
             <div class="field">
               <label for="songInput">Audio</label>
-              <select id="serverSongSelect">
-                <option value="">Use server song...</option>
-              </select>
-              <input id="songInput" type="file" accept="audio/*">
+              <div class="asset-picker">
+                <div>
+                  <span>Server</span>
+                  <select id="serverSongSelect">
+                    <option value="">Use server song...</option>
+                  </select>
+                </div>
+                <div>
+                  <span>Upload</span>
+                  <input id="songInput" type="file" accept="audio/*">
+                </div>
+              </div>
             </div>
 
             <div class="field adaptive-field" data-audio-start-field>
@@ -160,10 +182,18 @@
 
             <div class="field">
               <label for="imageInput">Background</label>
-              <select id="serverBackgroundSelect">
-                <option value="">Use server background...</option>
-              </select>
-              <input id="imageInput" type="file" accept="image/*,video/*">
+              <div class="asset-picker">
+                <div>
+                  <span>Server</span>
+                  <select id="serverBackgroundSelect">
+                    <option value="">Use server background...</option>
+                  </select>
+                </div>
+                <div>
+                  <span>Upload</span>
+                  <input id="imageInput" type="file" accept="image/*,video/*">
+                </div>
+              </div>
             </div>
           </div>
         </details>
@@ -299,6 +329,17 @@
       </section>
 
       <section class="preview-shell" aria-label="Preview and output">
+        <div class="preview-top">
+          <div>
+            <span>Live preview</span>
+            <strong id="previewSummary">Block bump</strong>
+          </div>
+          <div class="preview-badges">
+            <span id="previewDuration">5.0s</span>
+            <span id="previewCanvas">16:9</span>
+            <span id="previewAudio">Audio off</span>
+          </div>
+        </div>
         <div class="stage">
           <canvas id="stage" width="1280" height="720"></canvas>
         </div>
@@ -309,10 +350,10 @@
         </div>
         <video id="outputVideo" class="hide" controls playsinline></video>
         <div class="actions preview-actions">
-          <button id="previewBtn" type="button" class="secondary">Preview</button>
-          <button id="renderBtn" type="button">Generate video</button>
+          <button id="playNextBumpBtn" type="button">Play next</button>
           <button id="queueBumpBtn" type="button" class="secondary">Add to queue</button>
-          <button id="playNextBumpBtn" type="button" class="secondary">Play next</button>
+          <button id="previewBtn" type="button" class="secondary">Preview audio</button>
+          <button id="renderBtn" type="button" class="secondary">Generate file</button>
           <a id="downloadLink" class="download" href="#" download="bump.webm" aria-disabled="true">Download</a>
         </div>
         <p class="fine-print">Exports as WebM in browsers with MediaRecorder support. Uploaded files stay in this browser tab.</p>

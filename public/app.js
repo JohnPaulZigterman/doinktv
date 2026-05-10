@@ -1,5 +1,11 @@
 const frame = document.querySelector("#playerFrame");
 const stage = document.querySelector(".stage");
+const stageAdminTabs = document.querySelector("#stageAdminTabs");
+const stageBumpPanel = document.querySelector("#stageBumpPanel");
+const stageBumpFrame = document.querySelector("#stageBumpPanel .bump-frame");
+const stageTvButton = document.querySelector("#showStageTvButton");
+const stageBumpButton = document.querySelector("#showStageBumpButton");
+const viewerControls = document.querySelector(".viewer-controls");
 const streamPlayer = document.querySelector("#streamPlayer");
 const streamLoading = document.querySelector("#streamLoading");
 const playOverlayButton = document.querySelector("#playOverlayButton");
@@ -28,7 +34,6 @@ const loginPopover = document.querySelector("#loginPopover");
 const adminPanel = document.querySelector("#adminPanel");
 const schedulePanel = document.querySelector("#schedulePanel");
 const chatPanel = document.querySelector("#chatPanel");
-const bumpPanel = document.querySelector("#bumpPanel");
 const queuePanel = document.querySelector("#queuePanel");
 const soundboardPanel = document.querySelector("#soundboardPanel");
 const fxPanel = document.querySelector("#fxPanel");
@@ -44,7 +49,7 @@ const showBroadcastPanelButtons = [
   document.querySelector("#showBroadcastPanelButtonBump"),
   document.querySelector("#showBroadcastPanelButtonSoundboard"),
   document.querySelector("#showBroadcastPanelButtonFx")
-];
+].filter(Boolean);
 const showSchedulePanelButtons = [
   document.querySelector("#showSchedulePanelButton"),
   document.querySelector("#showSchedulePanelButtonAlt"),
@@ -53,7 +58,7 @@ const showSchedulePanelButtons = [
   document.querySelector("#showSchedulePanelButtonBump"),
   document.querySelector("#showSchedulePanelButtonSoundboard"),
   document.querySelector("#showSchedulePanelButtonFx")
-];
+].filter(Boolean);
 const showQueuePanelButtons = [
   document.querySelector("#showQueuePanelButton"),
   document.querySelector("#showQueuePanelButtonAlt"),
@@ -62,16 +67,7 @@ const showQueuePanelButtons = [
   document.querySelector("#showQueuePanelButtonBump"),
   document.querySelector("#showQueuePanelButtonSoundboard"),
   document.querySelector("#showQueuePanelButtonFx")
-];
-const showBumpPanelButtons = [
-  document.querySelector("#showBumpPanelButton"),
-  document.querySelector("#showBumpPanelButtonAlt"),
-  document.querySelector("#showBumpPanelButtonSchedule"),
-  document.querySelector("#showBumpPanelButtonQueue"),
-  document.querySelector("#showBumpPanelButtonBump"),
-  document.querySelector("#showBumpPanelButtonSoundboard"),
-  document.querySelector("#showBumpPanelButtonFx")
-];
+].filter(Boolean);
 const showSoundboardPanelButtons = [
   document.querySelector("#showSoundboardPanelButton"),
   document.querySelector("#showSoundboardPanelButtonAlt"),
@@ -80,7 +76,7 @@ const showSoundboardPanelButtons = [
   document.querySelector("#showSoundboardPanelButtonBump"),
   document.querySelector("#showSoundboardPanelButtonSoundboard"),
   document.querySelector("#showSoundboardPanelButtonFx")
-];
+].filter(Boolean);
 const showFxPanelButtons = [
   document.querySelector("#showFxPanelButton"),
   document.querySelector("#showFxPanelButtonAlt"),
@@ -89,7 +85,7 @@ const showFxPanelButtons = [
   document.querySelector("#showFxPanelButtonBump"),
   document.querySelector("#showFxPanelButtonSoundboard"),
   document.querySelector("#showFxPanelButtonFx")
-];
+].filter(Boolean);
 const showChatPanelButtons = [
   document.querySelector("#showChatPanelButton"),
   document.querySelector("#showChatPanelButtonAlt"),
@@ -98,7 +94,7 @@ const showChatPanelButtons = [
   document.querySelector("#showChatPanelButtonBump"),
   document.querySelector("#showChatPanelButtonSoundboard"),
   document.querySelector("#showChatPanelButtonFx")
-];
+].filter(Boolean);
 const chatStatus = document.querySelector("#chatStatus");
 const chatMessages = document.querySelector("#chatMessages");
 const chatForm = document.querySelector("#chatForm");
@@ -144,6 +140,17 @@ const fxMessage = document.querySelector("#fxMessage");
 const clearFxButton = document.querySelector("#clearFxButton");
 const fxButtons = document.querySelectorAll("[data-fx]");
 const djSoundboardGrid = document.querySelector("#djSoundboardGrid");
+const soundboardVolumeSlider = document.querySelector("#soundboardVolumeSlider");
+const soundboardVolumeValue = document.querySelector("#soundboardVolumeValue");
+const performanceBlockPack = document.querySelector("#performanceBlockPack");
+const performanceActiveCue = document.querySelector("#performanceActiveCue");
+const performanceIntensitySlider = document.querySelector("#performanceIntensitySlider");
+const performanceIntensityValue = document.querySelector("#performanceIntensityValue");
+const performanceReactiveToggle = document.querySelector("#performanceReactiveToggle");
+const performanceBumpToggle = document.querySelector("#performanceBumpToggle");
+const performanceSceneSelect = document.querySelector("#performanceSceneSelect");
+const performanceSceneButton = document.querySelector("#performanceSceneButton");
+const performanceCueGrid = document.querySelector("#performanceCueGrid");
 const looperBpmValue = document.querySelector("#looperBpmValue");
 const looperBeatLight = document.querySelector("#looperBeatLight");
 const looperStatus = document.querySelector("#looperStatus");
@@ -181,9 +188,15 @@ const warpResetButton = document.querySelector("#warpResetButton");
 const visualBrightnessSlider = document.querySelector("#visualBrightnessSlider");
 const visualContrastSlider = document.querySelector("#visualContrastSlider");
 const visualSaturationSlider = document.querySelector("#visualSaturationSlider");
+const visualTearSlider = document.querySelector("#visualTearSlider");
+const visualTrackingSlider = document.querySelector("#visualTrackingSlider");
+const visualSmearSlider = document.querySelector("#visualSmearSlider");
 const visualBrightnessValue = document.querySelector("#visualBrightnessValue");
 const visualContrastValue = document.querySelector("#visualContrastValue");
 const visualSaturationValue = document.querySelector("#visualSaturationValue");
+const visualTearValue = document.querySelector("#visualTearValue");
+const visualTrackingValue = document.querySelector("#visualTrackingValue");
+const visualSmearValue = document.querySelector("#visualSmearValue");
 const visualResetButton = document.querySelector("#visualResetButton");
 const delayTimeSlider = document.querySelector("#delayTimeSlider");
 const delayFeedbackSlider = document.querySelector("#delayFeedbackSlider");
@@ -198,6 +211,18 @@ const delayDivisionSelect = document.querySelector("#delayDivisionSelect");
 const delayRepitchSelect = document.querySelector("#delayRepitchSelect");
 const delayTargetSelect = document.querySelector("#delayTargetSelect");
 const delayToggleButton = document.querySelector("#delayToggleButton");
+const reverbSizeSlider = document.querySelector("#reverbSizeSlider");
+const reverbDecaySlider = document.querySelector("#reverbDecaySlider");
+const reverbPreDelaySlider = document.querySelector("#reverbPreDelaySlider");
+const reverbMixSlider = document.querySelector("#reverbMixSlider");
+const reverbToneSlider = document.querySelector("#reverbToneSlider");
+const reverbCharacterSelect = document.querySelector("#reverbCharacterSelect");
+const reverbSizeValue = document.querySelector("#reverbSizeValue");
+const reverbDecayValue = document.querySelector("#reverbDecayValue");
+const reverbPreDelayValue = document.querySelector("#reverbPreDelayValue");
+const reverbMixValue = document.querySelector("#reverbMixValue");
+const reverbToneValue = document.querySelector("#reverbToneValue");
+const reverbToggleButton = document.querySelector("#reverbToggleButton");
 const overlaySourceSelect = document.querySelector("#overlaySourceSelect");
 const overlayBlendSelect = document.querySelector("#overlayBlendSelect");
 const overlayCropSelect = document.querySelector("#overlayCropSelect");
@@ -255,10 +280,12 @@ let chatCollapsed = false;
 let youtubeAutofillTimer;
 let broadcastMode = "scheduled";
 let adminRailView = "broadcast";
+let adminStageView = "tv";
 let schedulePickMode = "source";
 let draggedQueueId = "";
 let draggedSourceId = "";
 let adminDataCache = { sourceFolders: [], sources: [] };
+let showControlCache = { scenes: [], cues: [], macros: {} };
 let programVotePoll = null;
 let railResizeDrag = null;
 const scheduleZoomLevels = [
@@ -286,8 +313,12 @@ let audioUnlocked = true;
 let playbackUnlocked = storedPlaybackUnlocked;
 let pendingPlaybackUnlock = false;
 let viewerVolume = Number(localStorage.getItem("doink_volume") || 70);
+let soundboardVolume = Number(localStorage.getItem("doink_soundboard_volume") || 100);
+let soundboardCollapsedGroups = loadSoundboardCollapsedGroups();
 if (!Number.isFinite(viewerVolume)) viewerVolume = 70;
 viewerVolume = Math.max(0, Math.min(100, viewerVolume));
+if (!Number.isFinite(soundboardVolume)) soundboardVolume = 100;
+soundboardVolume = Math.max(0, Math.min(140, soundboardVolume));
 let hlsPlayer = null;
 let hlsLoaded = false;
 let hlsLoading = false;
@@ -333,6 +364,12 @@ let avWarp = { speed: 1, pitch: 1, desync: 0 };
 let avWarpTarget = { speed: 1, pitch: 1, desync: 0 };
 let avWarpTweenTimer = 0;
 let lastYoutubeWarpRate = 1;
+let lastStreamWarpRate = 1;
+let lastWarpPitchPreserve = true;
+let lastWarpMediaApplyAt = 0;
+let activeFxClassSignature = "";
+let fxOverlaySignature = "";
+let lastBroadcastFx = [];
 let visualPostTimer = 0;
 const DELAY_DEFAULTS = {
   timeMs: 375,
@@ -376,9 +413,30 @@ const DELAY_DIVISIONS = new Set([
   "whole-triplet",
   "dotted-whole"
 ]);
+const REVERB_DEFAULTS = {
+  size: 56,
+  decay: 2.4,
+  preDelayMs: 22,
+  mix: 0.28,
+  tone: 6200,
+  character: "plate"
+};
+const REVERB_LIMITS = {
+  size: [0, 100],
+  decay: [0.2, 8],
+  preDelayMs: [0, 180],
+  mix: [0, 1],
+  tone: [900, 14000]
+};
+const REVERB_CHARACTERS = new Set(["room", "plate", "hall", "tunnel"]);
 let delayPostTimer = 0;
+let delayRemoteHoldUntil = 0;
 let delayActive = false;
 let delayNodes = null;
+let reverbPostTimer = 0;
+let reverbRemoteHoldUntil = 0;
+let reverbActive = false;
+let reverbImpulseKey = "";
 let delayLfoTimer = 0;
 let delayVisualTimer = 0;
 let delayVisualFrames = [];
@@ -386,6 +444,7 @@ let activePageFxSignature = "";
 let stingerAudioContext = null;
 let broadcastAudioDuck = 1;
 let delayState = { ...DELAY_DEFAULTS };
+let reverbState = { ...REVERB_DEFAULTS };
 let peaceMode = localStorage.getItem("doink_peace_mode") === "true";
 const soundboardAudioInstances = new Set();
 const DJ_STINGER_FX = new Set([
@@ -619,6 +678,26 @@ function setAuthMode(mode) {
   setMessage(registerMessage, "");
 }
 
+function setAdminStageView(view) {
+  const nextView = adminAuthenticated && view === "bump" ? "bump" : "tv";
+  const showingBump = nextView === "bump";
+  adminStageView = nextView;
+  shell.classList.toggle("bump-stage-open", showingBump);
+  stage.classList.toggle("stage-bump-open", showingBump);
+  frame.classList.toggle("hidden", showingBump);
+  viewerControls?.classList.toggle("hidden", showingBump);
+  stageBumpPanel?.classList.toggle("hidden", !showingBump);
+  if (showingBump && stageBumpFrame && !stageBumpFrame.getAttribute("src")) {
+    stageBumpFrame.src = stageBumpFrame.dataset.src || "/bumpgenerator/";
+  } else if (!adminAuthenticated) {
+    stageBumpFrame?.removeAttribute("src");
+  }
+  stageTvButton?.classList.toggle("active", !showingBump);
+  stageTvButton?.setAttribute("aria-pressed", String(!showingBump));
+  stageBumpButton?.classList.toggle("active", showingBump);
+  stageBumpButton?.setAttribute("aria-pressed", String(showingBump));
+}
+
 function setUserState(user) {
   const previousAdminState = adminAuthenticated;
   currentUser = user;
@@ -627,6 +706,7 @@ function setUserState(user) {
   adminTools.classList.toggle("hidden", !adminAuthenticated);
   shell.classList.toggle("admin-open", adminAuthenticated);
   adminRailTabs.forEach((tabs) => tabs.classList.toggle("hidden", !adminAuthenticated));
+  stageAdminTabs?.classList.toggle("hidden", !adminAuthenticated);
   chatPanel.classList.toggle("admin-rail", adminAuthenticated);
   adminToggle.textContent = adminAuthenticated ? "Controls" : user ? "Log Out" : "Log In";
   if (user) adminIdentity.textContent = `Signed in as ${user.username}`;
@@ -637,15 +717,15 @@ function setUserState(user) {
   chatStatus.textContent = user ? `Chatting as ${user.username}` : "Log in to join";
   if (adminAuthenticated) {
     setAdminRailView(adminRailView || "broadcast");
+    setAdminStageView(adminStageView);
   } else {
     adminPanel.classList.add("hidden");
     schedulePanel.classList.add("hidden");
     queuePanel.classList.add("hidden");
-    bumpPanel.classList.add("hidden");
     soundboardPanel.classList.add("hidden");
     fxPanel.classList.add("hidden");
     chatPanel.classList.remove("hidden");
-    shell.classList.remove("bump-workspace");
+    setAdminStageView("tv");
   }
   if (previousAdminState !== adminAuthenticated) reconnectProgramEvents();
   applyStoredRailWidth();
@@ -662,27 +742,23 @@ function setChatCollapsed(isCollapsed) {
 }
 
 function setAdminRailView(view) {
-  adminRailView = ["broadcast", "schedule", "queue", "bump", "soundboard", "fx", "chat"].includes(view) ? view : "broadcast";
+  adminRailView = ["broadcast", "schedule", "queue", "soundboard", "fx", "chat"].includes(view) ? view : "broadcast";
   const showingBroadcast = adminRailView === "broadcast";
   const showingSchedule = adminRailView === "schedule";
   const showingQueue = adminRailView === "queue";
-  const showingBump = adminRailView === "bump";
   const showingSoundboard = adminRailView === "soundboard";
   const showingFx = adminRailView === "fx";
   adminPanel.classList.toggle("hidden", !showingBroadcast);
   schedulePanel.classList.toggle("hidden", !showingSchedule);
   queuePanel.classList.toggle("hidden", !showingQueue);
-  bumpPanel.classList.toggle("hidden", !showingBump);
   soundboardPanel.classList.toggle("hidden", !showingSoundboard);
   fxPanel.classList.toggle("hidden", !showingFx);
-  chatPanel.classList.toggle("hidden", showingBroadcast || showingSchedule || showingQueue || showingBump || showingSoundboard || showingFx);
+  chatPanel.classList.toggle("hidden", showingBroadcast || showingSchedule || showingQueue || showingSoundboard || showingFx);
   chatPanel.classList.remove("collapsed");
   shell.classList.remove("chat-collapsed");
-  shell.classList.toggle("bump-workspace", showingBump);
   showBroadcastPanelButtons.forEach((button) => button.classList.toggle("active", showingBroadcast));
   showSchedulePanelButtons.forEach((button) => button.classList.toggle("active", showingSchedule));
   showQueuePanelButtons.forEach((button) => button.classList.toggle("active", showingQueue));
-  showBumpPanelButtons.forEach((button) => button.classList.toggle("active", showingBump));
   showSoundboardPanelButtons.forEach((button) => button.classList.toggle("active", showingSoundboard));
   showFxPanelButtons.forEach((button) => button.classList.toggle("active", showingFx));
   showChatPanelButtons.forEach((button) => button.classList.toggle("active", adminRailView === "chat"));
@@ -1107,6 +1183,7 @@ function applyViewerVolume({ unlock = false } = {}) {
       youtubePlayer.unMute?.();
     }
   }
+  applySoundboardVolume();
 }
 
 function clearCaptionTracks() {
@@ -1370,6 +1447,7 @@ function resetChaosForPeace() {
   stopSeedSkipper();
   resetAvWarp(false);
   disableDelay(false);
+  disableReverb(false);
   syncPlaylistAudio(null);
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   for (const audio of soundboardAudioInstances) {
@@ -1387,18 +1465,23 @@ function resetChaosForPeace() {
   document.body.style.removeProperty("--page-damage-rot");
   displayTheme(currentTheme);
   streamPlayer.style.filter = "";
+  resetAvWarp(false);
   const youtubeElement = youtubePlayerElement();
   if (youtubeElement) youtubeElement.style.filter = "";
   frame.className = frame.className
     .split(/\s+/)
     .filter((name) => name && !name.startsWith("fx-"))
     .join(" ");
+  activeFxClassSignature = "";
   fxOverlay.innerHTML = "";
+  fxOverlaySignature = "";
   if (fxAudioLayer) fxAudioLayer.innerHTML = "";
+  lastBroadcastFx = [];
 }
 
 function fxIsActive(fx) {
-  return !Number.isFinite(Number(fx.expiresAt)) || fx.expiresAt > Date.now() + clockDelta;
+  const expiresAt = Number(fx.expiresAt);
+  return fx.expiresAt == null || !Number.isFinite(expiresAt) || expiresAt > Date.now() + clockDelta;
 }
 
 function applyBroadcastFx(effects = []) {
@@ -1408,6 +1491,7 @@ function applyBroadcastFx(effects = []) {
     resetChaosForPeace();
     return;
   }
+  lastBroadcastFx = active;
   const nextDuck = active.some((fx) => ["dj-mic", "caller-line"].includes(fx.id)) ? 0.38 : 1;
   if (nextDuck !== broadcastAudioDuck) {
     broadcastAudioDuck = nextDuck;
@@ -1418,7 +1502,18 @@ function applyBroadcastFx(effects = []) {
   handleFxCommands(active);
   if (!active.some((fx) => fx.id === "seed-skip")) stopSeedSkipper();
   if (!active.some((fx) => fx.id === "av-warp")) resetAvWarp(false);
-  if (!active.some((fx) => fx.id === "delay")) disableDelay(false);
+  const hasDelayFx = active.some((fx) => fx.id === "delay");
+  if (hasDelayFx) {
+    delayRemoteHoldUntil = 0;
+  } else if (Date.now() > delayRemoteHoldUntil) {
+    disableDelay(false);
+  }
+  const hasReverbFx = active.some((fx) => fx.id === "reverb");
+  if (hasReverbFx) {
+    reverbRemoteHoldUntil = 0;
+  } else if (Date.now() > reverbRemoteHoldUntil) {
+    disableReverb(false);
+  }
   syncPlaylistAudio(active.find((fx) => fx.id === "playlist-audio"));
   const totalLevel = active.reduce((level, fx) => level + Number(fx.level || 1), 0);
   const chaos = Math.max(1, totalLevel + Math.max(0, active.length - 1) * 1.25);
@@ -1430,8 +1525,8 @@ function applyBroadcastFx(effects = []) {
   frame.style.setProperty("--fx-smear-opacity", String(Math.min(0.74, intensity * 0.46)));
   frame.style.setProperty("--fx-dropout-opacity", String(Math.min(0.78, intensity * 0.6)));
   frame.style.setProperty("--fx-glitch-ms", `${Math.max(0.075, 0.24 - chaos * 0.017)}s`);
-  frame.style.setProperty("--fx-vhs-ms", `${Math.max(0.44, 1.28 - chaos * 0.075)}s`);
-  frame.style.setProperty("--fx-tape-ms", `${Math.max(0.42, 1.12 - chaos * 0.055)}s`);
+  frame.style.setProperty("--fx-vhs-ms", `${Math.max(0.82, 1.5 - chaos * 0.055)}s`);
+  frame.style.setProperty("--fx-tape-ms", `${Math.max(0.92, 1.75 - chaos * 0.06)}s`);
   frame.style.setProperty("--fx-dvd-ms", `${Math.max(0.28, 0.86 - chaos * 0.048)}s`);
   frame.style.setProperty("--fx-contrast", String(1.22 + intensity * 0.72));
   frame.style.setProperty("--fx-saturate", String(1.18 + intensity * 0.85));
@@ -1444,14 +1539,46 @@ function applyBroadcastFx(effects = []) {
   frame.style.setProperty("--fx-crop-scale", String(1.06 + intensity * 0.46));
   frame.style.setProperty("--fx-pixel-scale", String(1 + intensity * 0.06));
   frame.style.setProperty("--fx-glass-blur", `${1 + intensity * 4}px`);
+  const visualFx = active.find((fx) => fx.id === "visual-adjust");
+  const visualRack = normalizedVisualValues(visualFx?.params || {});
+  frame.style.setProperty("--fx-manual-tear", visualRack.tear.toFixed(2));
+  frame.style.setProperty("--fx-manual-tracking", visualRack.tracking.toFixed(2));
+  frame.style.setProperty("--fx-manual-smear", visualRack.smear.toFixed(2));
   applyStackedFxFilter(active, intensity, chaos);
+  syncFrameFxClasses(active);
+  syncFxOverlay(active);
+}
+
+function frameFxClassSignature(active = []) {
+  return active.map((fx) => `${fx.id}:${Number(fx.level || 1)}`).join("|");
+}
+
+function syncFrameFxClasses(active = []) {
+  const signature = frameFxClassSignature(active);
+  if (signature === activeFxClassSignature) return;
+  activeFxClassSignature = signature;
   frame.className = frame.className
     .split(/\s+/)
     .filter((name) => name && !name.startsWith("fx-"))
     .join(" ");
   for (const fx of active) frame.classList.add(`fx-${fx.id}`);
   if (active.length > 1) frame.classList.add("fx-chaos-stack");
-  fxOverlay.innerHTML = `${renderFxTexture(active)}${active.map(renderFxOverlay).join("")}${renderFrozenFrame()}`;
+}
+
+function fxOverlayRenderSignature(active = []) {
+  const delayFrameStamp = active.some((fx) => fx.id === "delay")
+    ? delayVisualFrames.at(-1)?.at || 0
+    : 0;
+  return `${delayFrameStamp}|${active.map((fx) => `${fx.id}:${fx.seed || ""}:${Number(fx.level || 1)}:${JSON.stringify(fx.params || {})}`).join("|")}`;
+}
+
+function syncFxOverlay(active = []) {
+  const signature = fxOverlayRenderSignature(active);
+  if (signature === fxOverlaySignature) return;
+  fxOverlaySignature = signature;
+  fxOverlay.innerHTML = active.length
+    ? `${renderFxTexture(active)}${active.map(renderFxOverlay).join("")}${renderFrozenFrame()}`
+    : "";
   renderLooperLayers();
 }
 
@@ -1493,6 +1620,9 @@ function applyStackedFxFilter(active = [], intensity = 0, chaos = 1) {
     sepia = Math.min(1, sepia + visual.sepia);
     hue += visual.hue;
     blur += visual.blur;
+    saturate += visual.smear * 0.25;
+    contrast += visual.tear * 0.22 + visual.tracking * 0.15;
+    brightness -= visual.tracking * 0.08;
   }
 
   for (const fx of active) {
@@ -1537,14 +1667,20 @@ function normalizedVisualValues(params = {}) {
   const rawBrightness = clamp(Number(params.brightness ?? 100), -100, 300);
   const rawContrast = clamp(Number(params.contrast ?? 100), -100, 300);
   const rawSaturation = clamp(Number(params.saturation ?? 100), -100, 300);
+  const tear = clamp(Number(params.tear ?? 0), 0, 100) / 100;
+  const tracking = clamp(Number(params.tracking ?? 0), 0, 100) / 100;
+  const smear = clamp(Number(params.smear ?? 0), 0, 100) / 100;
   const brightnessDamage = Math.max(0, -rawBrightness, rawBrightness - 160) / 100;
   const contrastDamage = Math.max(0, -rawContrast, rawContrast - 170) / 100;
   const saturationDamage = Math.max(0, -rawSaturation, rawSaturation - 180) / 100;
-  const damage = Math.min(2.6, brightnessDamage + contrastDamage + saturationDamage);
+  const damage = Math.min(3.2, brightnessDamage + contrastDamage + saturationDamage + tear * 0.85 + tracking * 0.75 + smear * 0.62);
   return {
     rawBrightness,
     rawContrast,
     rawSaturation,
+    tear,
+    tracking,
+    smear,
     damage,
     brightnessFilter: Math.max(0.02, rawBrightness / 100),
     contrastFilter: Math.max(0.04, rawContrast / 100),
@@ -1629,6 +1765,7 @@ function handleFxCommands(active) {
     if (fx.id === "seed-skip") startSeedSkipper(fx);
     if (fx.id === "av-warp") applyAvWarp(fx.params);
     if (fx.id === "delay") applyDelayFx(fx.params);
+    if (fx.id === "reverb") applyReverbFx(fx.params);
     if (fx.id === "frozen") captureFrozenFrame(fx);
     if (DJ_STINGER_FX.has(fx.id)) triggerAudioStinger(fx);
     if (fx.id === "soundboard-sample") playSoundboardSample(fx);
@@ -1772,12 +1909,70 @@ function playSoundboardSample(fx) {
   const src = fx.params?.path;
   if (!src) return;
   const audio = new Audio(src);
-  audio.volume = Math.max(0, Math.min(1, viewerVolume / 100));
+  audio.volume = effectiveSoundboardVolume();
   soundboardAudioInstances.add(audio);
   audio.addEventListener("ended", () => soundboardAudioInstances.delete(audio), { once: true });
   audio.addEventListener("error", () => soundboardAudioInstances.delete(audio), { once: true });
   audio.play().catch(() => {});
   showSoundboardToast(fx.params?.label || "Soundboard cart", fx.params?.color || "#f2b84a");
+}
+
+function effectiveSoundboardVolume() {
+  return clamp((viewerVolume / 100) * (soundboardVolume / 100), 0, 1);
+}
+
+function normalizeSoundboardVolume(value) {
+  const number = Number(value);
+  return clamp(Number.isFinite(number) ? number : 100, 0, 140);
+}
+
+function updateSoundboardVolumeUi() {
+  soundboardVolume = normalizeSoundboardVolume(soundboardVolume);
+  if (soundboardVolumeSlider) {
+    const knobLevel = `${Math.round((soundboardVolume / 140) * 100)}%`;
+    const knobRotate = `${-135 + (soundboardVolume / 140) * 270}deg`;
+    soundboardVolumeSlider.value = String(Math.round(soundboardVolume));
+    soundboardVolumeSlider.style.setProperty("--knob-level", knobLevel);
+    soundboardVolumeSlider.style.setProperty("--knob-rotate", knobRotate);
+    soundboardVolumeSlider.closest(".soundboard-volume")?.style.setProperty("--knob-level", knobLevel);
+    soundboardVolumeSlider.closest(".soundboard-volume")?.style.setProperty("--knob-rotate", knobRotate);
+  }
+  if (soundboardVolumeValue) soundboardVolumeValue.textContent = `${Math.round(soundboardVolume)}%`;
+}
+
+function applySoundboardVolume() {
+  const volume = effectiveSoundboardVolume();
+  for (const audio of soundboardAudioInstances) audio.volume = volume;
+}
+
+function loadSoundboardCollapsedGroups() {
+  try {
+    const raw = JSON.parse(localStorage.getItem("doink_soundboard_collapsed_groups") || "[]");
+    return new Set(Array.isArray(raw) ? raw.map(String) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function persistSoundboardCollapsedGroups() {
+  localStorage.setItem("doink_soundboard_collapsed_groups", JSON.stringify([...soundboardCollapsedGroups]));
+}
+
+function toggleSoundboardGroup(groupId) {
+  const id = String(groupId || "");
+  if (!id) return;
+  if (soundboardCollapsedGroups.has(id)) {
+    soundboardCollapsedGroups.delete(id);
+  } else {
+    soundboardCollapsedGroups.add(id);
+  }
+  persistSoundboardCollapsedGroups();
+  const selectorId = window.CSS?.escape ? CSS.escape(id) : id.replace(/"/g, '\\"');
+  const group = djSoundboardGrid?.querySelector(`[data-soundboard-group="${selectorId}"]`);
+  const toggle = group?.querySelector("[data-soundboard-group-toggle]");
+  const collapsed = soundboardCollapsedGroups.has(id);
+  group?.classList.toggle("is-collapsed", collapsed);
+  toggle?.setAttribute("aria-expanded", String(!collapsed));
 }
 
 function showSoundboardToast(label, color) {
@@ -2288,7 +2483,8 @@ function renderFxTexture(active = []) {
   const hasPixels = active.some((fx) => ["glitch", "dvd-skip", "pixelate", "glass", "melt", "retro-os", "blue-screen"].includes(fx.id)) || active.length > 3;
   const hasMagnetic = active.some((fx) => ["tape-warp", "vhs", "signal-loss", "kaleidoscope", "lsd", "floppy-prompt", "frequency-drift", "dub-siren"].includes(fx.id)) || active.length > 2;
   const hasDegauss = active.some((fx) => ["palette-swap", "color-acid", "color-hot", "color-ice", "invert", "kaleidoscope", "lsd", "party-damage", "auto-filter-sweep"].includes(fx.id));
-  const visualDamage = normalizedVisualValues(active.find((fx) => fx.id === "visual-adjust")?.params || {}).damage;
+  const visualRack = normalizedVisualValues(active.find((fx) => fx.id === "visual-adjust")?.params || {});
+  const visualDamage = visualRack.damage;
   const hasVisualDamage = visualDamage > 0.08;
   const fillIds = new Set(["fill-water", "fill-shapes", "fill-marbles", "fill-stickers", "fill-confetti", "fill-popups", "fill-bubbles", "fill-static-panels"]);
   const fillLayers = active
@@ -2312,8 +2508,9 @@ function renderFxTexture(active = []) {
     (hasPixels || visualDamage > 0.28) ? `<div class="fx-texture fx-coarse-pixels" style="--visual-damage:${visualDamage.toFixed(2)}"></div>` : "",
     (hasMagnetic || visualDamage > 0.62) ? `<div class="fx-texture fx-magnetic-bands" style="--visual-damage:${visualDamage.toFixed(2)}"></div>` : "",
     (hasDegauss || visualDamage > 0.36) ? `<div class="fx-texture fx-degauss" style="--visual-damage:${visualDamage.toFixed(2)}"></div>` : "",
-    hasChroma ? `<div class="fx-texture fx-chroma-smear"></div>` : "",
-    hasDropout ? `<div class="fx-texture fx-dropout"></div>` : "",
+    (hasChroma || visualRack.smear > 0.04) ? `<div class="fx-texture fx-chroma-smear" style="--visual-smear:${visualRack.smear.toFixed(2)}"></div>` : "",
+    (hasDropout || visualRack.tear > 0.04) ? `<div class="fx-texture fx-dropout" style="--visual-tear:${visualRack.tear.toFixed(2)}"></div>` : "",
+    visualRack.tracking > 0.04 ? `<div class="fx-detail fx-vhs-tracking fx-manual-tracking"><i></i><i></i><i></i></div>` : "",
     fillLayers,
     osLayers,
     detailLayers,
@@ -2370,6 +2567,13 @@ function renderFxDetailLayer(fx) {
     const legalId = fx.params?.legalId || "WDOINK basement";
     const note = fx.params?.note || "not actually your license";
     return `<div class="fx-detail fx-legal-id"><strong>${escapeHtml(legalId)}</strong><span>${escapeHtml(note)}</span></div>`;
+  }
+  if (fx.id === "show-cue") {
+    const label = fx.params?.label || "SHOW CUE";
+    const scene = fx.params?.scene || "DoinkTV";
+    const clip = fx.params?.clip || "";
+    const color = fx.params?.color || "#68c3b7";
+    return `<div class="fx-detail fx-show-cue" style="--cue-color:${escapeHtml(color)}"><small>${escapeHtml(scene)}</small><strong>${escapeHtml(label)}</strong><span>${escapeHtml(clip)}</span></div>`;
   }
   if (fx.id === "cart-wall" || fx.id === "record-scratch" || fx.id === "dub-siren") {
     const label = fx.id === "record-scratch" ? "SCRATCH" : fx.id === "dub-siren" ? "DUB SIREN" : String(fx.params?.cart || "cart").replaceAll("-", " ");
@@ -2586,13 +2790,16 @@ function resetAvWarp(updateControls = true) {
   clearInterval(avWarpTweenTimer);
   avWarpTweenTimer = 0;
   lastYoutubeWarpRate = 1;
+  lastStreamWarpRate = Number.NaN;
+  lastWarpPitchPreserve = null;
+  lastWarpMediaApplyAt = 0;
   if (updateControls) {
     warpSpeedSlider.value = "1";
     warpPitchSlider.value = "1";
     warpDesyncSlider.value = "0";
     updateWarpLabels(avWarp);
   }
-  applyAvWarpToPlayers();
+  applyAvWarpToPlayers(true);
 }
 
 function startAvWarpTween() {
@@ -2610,23 +2817,43 @@ function startAvWarpTween() {
       && Math.abs(avWarp.desync - avWarpTarget.desync) < 0.03;
     if (settled) {
       avWarp = { ...avWarpTarget };
-      applyAvWarpToPlayers();
+      applyAvWarpToPlayers(true);
       clearInterval(avWarpTweenTimer);
       avWarpTweenTimer = 0;
     }
   }, 50);
 }
 
-function applyAvWarpToPlayers() {
-  const rate = Math.max(0.25, Math.min(2, avWarp.speed * avWarp.pitch));
-  streamPlayer.playbackRate = rate;
-  streamPlayer.defaultPlaybackRate = rate;
-  if ("preservesPitch" in streamPlayer) streamPlayer.preservesPitch = Math.abs(avWarp.pitch - 1) < 0.03;
-  if ("mozPreservesPitch" in streamPlayer) streamPlayer.mozPreservesPitch = Math.abs(avWarp.pitch - 1) < 0.03;
-  if ("webkitPreservesPitch" in streamPlayer) streamPlayer.webkitPreservesPitch = Math.abs(avWarp.pitch - 1) < 0.03;
+function applyAvWarpToPlayers(force = false) {
+  const rate = Math.max(0.35, Math.min(1.75, avWarp.speed * Math.sqrt(avWarp.pitch)));
+  const warpAmount = Math.min(1, Math.abs(avWarp.speed - 1) * 0.8 + Math.abs(avWarp.pitch - 1) * 0.45 + Math.abs(avWarp.desync) * 0.12);
+  frame.style.setProperty("--av-warp-amount", warpAmount.toFixed(3));
+  frame.style.setProperty("--av-warp-shift", `${(avWarp.desync * 2.2).toFixed(2)}px`);
+  frame.style.setProperty("--av-warp-skew", `${(((avWarp.speed - 1) * 1.2) + ((avWarp.pitch - 1) * 0.55)).toFixed(2)}deg`);
+  frame.style.setProperty("--av-warp-scale", (1 + warpAmount * 0.018).toFixed(3));
+  frame.style.setProperty("--av-warp-contrast", (1 + warpAmount * 0.12).toFixed(3));
+  frame.style.setProperty("--av-warp-saturate", (1 + warpAmount * 0.18).toFixed(3));
+  const now = performance.now();
+  const shouldApplyMedia = force
+    || Number.isNaN(lastStreamWarpRate)
+    || Math.abs(rate - lastStreamWarpRate) > 0.018
+    || now - lastWarpMediaApplyAt > 240;
+  if (shouldApplyMedia && (force || streamPlayer.readyState >= 1)) {
+    streamPlayer.playbackRate = rate;
+    streamPlayer.defaultPlaybackRate = rate;
+    lastStreamWarpRate = rate;
+    lastWarpMediaApplyAt = now;
+  }
+  const preservePitch = Math.abs(avWarp.pitch - 1) < 0.03;
+  if (force || preservePitch !== lastWarpPitchPreserve) {
+    if ("preservesPitch" in streamPlayer) streamPlayer.preservesPitch = preservePitch;
+    if ("mozPreservesPitch" in streamPlayer) streamPlayer.mozPreservesPitch = preservePitch;
+    if ("webkitPreservesPitch" in streamPlayer) streamPlayer.webkitPreservesPitch = preservePitch;
+    lastWarpPitchPreserve = preservePitch;
+  }
   if (youtubeReady) {
     const youtubeRate = nearestYouTubeRate(rate);
-    if (Math.abs(youtubeRate - lastYoutubeWarpRate) >= 0.24) {
+    if (force || Math.abs(youtubeRate - lastYoutubeWarpRate) >= 0.24) {
       lastYoutubeWarpRate = youtubeRate;
       youtubePlayer.setPlaybackRate?.(youtubeRate);
     }
@@ -2650,14 +2877,17 @@ async function broadcastAvWarp() {
     } catch (error) {
       setMessage(fxMessage, error.message, true);
     }
-  }, 120);
+  }, 280);
 }
 
 function readVisualControls() {
   return {
     brightness: Number(visualBrightnessSlider?.value || 100),
     contrast: Number(visualContrastSlider?.value || 100),
-    saturation: Number(visualSaturationSlider?.value || 100)
+    saturation: Number(visualSaturationSlider?.value || 100),
+    tear: Number(visualTearSlider?.value || 0),
+    tracking: Number(visualTrackingSlider?.value || 0),
+    smear: Number(visualSmearSlider?.value || 0)
   };
 }
 
@@ -2665,6 +2895,9 @@ function updateVisualLabels(values = readVisualControls()) {
   if (visualBrightnessValue) visualBrightnessValue.textContent = `${Math.round(values.brightness)}%`;
   if (visualContrastValue) visualContrastValue.textContent = `${Math.round(values.contrast)}%`;
   if (visualSaturationValue) visualSaturationValue.textContent = `${Math.round(values.saturation)}%`;
+  if (visualTearValue) visualTearValue.textContent = `${Math.round(values.tear || 0)}%`;
+  if (visualTrackingValue) visualTrackingValue.textContent = `${Math.round(values.tracking || 0)}%`;
+  if (visualSmearValue) visualSmearValue.textContent = `${Math.round(values.smear || 0)}%`;
 }
 
 async function broadcastVisualAdjust() {
@@ -2685,6 +2918,9 @@ async function resetVisualAdjust() {
   if (visualBrightnessSlider) visualBrightnessSlider.value = "100";
   if (visualContrastSlider) visualContrastSlider.value = "100";
   if (visualSaturationSlider) visualSaturationSlider.value = "100";
+  if (visualTearSlider) visualTearSlider.value = "0";
+  if (visualTrackingSlider) visualTrackingSlider.value = "0";
+  if (visualSmearSlider) visualSmearSlider.value = "0";
   updateVisualLabels();
   await api("/api/fx", {
     method: "POST",
@@ -2777,6 +3013,48 @@ function updateDelayLabels(values = readDelayControls()) {
   updateDelayToggle();
 }
 
+function readReverbControls() {
+  return normalizedReverbState({
+    size: delayControlNumber(reverbSizeSlider, REVERB_DEFAULTS.size),
+    decay: delayControlNumber(reverbDecaySlider, REVERB_DEFAULTS.decay),
+    preDelayMs: delayControlNumber(reverbPreDelaySlider, REVERB_DEFAULTS.preDelayMs),
+    mix: delayControlNumber(reverbMixSlider, REVERB_DEFAULTS.mix * 100) / 100,
+    tone: delayControlNumber(reverbToneSlider, REVERB_DEFAULTS.tone),
+    character: reverbCharacterSelect?.value
+  }, REVERB_DEFAULTS);
+}
+
+function normalizedReverbState(params = {}, fallback = reverbState) {
+  const base = { ...REVERB_DEFAULTS, ...fallback };
+  return {
+    size: clamp(Number(params.size ?? base.size), ...REVERB_LIMITS.size),
+    decay: clamp(Number(params.decay ?? base.decay), ...REVERB_LIMITS.decay),
+    preDelayMs: clamp(Number(params.preDelayMs ?? base.preDelayMs), ...REVERB_LIMITS.preDelayMs),
+    mix: clamp(Number(params.mix ?? base.mix), ...REVERB_LIMITS.mix),
+    tone: clamp(Number(params.tone ?? base.tone), ...REVERB_LIMITS.tone),
+    character: delayChoice(params.character, REVERB_CHARACTERS, base.character)
+  };
+}
+
+function syncReverbControls(values = reverbState) {
+  setDelayControlValue(reverbSizeSlider, Math.round(values.size));
+  setDelayControlValue(reverbDecaySlider, values.decay.toFixed(1));
+  setDelayControlValue(reverbPreDelaySlider, Math.round(values.preDelayMs));
+  setDelayControlValue(reverbMixSlider, Math.round(values.mix * 100));
+  setDelayControlValue(reverbToneSlider, values.tone);
+  setDelayControlValue(reverbCharacterSelect, values.character);
+}
+
+function updateReverbLabels(values = readReverbControls()) {
+  const state = normalizedReverbState(values);
+  if (reverbSizeValue) reverbSizeValue.textContent = `${Math.round(state.size)}%`;
+  if (reverbDecayValue) reverbDecayValue.textContent = `${state.decay.toFixed(1)}s`;
+  if (reverbPreDelayValue) reverbPreDelayValue.textContent = `${Math.round(state.preDelayMs)}ms`;
+  if (reverbMixValue) reverbMixValue.textContent = `${Math.round(state.mix * 100)}%`;
+  if (reverbToneValue) reverbToneValue.textContent = state.tone >= 1000 ? `${(state.tone / 1000).toFixed(1)}k` : `${Math.round(state.tone)}Hz`;
+  updateReverbToggle();
+}
+
 function updateOverlayLabels() {
   overlayOpacityValue.textContent = `${overlayOpacitySlider.value}%`;
   overlayScaleValue.textContent = `${overlayScaleSlider.value}%`;
@@ -2819,7 +3097,7 @@ async function broadcastSourceOverlay() {
   }
 }
 
-function ensureDelayGraph() {
+function ensureAudioFxGraph() {
   if (delayNodes) return delayNodes;
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) return null;
@@ -2830,9 +3108,15 @@ function ensureDelayGraph() {
   const delay = context.createDelay(2.5);
   const feedback = context.createGain();
   const tone = context.createBiquadFilter();
+  const reverbPreDelay = context.createDelay(0.2);
+  const reverb = context.createConvolver();
+  const reverbTone = context.createBiquadFilter();
+  const reverbWet = context.createGain();
   tone.type = "lowpass";
+  reverbTone.type = "lowpass";
   wet.gain.value = 0;
   feedback.gain.value = 0;
+  reverbWet.gain.value = 0;
   source.connect(dry);
   dry.connect(context.destination);
   source.connect(delay);
@@ -2841,8 +3125,17 @@ function ensureDelayGraph() {
   delay.connect(tone);
   tone.connect(wet);
   wet.connect(context.destination);
-  delayNodes = { context, source, dry, wet, delay, feedback, tone };
+  source.connect(reverbPreDelay);
+  reverbPreDelay.connect(reverb);
+  reverb.connect(reverbTone);
+  reverbTone.connect(reverbWet);
+  reverbWet.connect(context.destination);
+  delayNodes = { context, source, dry, wet, delay, feedback, tone, reverbPreDelay, reverb, reverbTone, reverbWet };
   return delayNodes;
+}
+
+function ensureDelayGraph() {
+  return ensureAudioFxGraph();
 }
 
 function applyDelayFx(params = {}) {
@@ -2859,7 +3152,7 @@ function applyDelayToGraph() {
     silenceDelayGraph();
     return;
   }
-  const nodes = ensureDelayGraph();
+  const nodes = ensureAudioFxGraph();
   if (!nodes) return;
   nodes.context.resume?.();
   const now = nodes.context.currentTime;
@@ -2876,8 +3169,8 @@ function applyDelayToGraph() {
   }
   nodes.feedback.gain.setTargetAtTime(feedback, now, 0.02);
   nodes.wet.gain.setTargetAtTime(delayState.mix, now, 0.02);
-  nodes.dry.gain.setTargetAtTime(dryLevel, now, 0.02);
   nodes.tone.frequency.setTargetAtTime(tone, now, 0.04);
+  updateAudioFxDryLevel(dryLevel);
   startDelayModulation();
 }
 
@@ -2887,7 +3180,65 @@ function silenceDelayGraph() {
   const now = delayNodes.context.currentTime;
   delayNodes.wet.gain.setTargetAtTime(0, now, 0.03);
   delayNodes.feedback.gain.setTargetAtTime(0, now, 0.03);
-  delayNodes.dry.gain.setTargetAtTime(1, now, 0.03);
+  updateAudioFxDryLevel();
+}
+
+function updateAudioFxDryLevel(delayDryOverride = null) {
+  if (!delayNodes) return;
+  const now = delayNodes.context.currentTime;
+  const delayDry = delayDryOverride ?? (delayActive && delayUsesAudio(delayState) ? Math.max(0.45, 1 - delayState.mix * 0.35) : 1);
+  const reverbDry = reverbActive ? Math.max(0.42, 1 - reverbState.mix * 0.26) : 1;
+  delayNodes.dry.gain.setTargetAtTime(Math.min(delayDry, reverbDry), now, 0.025);
+}
+
+function createReverbImpulse(context, state = reverbState) {
+  const characterScale = { room: 0.72, plate: 0.95, hall: 1.22, tunnel: 1.45 }[state.character] || 1;
+  const seconds = clamp(state.decay * (0.5 + state.size / 100) * characterScale, 0.18, 9);
+  const length = Math.max(1, Math.floor(context.sampleRate * seconds));
+  const impulse = context.createBuffer(2, length, context.sampleRate);
+  for (let channel = 0; channel < impulse.numberOfChannels; channel += 1) {
+    const data = impulse.getChannelData(channel);
+    for (let i = 0; i < length; i += 1) {
+      const t = i / length;
+      const shaped = state.character === "tunnel"
+        ? Math.cos(t * Math.PI * 18) * (1 - t)
+        : (Math.random() * 2 - 1);
+      const plateBright = state.character === "plate" ? 1 - t * 0.28 : 1;
+      data[i] = shaped * Math.pow(1 - t, 1.2 + (100 - state.size) / 90) * plateBright;
+    }
+  }
+  return impulse;
+}
+
+function applyReverbFx(params = {}) {
+  reverbActive = true;
+  reverbState = normalizedReverbState(params);
+  syncReverbControls(reverbState);
+  updateReverbLabels(reverbState);
+  applyReverbToGraph();
+}
+
+function applyReverbToGraph() {
+  const nodes = ensureAudioFxGraph();
+  if (!nodes) return;
+  nodes.context.resume?.();
+  const now = nodes.context.currentTime;
+  const impulseKey = `${Math.round(reverbState.size)}:${reverbState.decay.toFixed(1)}:${reverbState.character}`;
+  if (impulseKey !== reverbImpulseKey) {
+    reverbImpulseKey = impulseKey;
+    nodes.reverb.buffer = createReverbImpulse(nodes.context, reverbState);
+  }
+  nodes.reverbPreDelay.delayTime.setTargetAtTime(reverbState.preDelayMs / 1000, now, 0.018);
+  nodes.reverbWet.gain.setTargetAtTime(reverbState.mix, now, 0.025);
+  nodes.reverbTone.frequency.setTargetAtTime(reverbState.tone, now, 0.04);
+  updateAudioFxDryLevel();
+}
+
+function silenceReverbGraph() {
+  if (!delayNodes) return;
+  const now = delayNodes.context.currentTime;
+  delayNodes.reverbWet.gain.setTargetAtTime(0, now, 0.04);
+  updateAudioFxDryLevel();
 }
 
 function updateDelayVisualCapture() {
@@ -2917,6 +3268,7 @@ function captureDelayVisualFrame() {
     context.drawImage(streamPlayer, 0, 0, width, height);
     delayVisualFrames.push({ image: canvas.toDataURL("image/jpeg", DELAY_VISUAL_JPEG_QUALITY), at: Date.now() });
     delayVisualFrames = delayVisualFrames.slice(-DELAY_VISUAL_FRAME_LIMIT);
+    syncFxOverlay(lastBroadcastFx);
   } catch {
     delayVisualFrames = [];
   }
@@ -2946,6 +3298,16 @@ function disableDelay(updateControls = true) {
   updateDelayToggle();
 }
 
+function disableReverb(updateControls = true) {
+  if (!reverbActive && !delayNodes) return;
+  reverbActive = false;
+  silenceReverbGraph();
+  if (updateControls) {
+    updateReverbLabels(readReverbControls());
+  }
+  updateReverbToggle();
+}
+
 function updateDelayToggle() {
   if (!delayToggleButton) return;
   delayToggleButton.classList.toggle("active", delayActive);
@@ -2956,6 +3318,7 @@ function updateDelayToggle() {
 async function broadcastDelay() {
   const values = readDelayControls();
   updateDelayLabels(values);
+  delayRemoteHoldUntil = Date.now() + 3000;
   applyDelayFx(values);
   clearTimeout(delayPostTimer);
   delayPostTimer = setTimeout(async () => {
@@ -2970,6 +3333,7 @@ async function broadcastDelay() {
 
 async function toggleDelay() {
   if (delayActive) {
+    delayRemoteHoldUntil = 0;
     disableDelay(true);
     clearTimeout(delayPostTimer);
     try {
@@ -2981,6 +3345,45 @@ async function toggleDelay() {
     return;
   }
   await broadcastDelay();
+}
+
+function updateReverbToggle() {
+  if (!reverbToggleButton) return;
+  reverbToggleButton.classList.toggle("active", reverbActive);
+  reverbToggleButton.setAttribute("aria-pressed", String(reverbActive));
+  reverbToggleButton.textContent = reverbActive ? "Reverb on" : "Reverb off";
+}
+
+async function broadcastReverb() {
+  const values = readReverbControls();
+  updateReverbLabels(values);
+  reverbRemoteHoldUntil = Date.now() + 3000;
+  applyReverbFx(values);
+  clearTimeout(reverbPostTimer);
+  reverbPostTimer = setTimeout(async () => {
+    try {
+      await api("/api/fx", { method: "POST", body: JSON.stringify({ id: "reverb", params: { ...values, enabled: true } }) });
+      setMessage(fxMessage, "Reverb on.");
+    } catch (error) {
+      setMessage(fxMessage, error.message, true);
+    }
+  }, 120);
+}
+
+async function toggleReverb() {
+  if (reverbActive) {
+    reverbRemoteHoldUntil = 0;
+    disableReverb(true);
+    clearTimeout(reverbPostTimer);
+    try {
+      await api("/api/fx", { method: "POST", body: JSON.stringify({ id: "reverb", params: { enabled: false } }) });
+      setMessage(fxMessage, "Reverb off.");
+    } catch (error) {
+      setMessage(fxMessage, error.message, true);
+    }
+    return;
+  }
+  await broadcastReverb();
 }
 
 function renderFxOverlay(fx) {
@@ -3000,6 +3403,7 @@ function renderFxOverlay(fx) {
     "caller-line": fx.params?.username ? `CALLER: ${fx.params.username}` : "CALLER LINE",
     "party-damage": "PARTY DAMAGE",
     "dub-siren": "DUB SIREN",
+    "show-cue": fx.params?.label || "SHOW CUE",
     "auto-filter-sweep": "FILTER SWEEP",
     "amen-break": "AMEN",
     hum: "60Hz",
@@ -3032,7 +3436,8 @@ function renderFxOverlay(fx) {
     delay: "DELAY"
   }[fx.id] || "";
   const level = Number(fx.level || 1);
-  return text ? `<span class="fx-callout fx-callout-${escapeHtml(fx.id)}">${escapeHtml(text)}${level > 1 ? ` x${level}` : ""}</span>` : "";
+  const style = fx.id === "show-cue" && fx.params?.color ? ` style="--cue-color:${escapeHtml(fx.params.color)}"` : "";
+  return text ? `<span class="fx-callout fx-callout-${escapeHtml(fx.id)}"${style}>${escapeHtml(text)}${level > 1 ? ` x${level}` : ""}</span>` : "";
 }
 
 function syncProgram(program) {
@@ -3040,6 +3445,7 @@ function syncProgram(program) {
   currentProgram = program;
   clockDelta = program.serverTime - Date.now();
   updateAudienceBadge(program.audience);
+  updatePerformanceUi(program.performance);
   renderProgramVote(program.votePoll);
   applyBroadcastFx(program.fx || []);
   const live = program.live;
@@ -3171,8 +3577,82 @@ function sourceLocation(source = {}) {
   return source.path || "";
 }
 
+function renderPerformanceControl(control = {}) {
+  showControlCache = {
+    scenes: Array.isArray(control.scenes) ? control.scenes : [],
+    cues: Array.isArray(control.cues) ? control.cues : [],
+    macros: control.macros || {}
+  };
+  if (performanceSceneSelect) {
+    performanceSceneSelect.innerHTML = showControlCache.scenes.length
+      ? showControlCache.scenes
+          .map((scene) => `<option value="${escapeHtml(scene.cueId || "")}">${escapeHtml(scene.label || scene.id)}</option>`)
+          .join("")
+      : `<option value="">No scenes</option>`;
+  }
+  if (performanceCueGrid) {
+    performanceCueGrid.innerHTML = showControlCache.cues.length
+      ? showControlCache.cues
+          .map((cue) => {
+            const scene = showControlCache.scenes.find((item) => item.id === cue.sceneId) || {};
+            return `
+              <button class="performance-cue-pad" data-performance-cue="${escapeHtml(cue.id)}" style="--cue-color:${escapeHtml(scene.color || "#68c3b7")}" type="button">
+                <strong>${escapeHtml(cue.label || cue.id)}</strong>
+                <small>${escapeHtml(cue.clip || cue.macro || "")}</small>
+              </button>`;
+          })
+          .join("")
+      : `<p class="message">No performance cues loaded.</p>`;
+  }
+  updatePerformanceUi(currentProgram?.performance);
+}
+
+function updatePerformanceUi(performance = {}) {
+  const pack = performance?.blockPack || {};
+  const activeCue = performance?.activeCue || null;
+  if (performanceBlockPack) performanceBlockPack.textContent = pack.label || "Station Default";
+  if (performanceActiveCue) {
+    performanceActiveCue.textContent = activeCue?.label
+      ? `${activeCue.label}${activeCue.intensity ? ` / ${activeCue.intensity}%` : ""}`
+      : pack.cueId ? `Suggested: ${cueLabel(pack.cueId)}` : "Ready";
+  }
+}
+
+function cueLabel(cueId) {
+  return showControlCache.cues.find((cue) => cue.id === cueId)?.label || cueId || "";
+}
+
+function updatePerformanceIntensityUi() {
+  const value = Math.round(Number(performanceIntensitySlider?.value || 0));
+  if (performanceIntensityValue) performanceIntensityValue.textContent = `${value}%`;
+}
+
+async function launchPerformanceCue(cueId) {
+  if (!cueId) return;
+  const cue = showControlCache.cues.find((item) => item.id === cueId);
+  try {
+    const result = await api("/api/performance-cue", {
+      method: "POST",
+      body: JSON.stringify({
+        cueId,
+        intensity: Number(performanceIntensitySlider?.value || 62) / 100,
+        reactive: performanceReactiveToggle?.checked === true,
+        queueBump: performanceBumpToggle?.checked === true,
+        blockName: currentProgram?.live?.weeklyBlockName || currentProgram?.performance?.blockPack?.label || ""
+      })
+    });
+    const fired = Array.isArray(result.fired) ? result.fired.length : 0;
+    setMessage(fxMessage, `${cue?.label || result.cue?.label || "Cue"} launched${fired ? ` / ${fired} clips` : ""}${result.queuedBump ? " / bump queued" : ""}.`);
+    if (result.fx) applyBroadcastFx(result.fx);
+    await loadAdmin();
+  } catch (error) {
+    setMessage(fxMessage, error.message, true);
+  }
+}
+
 function renderAdmin(data) {
   adminDataCache = data;
+  renderPerformanceControl(data.showControl || {});
   const folders = data.sourceFolders || [];
   setBroadcastModeUI(data.broadcastMode);
   const librarySources = data.sources.filter((source) => source.type !== "bump");
@@ -3368,10 +3848,15 @@ function renderDjSoundboard(board = {}) {
       const groupSounds = sounds.filter((sound) => (sound.group || "misc") === groupId);
       if (!groupSounds.length) return "";
       const group = groups[groupId] || { label: groupId, color: "#f2b84a" };
+      const collapsed = soundboardCollapsedGroups.has(String(groupId));
       return `
-        <div class="soundboard-group" style="--cart-color:${escapeHtml(group.color || "#f2b84a")}">
-          <span>${escapeHtml(group.label || groupId)}</span>
-          <div>
+        <div class="soundboard-group${collapsed ? " is-collapsed" : ""}" data-soundboard-group="${escapeHtml(groupId)}" style="--cart-color:${escapeHtml(group.color || "#f2b84a")}">
+          <button class="soundboard-group-toggle" data-soundboard-group-toggle="${escapeHtml(groupId)}" type="button" aria-expanded="${String(!collapsed)}">
+            <span>${escapeHtml(group.label || groupId)}</span>
+            <small>${groupSounds.length} cart${groupSounds.length === 1 ? "" : "s"}</small>
+            <i aria-hidden="true"></i>
+          </button>
+          <div class="soundboard-pad-grid">
             ${groupSounds.map((sound) => `
               <button class="soundboard-pad" data-soundboard-sound="${escapeHtml(sound.id)}" type="button" title="${escapeHtml(sound.label)} · ${formatDuration(sound.duration || 0)}">
                 <strong>${escapeHtml(sound.label)}</strong>
@@ -3678,9 +4163,9 @@ adminToggle.addEventListener("click", () => {
     adminPanel.classList.toggle("hidden", railOpen || adminRailView !== "broadcast");
     schedulePanel.classList.toggle("hidden", railOpen || adminRailView !== "schedule");
     queuePanel.classList.toggle("hidden", railOpen || adminRailView !== "queue");
-    bumpPanel.classList.toggle("hidden", railOpen || adminRailView !== "bump");
+    soundboardPanel.classList.toggle("hidden", railOpen || adminRailView !== "soundboard");
+    fxPanel.classList.toggle("hidden", railOpen || adminRailView !== "fx");
     chatPanel.classList.toggle("hidden", railOpen || adminRailView !== "chat");
-    shell.classList.toggle("bump-workspace", !railOpen && adminRailView === "bump");
     if (!railOpen) applyStoredRailWidth();
     return;
   }
@@ -3699,10 +4184,11 @@ showRegisterButton.addEventListener("click", () => setAuthMode("register"));
 showBroadcastPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("broadcast")));
 showSchedulePanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("schedule")));
 showQueuePanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("queue")));
-showBumpPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("bump")));
 showSoundboardPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("soundboard")));
 showFxPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("fx")));
 showChatPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("chat")));
+stageTvButton?.addEventListener("click", () => setAdminStageView("tv"));
+stageBumpButton?.addEventListener("click", () => setAdminStageView("bump"));
 pickModeButtons.forEach((button) => button.addEventListener("click", () => setSchedulePickMode(button.dataset.pickMode)));
 chatToggle.addEventListener("click", () => setChatCollapsed(!chatCollapsed));
 scheduledModeButton.addEventListener("click", async () => {
@@ -4015,6 +4501,13 @@ volumeSlider.addEventListener("input", () => {
   playStreamPlayer();
 });
 
+soundboardVolumeSlider?.addEventListener("input", () => {
+  soundboardVolume = normalizeSoundboardVolume(soundboardVolumeSlider.value);
+  localStorage.setItem("doink_soundboard_volume", String(soundboardVolume));
+  updateSoundboardVolumeUi();
+  applySoundboardVolume();
+});
+
 captionsToggle?.addEventListener("click", toggleCaptions);
 
 [warpSpeedSlider, warpPitchSlider, warpDesyncSlider].forEach((slider) => {
@@ -4026,7 +4519,7 @@ warpResetButton?.addEventListener("click", async () => {
   await api("/api/fx", { method: "POST", body: JSON.stringify({ id: "av-warp", duration: 2, params: avWarp }) }).catch(() => {});
 });
 
-[visualBrightnessSlider, visualContrastSlider, visualSaturationSlider].forEach((slider) => {
+[visualBrightnessSlider, visualContrastSlider, visualSaturationSlider, visualTearSlider, visualTrackingSlider, visualSmearSlider].forEach((slider) => {
   slider?.addEventListener("input", broadcastVisualAdjust);
 });
 
@@ -4042,6 +4535,17 @@ visualResetButton?.addEventListener("click", resetVisualAdjust);
 });
 
 delayToggleButton?.addEventListener("click", toggleDelay);
+
+[reverbSizeSlider, reverbDecaySlider, reverbPreDelaySlider, reverbMixSlider, reverbToneSlider, reverbCharacterSelect].forEach((control) => {
+  const handleReverbControl = () => {
+    updateReverbLabels();
+    if (reverbActive) broadcastReverb();
+  };
+  control?.addEventListener("input", handleReverbControl);
+  control?.addEventListener("change", handleReverbControl);
+});
+
+reverbToggleButton?.addEventListener("click", toggleReverb);
 
 [overlayOpacitySlider, overlayScaleSlider, overlayDurationSlider].forEach((control) => {
   control?.addEventListener("input", updateOverlayLabels);
@@ -4109,6 +4613,14 @@ clearQueueButton?.addEventListener("click", async () => {
   }
 });
 
+performanceIntensitySlider?.addEventListener("input", updatePerformanceIntensityUi);
+performanceSceneButton?.addEventListener("click", () => launchPerformanceCue(performanceSceneSelect?.value || currentProgram?.performance?.blockPack?.cueId || "identity-hit"));
+performanceCueGrid?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-performance-cue]");
+  if (!button) return;
+  launchPerformanceCue(button.dataset.performanceCue);
+});
+
 fxButtons.forEach((button) => button.addEventListener("click", async () => {
   try {
     if (button.id === "looperCaptureButton") {
@@ -4132,6 +4644,11 @@ fxButtons.forEach((button) => button.addEventListener("click", async () => {
 }));
 
 djSoundboardGrid?.addEventListener("click", async (event) => {
+  const groupToggle = event.target.closest("[data-soundboard-group-toggle]");
+  if (groupToggle) {
+    toggleSoundboardGroup(groupToggle.dataset.soundboardGroupToggle);
+    return;
+  }
   const button = event.target.closest("[data-soundboard-sound]");
   if (!button) return;
   try {
@@ -4156,6 +4673,7 @@ clearFxButton?.addEventListener("click", async () => {
   try {
     await api("/api/fx", { method: "DELETE" });
     disableDelay(true);
+    disableReverb(true);
     setMessage(fxMessage, "FX cleared.");
   } catch (error) {
     setMessage(fxMessage, error.message, true);
@@ -4382,6 +4900,7 @@ peaceModeToggle?.addEventListener("click", () => setPeaceMode(!peaceMode));
 chatEmojiButtons.forEach((button) => {
   button.addEventListener("click", () => insertChatEmoji(button.dataset.chatEmoji || ""));
 });
+updatePerformanceIntensityUi();
 
 api("/api/program").then(syncProgram).catch(() => {});
 
@@ -4431,11 +4950,13 @@ applyStoredRailWidth();
 initFxCollapsibles();
 loadDjSoundboard();
 applyViewerVolume();
+updateSoundboardVolumeUi();
 startLooperBeat();
 loadLooperLayerControls(1);
 updateWarpLabels();
 updateVisualLabels();
 updateDelayLabels();
+updateReverbLabels();
 updateOverlayLabels();
 updateLooperMonitor();
 renderLooperWaveform(Array.from({ length: 16 }, () => 0.08));

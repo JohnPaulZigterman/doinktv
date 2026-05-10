@@ -32,6 +32,14 @@ const playNextBumpBtn = document.querySelector("#playNextBumpBtn");
 const downloadLink = document.querySelector("#downloadLink");
 const outputVideo = document.querySelector("#outputVideo");
 const status = document.querySelector("#status");
+const bumpSummary = document.querySelector("#bumpSummary");
+const summaryPreset = document.querySelector("#summaryPreset");
+const summaryMedia = document.querySelector("#summaryMedia");
+const summaryEffects = document.querySelector("#summaryEffects");
+const previewSummary = document.querySelector("#previewSummary");
+const previewDuration = document.querySelector("#previewDuration");
+const previewCanvas = document.querySelector("#previewCanvas");
+const previewAudioBadge = document.querySelector("#previewAudio");
 const progress = document.querySelector("#progress");
 const timeLabel = document.querySelector("#timeLabel");
 const durationLabel = document.querySelector("#durationLabel");
@@ -59,6 +67,7 @@ let audioProbeUrl = "";
 let previewAudio = null;
 let selectedServerAudio = null;
 let selectedServerBackground = null;
+let activePresetName = "block";
 const effectCanvas = document.createElement("canvas");
 const effectCtx = effectCanvas.getContext("2d");
 
@@ -215,6 +224,43 @@ function textLineValues() {
 
 function durationSeconds() {
   return textLineValues().length * secondsPerLine();
+}
+
+function activePresetLabel() {
+  return bumpPresets[activePresetName]?.label || "Custom bump";
+}
+
+function canvasLabel() {
+  return { landscape: "16:9", square: "1:1", vertical: "9:16" }[formatInput.value] || "16:9";
+}
+
+function audioLabel() {
+  if (songInput.files[0]) return songInput.files[0].name.replace(/\.[^/.]+$/, "");
+  if (selectedServerAudio?.name) return selectedServerAudio.name;
+  return "Audio off";
+}
+
+function backgroundLabel() {
+  if (imageInput.files[0]) return imageInput.files[0].name.replace(/\.[^/.]+$/, "");
+  if (selectedServerBackground?.name || selectedServerBackground?.fileName) return selectedServerBackground.name || selectedServerBackground.fileName;
+  return state.usingWallpaper ? "Wallpaper" : "Fallback";
+}
+
+function updateWorkspaceSummary() {
+  const lines = textLineValues();
+  const duration = durationSeconds();
+  const effects = selectedEffects();
+  const audio = audioLabel();
+  const background = backgroundLabel();
+  const durationText = `${duration.toFixed(1)}s`;
+  if (bumpSummary) bumpSummary.textContent = `${durationText} / ${lines.length} line${lines.length === 1 ? "" : "s"} / ${audio}`;
+  if (summaryPreset) summaryPreset.textContent = activePresetLabel();
+  if (summaryMedia) summaryMedia.textContent = `${audio} + ${background}`;
+  if (summaryEffects) summaryEffects.textContent = effects.length ? `${effects.length} FX / ${effectIntensity.value}%` : "Clean";
+  if (previewSummary) previewSummary.textContent = `${activePresetLabel()} / ${lines[0] || "blank card"}`;
+  if (previewDuration) previewDuration.textContent = durationText;
+  if (previewCanvas) previewCanvas.textContent = canvasLabel();
+  if (previewAudioBadge) previewAudioBadge.textContent = audio;
 }
 
 function activeText(time) {
@@ -537,6 +583,7 @@ function loadImageBackgroundUrl(asset) {
     status.textContent = "That server image could not be loaded.";
     drawFrame();
   };
+  updateWorkspaceSummary();
 }
 
 function loadVideoBackground(file) {
@@ -584,11 +631,13 @@ function loadVideoBackgroundUrl(asset) {
     drawFrame();
   };
   backgroundVideo.load();
+  updateWorkspaceSummary();
 }
 
 function loadBackground(file) {
   state.usingWallpaper = false;
   selectedServerBackground = null;
+  updateWorkspaceSummary();
   if (file.type.startsWith("video/")) {
     loadVideoBackground(file);
   } else {
@@ -604,6 +653,7 @@ function loadServerBackground(asset) {
     loadImageBackgroundUrl(asset);
   }
   status.textContent = `Using server background: ${asset.name || asset.fileName || "Untitled"}.`;
+  updateWorkspaceSummary();
   restartPreview();
 }
 
@@ -1515,6 +1565,7 @@ function syncPreviewAudio(elapsed, force = false) {
 }
 
 function restartPreview() {
+  updateWorkspaceSummary();
   stopPreviewAudio();
   stage.classList.remove("hide");
   outputVideo.classList.add("hide");
@@ -1716,7 +1767,10 @@ function bindTextLine(row) {
   const input = row.querySelector(".line-input");
   const removeButton = row.querySelector(".remove-line");
 
-  input.addEventListener("input", restartPreview);
+  input.addEventListener("input", () => {
+    activePresetName = "custom";
+    restartPreview();
+  });
   removeButton.addEventListener("click", () => {
     const rows = [...textLines.querySelectorAll(".text-line")];
     if (rows.length === 1) {
@@ -1749,7 +1803,10 @@ function addTextLine(value = "", options = {}) {
   bindTextLine(row);
   updateLineLabels();
   if (focus) row.querySelector(".line-input").focus();
-  if (restart) restartPreview();
+  if (restart) {
+    activePresetName = "custom";
+    restartPreview();
+  }
 }
 
 function setTextLineValues(lines) {
@@ -1767,11 +1824,13 @@ function syncControlReadouts() {
   wallpaperSpacingValue.textContent = wallpaperSpacing.value;
   updateAudioStartReadout();
   updateAdaptiveControls();
+  updateWorkspaceSummary();
 }
 
 function applyBumpPreset(name) {
   const preset = bumpPresets[name];
   if (!preset) return;
+  activePresetName = name;
 
   presetButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.bumpPreset === name);
@@ -1809,6 +1868,7 @@ function applyBumpPreset(name) {
   setCanvasFormat();
   restartPreview();
   status.textContent = `${preset.label} preset loaded.`;
+  updateWorkspaceSummary();
 }
 
 function optionLabel(asset) {
@@ -1829,6 +1889,7 @@ function populateAssetSelect(select, assets, placeholder) {
 
 async function loadServerAssets() {
   try {
+    if (summaryMedia) summaryMedia.textContent = "Loading server media";
     const response = await fetch("/api/bump-assets");
     if (!response.ok) throw new Error("Server assets unavailable.");
     const assets = await response.json();
@@ -1845,18 +1906,22 @@ async function loadServerAssets() {
       configureServerAudio(music[0]);
       autofillCreditFromServerAudio(music[0]);
       status.textContent = `Loaded server song: ${music[0].name}.`;
+      updateWorkspaceSummary();
     }
     if (backgrounds.length && !imageInput.files[0]) {
       serverBackgroundSelect.value = "0";
       loadServerBackground(backgrounds[0]);
     }
+    updateWorkspaceSummary();
   } catch (error) {
     console.warn("Could not load server bump assets", error);
+    if (summaryMedia) summaryMedia.textContent = "Server media unavailable";
   }
 }
 
 imageInput.addEventListener("change", () => {
   if (imageInput.files[0]) {
+    activePresetName = "custom";
     serverBackgroundSelect.value = "";
     loadBackground(imageInput.files[0]);
   }
@@ -1864,6 +1929,7 @@ imageInput.addEventListener("change", () => {
 
 songInput.addEventListener("change", () => {
   if (songInput.files[0]) {
+    activePresetName = "custom";
     selectedServerAudio = null;
     serverSongSelect.value = "";
     configureAudioStart(songInput.files[0]);
@@ -1873,10 +1939,12 @@ songInput.addEventListener("change", () => {
     clearAudioProbeUrl();
     previewAudio = null;
   }
+  updateWorkspaceSummary();
 });
 
 serverSongSelect.addEventListener("change", () => {
   const asset = serverSongSelect._assets?.[Number(serverSongSelect.value)];
+  activePresetName = "custom";
   if (!asset) {
     selectedServerAudio = null;
     resetAudioStart();
@@ -1886,19 +1954,23 @@ serverSongSelect.addEventListener("change", () => {
   configureServerAudio(asset);
   autofillCreditFromServerAudio(asset);
   status.textContent = `Using server song: ${asset.name}.`;
+  updateWorkspaceSummary();
 });
 
 serverBackgroundSelect.addEventListener("change", () => {
   const asset = serverBackgroundSelect._assets?.[Number(serverBackgroundSelect.value)];
+  activePresetName = "custom";
   if (!asset) {
     selectedServerBackground = null;
     return;
   }
   imageInput.value = "";
   loadServerBackground(asset);
+  updateWorkspaceSummary();
 });
 
 wallpaperSpacing.addEventListener("input", () => {
+  activePresetName = "custom";
   wallpaperSpacingValue.textContent = wallpaperSpacing.value;
   renderWallpaperPreview();
   if (state.usingWallpaper) restartPreview();
@@ -1906,34 +1978,44 @@ wallpaperSpacing.addEventListener("input", () => {
 
 [wallpaperShapes, wallpaperScheme].forEach((input) => {
   input.addEventListener("input", () => {
+    activePresetName = "custom";
     renderWallpaperPreview();
     if (state.usingWallpaper) restartPreview();
   });
 });
 
 randomizeWallpaperBtn.addEventListener("click", () => {
+  activePresetName = "custom";
   wallpaperSeed = Math.floor(Math.random() * 100000);
   renderWallpaperPreview();
   if (state.usingWallpaper) restartPreview();
 });
 
 useWallpaperBtn.addEventListener("click", () => {
+  activePresetName = "custom";
   state.usingWallpaper = true;
   status.textContent = "Using generated wallpaper.";
+  selectedServerBackground = null;
+  serverBackgroundSelect.value = "";
+  imageInput.value = "";
+  updateWorkspaceSummary();
   restartPreview();
 });
 
 fontSizeInput.addEventListener("input", () => {
+  activePresetName = "custom";
   fontSizeValue.textContent = fontSizeInput.value;
   drawFrame();
 });
 
 tintStrength.addEventListener("input", () => {
+  activePresetName = "custom";
   tintStrengthValue.textContent = `${tintStrength.value}%`;
   drawFrame();
 });
 
 effectIntensity.addEventListener("input", () => {
+  activePresetName = "custom";
   effectIntensityValue.textContent = `${effectIntensity.value}%`;
   drawFrame();
 });
@@ -1944,15 +2026,18 @@ audioStart.addEventListener("input", () => {
 });
 
 secondsPerLineInput.addEventListener("input", () => {
+  activePresetName = "custom";
   secondsPerLineValue.textContent = `${secondsPerLineInput.value}s`;
 });
 
 creditText.addEventListener("input", () => {
+  activePresetName = "custom";
   creditWasAutoFilled = false;
   restartPreview();
 });
 
 creditSize.addEventListener("input", () => {
+  activePresetName = "custom";
   creditSizeValue.textContent = creditSize.value;
   drawFrame();
 });
@@ -1966,8 +2051,15 @@ presetButtons.forEach((button) => {
 updateLineLabels();
 
 [secondsPerLineInput, formatInput, toneInput, tintStrength, effectIntensity, ...effectToggles, creditPosition, creditFont, creditSize, ...document.querySelectorAll("input[name='placement'], input[name='alignment']")]
-  .forEach((input) => input.addEventListener("input", restartPreview));
-effectToggles.forEach((input) => input.addEventListener("input", updateAdaptiveControls));
+  .forEach((input) => input.addEventListener("input", () => {
+    activePresetName = "custom";
+    restartPreview();
+  }));
+effectToggles.forEach((input) => input.addEventListener("input", () => {
+  activePresetName = "custom";
+  updateAdaptiveControls();
+  updateWorkspaceSummary();
+}));
 
 previewBtn.addEventListener("click", startPreviewWithAudio);
 renderBtn.addEventListener("click", renderVideo);

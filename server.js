@@ -31,13 +31,17 @@ const GAP_FILLER_MAX_SOURCE_SECONDS = 210;
 const GAP_FILLER_BUMP_DURATION = 42;
 const GAP_FILLER_MAX_ENTRIES = 48;
 const GAP_FILLER_BLOCK_NAME = "STATION BREAK";
-const GAP_FILLER_VERSION = 5;
+const GAP_FILLER_VERSION = 6;
 const FADE_BREAK_MIN_SECONDS = 60 * 5.5;
 const FADE_BREAK_MIN_SOURCE_DURATION = 60 * 12;
 const FADE_BREAK_MIN_REMAINING_SECONDS = 60 * 4;
 const FADE_BREAK_SCAN_SECONDS = 60 * 24;
 const FADE_BREAK_BUMP_DURATION = 18;
 const FADE_BREAK_MAX_CONCURRENT_PROBES = 2;
+const BUMP_SUPPORTED_EFFECTS = new Set(["noise", "vhs", "scanlines", "chromatic", "flicker", "letterbox"]);
+const BUMP_GLITCH_EFFECTS = new Set(["noise", "flicker"]);
+const BUMP_CLEAN_EFFECTS = ["scanlines", "letterbox", "vhs", "chromatic"];
+const BUMP_INTENTIONAL_GLITCH_EFFECTS = ["noise", "vhs", "scanlines", "chromatic", "flicker", "letterbox"];
 const MIN_QUEUE_VIDEO_ITEMS = 5;
 const CHAOS_AUDIO_PLAYLIST_ID = "PLWL3FzHaRRMkQqUhks8Y9l35rqY_kKCto";
 const WEEKLY_SCHEDULE_LOOKAHEAD_DAYS = 8;
@@ -421,6 +425,7 @@ const ADMIN_ACCOUNTS = [
   { username: "ChillNeil", password: "ChillyBilly12!@" }
 ];
 const SESSION_TTL_MS = 1000 * 60 * 60 * 12;
+const ADMIN_FX_GRACE_MS = 30000;
 const FX_PRESETS = {
   glitch: { label: "Glitch", duration: 8 },
   "signal-loss": { label: "Signal loss", duration: 10 },
@@ -468,6 +473,7 @@ const FX_PRESETS = {
   "caller-line": { label: "Caller line", duration: 14 },
   "party-damage": { label: "Party damage", duration: 60 },
   "dub-siren": { label: "Dub siren", duration: 8 },
+  "show-cue": { label: "Show cue", duration: 8 },
   "soundboard-sample": { label: "Soundboard cart", duration: 8 },
   hum: { label: "Audio hum", duration: 10 },
   countdown: { label: "Random countdown", duration: 10 },
@@ -484,6 +490,7 @@ const FX_PRESETS = {
   "seed-skip": { label: "Seed skipper", duration: 30 },
   "av-warp": { label: "A/V warp", duration: 90 },
   delay: { label: "Delay", duration: 90 },
+  reverb: { label: "Reverb", duration: 90 },
   "theme-cycle": { label: "Theme cycle", duration: 45 },
   "theme-random": { label: "Random theme shove", duration: 24 },
   "theme-aero-blast": { label: "Aero blast", duration: 30 },
@@ -522,6 +529,117 @@ const CART_WALL_PRESETS = [
   "needle-drop",
   "bad-jingle",
   "panic-button"
+];
+
+const PERFORMANCE_SCENES = [
+  { id: "pirate", label: "Pirate Takeover", color: "#ff715f", cueId: "pirate-takeover" },
+  { id: "party", label: "Basement Party", color: "#f2b84a", cueId: "basement-party" },
+  { id: "uhf", label: "Haunted UHF", color: "#68c3b7", cueId: "haunted-uhf" },
+  { id: "anime", label: "Anime Drift", color: "#7db7ff", cueId: "anime-drift" },
+  { id: "training", label: "Training Tape", color: "#8fd06d", cueId: "training-tape" },
+  { id: "panic", label: "Public Access Panic", color: "#c968ff", cueId: "public-access-panic" }
+];
+
+const PERFORMANCE_CUES = [
+  {
+    id: "pirate-takeover",
+    sceneId: "pirate",
+    label: "Pirate Takeover",
+    clip: "signal hijack + station ID",
+    macro: "hijack",
+    bumpClass: "legal-id-bump",
+    bumpLines: ["unauthorized relay", "tower light blinking", "call sign borrowed for educational misuse"],
+    fx: ["show-cue", "legal-id", "frequency-drift", "visual-adjust", "av-warp", "delay", "dub-siren"]
+  },
+  {
+    id: "basement-party",
+    sceneId: "party",
+    label: "Basement Party",
+    clip: "sound system pushed past good judgment",
+    macro: "party",
+    bumpClass: "call-in-bump",
+    bumpLines: ["cart wall armed", "floor sticky", "somebody touched the aux"],
+    fx: ["show-cue", "party-damage", "cart-wall", "record-scratch", "visual-adjust", "reverb"]
+  },
+  {
+    id: "haunted-uhf",
+    sceneId: "uhf",
+    label: "Haunted UHF",
+    clip: "cold signal, hot ghosts",
+    macro: "haunted",
+    bumpClass: "block-bump",
+    bumpLines: ["channel within a channel", "tracking has opinions", "please stand by forever"],
+    fx: ["show-cue", "signal-loss", "tape-warp", "hum", "visual-adjust", "reverb"]
+  },
+  {
+    id: "anime-drift",
+    sceneId: "anime",
+    label: "Anime Drift",
+    clip: "late-night smear + ice color",
+    macro: "drift",
+    bumpClass: "block-bump",
+    bumpLines: ["cel shade after hours", "two frames from another timeline", "subcarrier moonlight"],
+    fx: ["show-cue", "color-ice", "kaleidoscope", "visual-adjust", "delay", "reverb"]
+  },
+  {
+    id: "training-tape",
+    sceneId: "training",
+    label: "Training Tape",
+    clip: "corporate AV room collapse",
+    macro: "training",
+    bumpClass: "weather-bump",
+    bumpLines: ["module four: compliance fog", "please rewind the workplace", "quiz follows eventually"],
+    fx: ["show-cue", "vhs", "color-bars", "floppy-prompt", "visual-adjust", "radio-sting"]
+  },
+  {
+    id: "public-access-panic",
+    sceneId: "panic",
+    label: "Public Access Panic",
+    clip: "the switcher is melting",
+    macro: "panic",
+    bumpClass: "manual-bump",
+    bumpLines: ["wrong button, great button", "lower third escaped", "viewer discretion is improvising"],
+    fx: ["show-cue", "os-popups", "ui-css-panic", "fill-popups", "visual-adjust", "cart-wall"]
+  },
+  {
+    id: "identity-hit",
+    sceneId: "pirate",
+    label: "Identity Hit",
+    clip: "quick ID + sting",
+    macro: "identity",
+    bumpClass: "legal-id-bump",
+    bumpLines: ["station ID", "back to the program", "nobody saw the paperwork"],
+    fx: ["show-cue", "legal-id", "radio-sting"]
+  },
+  {
+    id: "panic-reset",
+    sceneId: "training",
+    label: "Panic Reset",
+    clip: "clear the rack",
+    macro: "reset",
+    bumpClass: "manual-bump",
+    bumpLines: ["resetting the room", "stand by", "all knobs to survivable"],
+    fx: []
+  }
+];
+
+const PERFORMANCE_MACROS = {
+  hijack: { damage: 0.72, drift: 0.36, space: 0.22, rhythm: 0.42, page: 0.22 },
+  party: { damage: 0.44, drift: 0.18, space: 0.34, rhythm: 0.72, page: 0.28 },
+  haunted: { damage: 0.58, drift: 0.48, space: 0.78, rhythm: 0.18, page: 0.12 },
+  drift: { damage: 0.34, drift: 0.74, space: 0.58, rhythm: 0.36, page: 0.08 },
+  training: { damage: 0.5, drift: 0.18, space: 0.12, rhythm: 0.16, page: 0.32 },
+  panic: { damage: 0.82, drift: 0.28, space: 0.18, rhythm: 0.5, page: 0.78 },
+  identity: { damage: 0.22, drift: 0.1, space: 0.08, rhythm: 0.36, page: 0.04 },
+  reset: { damage: 0, drift: 0, space: 0, rhythm: 0, page: 0 }
+};
+
+const BLOCK_IDENTITY_PACKS = [
+  { match: /anime|ova|cel|toonami|midnight/i, sceneId: "anime", cueId: "anime-drift", label: "Cel Drift" },
+  { match: /fridge|sketch|cartoon|sunday|saturday/i, sceneId: "party", cueId: "basement-party", label: "Cartoon Party" },
+  { match: /retro|uhf|fish|lexx|robot|popeye|looney/i, sceneId: "uhf", cueId: "haunted-uhf", label: "UHF Ghost" },
+  { match: /coffee|music|mtv|bump|song/i, sceneId: "party", cueId: "identity-hit", label: "Music ID" },
+  { match: /talk|space ghost|chill|hank/i, sceneId: "training", cueId: "training-tape", label: "Talk Show Tape" }
 ];
 
 const sessions = new Map();
@@ -605,7 +723,24 @@ async function ensureState() {
       randomEligible: source.randomEligible ?? source.type !== "youtube"
     }));
   }
-  if (syncWeeklyBlockTemplates()) await saveState();
+  const normalizedBumps = normalizeGeneratedBumpsInState();
+  const syncedBlocks = syncWeeklyBlockTemplates();
+  if (normalizedBumps || syncedBlocks) await saveState();
+}
+
+function publicShowControl() {
+  return {
+    scenes: PERFORMANCE_SCENES,
+    cues: PERFORMANCE_CUES.map(({ id, sceneId, label, clip, macro, bumpClass }) => ({ id, sceneId, label, clip, macro, bumpClass })),
+    macros: Object.fromEntries(Object.entries(PERFORMANCE_MACROS).map(([id, macro]) => [id, { ...macro }]))
+  };
+}
+
+function blockIdentityPackFor(live = null) {
+  const blockText = `${live?.weeklyBlockId || ""} ${live?.weeklyBlockName || ""} ${live?.title || ""}`.trim();
+  const pack = BLOCK_IDENTITY_PACKS.find((item) => item.match.test(blockText)) || null;
+  if (pack) return { label: pack.label, sceneId: pack.sceneId, cueId: pack.cueId };
+  return { label: "Station Default", sceneId: "pirate", cueId: "identity-hit" };
 }
 
 async function saveState() {
@@ -685,7 +820,7 @@ function isAdmin(req) {
 }
 
 function markAdminActivity() {
-  adminActivityUntil = Date.now() + 30000;
+  adminActivityUntil = Date.now() + ADMIN_FX_GRACE_MS;
 }
 
 function getSession(req) {
@@ -1269,12 +1404,17 @@ function publicProgram() {
   maintainBroadcastTimeline();
   applyDetectedFadeBreaks();
   const program = programSnapshot();
+  const fx = activeBroadcastFx();
   queueFadeBreakDetectionForProgram(program);
   return {
     ...program,
     audience: publicAudience(),
+    performance: {
+      blockPack: blockIdentityPackFor(program.live),
+      activeCue: fx.find((item) => item.id === "show-cue")?.params || null
+    },
     votePoll: publicProgramVotePoll(program.live),
-    fx: activeBroadcastFx(),
+    fx,
     stream: {
       url: "/stream/live.m3u8",
       status: hlsPlayout.status,
@@ -1540,9 +1680,13 @@ function hasAdminOnline() {
 function activeBroadcastFx() {
   const now = Date.now();
   const beforeCount = (state.activeFx || []).length;
-  state.activeFx = hasAdminOnline()
-    ? (state.activeFx || []).filter((fx) => !Number.isFinite(Number(fx.expiresAt)) || fx.expiresAt > now)
-    : [];
+  const adminOnline = hasAdminOnline();
+  state.activeFx = (state.activeFx || []).filter((fx) => {
+    const expiresAt = Number(fx.expiresAt);
+    const unexpired = fx.expiresAt == null || !Number.isFinite(expiresAt) || expiresAt > now;
+    const recentlyFiredByAdmin = now - Number(fx.startedAt || 0) < ADMIN_FX_GRACE_MS;
+    return unexpired && (adminOnline || recentlyFiredByAdmin);
+  });
   if (state.activeFx.length !== beforeCount) timelineSaveNeeded = true;
   return state.activeFx;
 }
@@ -1759,8 +1903,10 @@ function createGapFillerBumpSource(nextReal = {}, cursor = Date.now(), index = 0
         spacing: deliberateGlitch ? 62 + Math.floor(Math.random() * 74) : 92 + Math.floor(Math.random() * 70),
         seed
       },
-      effects: deliberateGlitch ? sampleMany(["noise", "vhs", "scanlines", "chromatic", "letterbox"], 2) : sampleMany(["scanlines", "chromatic", "letterbox"], 1),
+      effects: deliberateGlitch ? sampleMany(BUMP_INTENTIONAL_GLITCH_EFFECTS, 2) : sampleMany(BUMP_CLEAN_EFFECTS, 1),
       effectIntensity: deliberateGlitch ? 38 : 18,
+      intentionalGlitch: deliberateGlitch,
+      presentation: generatedBumpPresentation(deliberateGlitch),
       audio: music.path,
       audioStart: music.start
     }
@@ -1805,15 +1951,41 @@ function sampleMany(array, count) {
   return selected;
 }
 
-function randomAutoBumpVisuals() {
-  const effectCount = Math.floor(Math.random() * 3);
+function generatedBumpPresentation(intentionalGlitch = false) {
   return {
+    renderMode: "server-slate",
+    cleanDefault: !intentionalGlitch,
+    intentionalGlitch: Boolean(intentionalGlitch)
+  };
+}
+
+function intentionalBumpGlitch(bump = {}) {
+  return bump.intentionalGlitch === true || bump.presentation?.intentionalGlitch === true;
+}
+
+function sanitizedBumpEffects(effects = [], intentionalGlitch = false) {
+  const selected = (Array.isArray(effects) ? effects : [])
+    .map(String)
+    .filter((effect) => BUMP_SUPPORTED_EFFECTS.has(effect));
+  return selected.filter((effect) => intentionalGlitch || !BUMP_GLITCH_EFFECTS.has(effect)).slice(0, intentionalGlitch ? 3 : 2);
+}
+
+function normalizedGeneratedBumpIntensity(value, intentionalGlitch = false) {
+  const fallback = intentionalGlitch ? 36 : 18;
+  const number = Number.isFinite(Number(value)) ? Number(value) : fallback;
+  return Math.max(0, Math.min(intentionalGlitch ? 56 : 28, number));
+}
+
+function randomAutoBumpVisuals() {
+  const deliberateGlitch = Math.random() < 0.14;
+  const effectPool = deliberateGlitch ? BUMP_INTENTIONAL_GLITCH_EFFECTS : BUMP_CLEAN_EFFECTS;
+  const effectCount = deliberateGlitch ? 2 : Math.floor(Math.random() * 2);
+  return {
+    intentionalGlitch: deliberateGlitch,
     wallpaper: {
       shapes: sample([
-        "mixed",
         "circles",
         "diamonds",
-        "triangles",
         "lines",
         "stripes",
         "polka",
@@ -1836,16 +2008,14 @@ function randomAutoBumpVisuals() {
         "warning",
         "citrus",
         "broadcast",
-        "miami",
         "mint",
-        "ruby",
         "blueprint"
       ]),
-      spacing: 34 + Math.floor(Math.random() * 137),
+      spacing: deliberateGlitch ? 58 + Math.floor(Math.random() * 82) : 86 + Math.floor(Math.random() * 82),
       seed: Math.floor(Math.random() * 100000)
     },
-    effects: sampleMany(["noise", "vhs", "dvd", "warp", "fisheye", "scanlines", "chromatic", "flicker", "letterbox"], effectCount),
-    effectIntensity: 25 + Math.floor(Math.random() * 51)
+    effects: sampleMany(effectPool, effectCount),
+    effectIntensity: deliberateGlitch ? 30 + Math.floor(Math.random() * 15) : 10 + Math.floor(Math.random() * 12)
   };
 }
 
@@ -1872,6 +2042,8 @@ function createAutoBumpSource(afterEntryEnd, upcomingEntries = null) {
       wallpaper: visuals.wallpaper,
       effects: visuals.effects,
       effectIntensity: visuals.effectIntensity,
+      intentionalGlitch: visuals.intentionalGlitch,
+      presentation: generatedBumpPresentation(visuals.intentionalGlitch),
       audio: audio.path,
       audioStart: audio.start
     },
@@ -2154,13 +2326,15 @@ function createFadeBreakBumpSource(source = {}, entry = {}) {
       creditSize: 18,
       creditPosition: "bottom-right",
       wallpaper: {
-        shapes: sample(["checkerboard", "stripes", "starburst", "memphis", "diamonds"]),
-        scheme: sample(["broadcast", "warning", "arcade", "miami", "ruby"]),
-        spacing: 58 + Math.floor(Math.random() * 70),
+        shapes: sample(["lines", "stripes", "starburst", "diamonds", "argyle"]),
+        scheme: sample(["broadcast", "warning", "midnight", "blueprint", "ruby"]),
+        spacing: 82 + Math.floor(Math.random() * 62),
         seed: Math.floor(Math.random() * 100000)
       },
-      effects: sampleMany(["noise", "vhs", "scanlines", "chromatic", "flicker", "letterbox"], 2),
-      effectIntensity: 42,
+      effects: sampleMany(["vhs", "scanlines", "chromatic", "letterbox"], 2),
+      effectIntensity: 24,
+      intentionalGlitch: false,
+      presentation: generatedBumpPresentation(false),
       audio: music.path,
       audioStart: music.start
     }
@@ -2184,6 +2358,8 @@ function createManualBumpSource(body = {}) {
     ? { path: String(body.audio), start: Math.max(0, Number(body.audioStart) || 0) }
     : randomBumpMusic(Math.round(duration));
   const background = normalizeBumpBackground(body.background);
+  const bumpKind = BUMP_CLASSES.some((item) => item.id === body.bumpClass) ? body.bumpClass : "manual-bump";
+  const intentionalGlitch = body.intentionalGlitch === true || body.presentation?.intentionalGlitch === true;
 
   const source = {
     id: crypto.randomUUID(),
@@ -2192,7 +2368,7 @@ function createManualBumpSource(body = {}) {
     folderId: "",
     duration: Math.round(duration),
     bump: {
-      kind: "manual-bump",
+      kind: bumpKind,
       heading: String(body.heading || "bump").trim() || "bump",
       lines: lines.length ? lines : [{ time: "", title: "DoinkTV continues shortly" }],
       secondsPerLine: Math.max(0.5, Math.min(30, Number(body.secondsPerLine) || Math.max(1, duration / Math.max(1, lines.length || 1)))),
@@ -2210,9 +2386,13 @@ function createManualBumpSource(body = {}) {
       wallpaper: body.wallpaper || randomAutoBumpVisuals().wallpaper,
       effects: Array.isArray(body.effects) ? body.effects.slice(0, 2) : [],
       effectIntensity: Math.max(0, Math.min(100, Number(body.effectIntensity) || 0)),
+      intentionalGlitch,
+      presentation: body.presentation || generatedBumpPresentation(intentionalGlitch),
       audio: audio.path,
       audioStart: audio.start,
-      background
+      background,
+      performanceCueId: String(body.performanceCueId || ""),
+      performanceSceneId: String(body.performanceSceneId || "")
     },
     generatedAt: Date.now()
   };
@@ -2869,7 +3049,7 @@ function hlsArgsForProgram(live) {
 
 function hlsSlateArgs(live, remaining, segmentPattern, playlist) {
   const source = live.source || {};
-  const bump = source.bump || {};
+  const bump = normalizedBumpForRender(source.bump || {});
   const backgroundPath = bump.background ? mediaPathFromSource(bump.background) : "";
   const hasBackground = backgroundPath && existsSync(backgroundPath) && BUMP_BACKGROUND_EXTENSIONS.test(backgroundPath);
   const videoArgs = hasBackground
@@ -2915,6 +3095,48 @@ function hlsSlateArgs(live, remaining, segmentPattern, playlist) {
   ];
 }
 
+function normalizedBumpForRender(bump = {}) {
+  const manual = bump.kind === "manual-bump";
+  if (manual) return bump;
+  const intentionalGlitch = intentionalBumpGlitch(bump);
+  return {
+    ...bump,
+    effects: sanitizedBumpEffects(bump.effects, intentionalGlitch),
+    effectIntensity: normalizedGeneratedBumpIntensity(bump.effectIntensity, intentionalGlitch),
+    presentation: {
+      ...(bump.presentation || {}),
+      ...generatedBumpPresentation(intentionalGlitch)
+    }
+  };
+}
+
+function normalizeGeneratedBumpsInState() {
+  let changed = false;
+  for (const source of state.sources || []) {
+    if (source.type !== "bump" || !source.bump || source.bump.kind === "manual-bump") continue;
+    const normalized = normalizedBumpForRender(source.bump);
+    if (JSON.stringify(source.bump.effects || []) !== JSON.stringify(normalized.effects || [])) {
+      source.bump.effects = normalized.effects;
+      changed = true;
+    }
+    if (Number(source.bump.effectIntensity || 0) !== Number(normalized.effectIntensity || 0)) {
+      source.bump.effectIntensity = normalized.effectIntensity;
+      changed = true;
+    }
+    const presentation = JSON.stringify(source.bump.presentation || {});
+    const nextPresentation = JSON.stringify(normalized.presentation || {});
+    if (presentation !== nextPresentation) {
+      source.bump.presentation = normalized.presentation;
+      changed = true;
+    }
+    if (source.bump.intentionalGlitch !== normalized.presentation.intentionalGlitch) {
+      source.bump.intentionalGlitch = normalized.presentation.intentionalGlitch;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 function isManualBump(bump = {}) {
   return Boolean(bump.secondsPerLine || bump.fontSize || bump.creditText || bump.tintStrength || bump.format || bump.background);
 }
@@ -2943,6 +3165,7 @@ function manualBumpVideoFilter(lines = [], bump = {}) {
   const textX = alignment === "right" ? 1280 - pad : alignment === "center" ? 640 : pad;
   const textXExpr = textXExpression(textX, alignment);
   const cardX = alignment === "right" ? 1280 - pad - textWidth : alignment === "center" ? 640 - textWidth / 2 : pad;
+  const textMotion = intentionalBumpGlitch(bump) ? "+sin(t*0.9)*3" : "";
   const secondsPerLine = Math.max(0.5, Number(bump.secondsPerLine) || 2.5);
   const safeLines = lines.map((line) => String(line || " ")).filter((line) => line.trim()).length ? lines : [" "];
   const maxWrapped = 4;
@@ -2976,7 +3199,7 @@ function manualBumpVideoFilter(lines = [], bump = {}) {
       filters.push(`drawbox=x=${Math.round(cardX - cardPad)}:y=${Math.round(y - cardPad * 0.7)}:w=${Math.round(textWidth + cardPad * 2)}:h=${Math.round(blockHeight + cardPad * 1.25)}:color=black@0.68:t=fill:enable='${enable}'`);
     }
     wrapped.forEach((line, lineIndex) => {
-      filters.push(`drawtext=fontfile='${font}':text='${drawTextEscape(line)}':fontcolor=0xf4f0e8:fontsize=${fontSize}:x=${textXExpr}:y=${Math.round(y + lineIndex * lineHeight)}+sin(t*0.9)*3:shadowcolor=black@0.75:shadowx=0:shadowy=3:enable='${enable}'`);
+      filters.push(`drawtext=fontfile='${font}':text='${drawTextEscape(line)}':fontcolor=0xf4f0e8:fontsize=${fontSize}:x=${textXExpr}:y=${Math.round(y + lineIndex * lineHeight)}${textMotion}:shadowcolor=black@0.75:shadowx=0:shadowy=3:enable='${enable}'`);
     });
   });
 
@@ -3023,9 +3246,9 @@ function slateVideoFilter(title, lines = [], bump = {}) {
   const placement = ["top", "middle", "bottom"].includes(bump.placement) ? bump.placement : "middle";
   const alignment = ["left", "center", "right"].includes(bump.alignment) ? bump.alignment : "left";
   const tone = ["classic", "caption", "washed"].includes(bump.tone) ? bump.tone : "classic";
-  const intensity = Math.max(0, Math.min(1, Number(bump.effectIntensity || 45) / 100));
-  const textLines = [title, ...lines].filter(Boolean).slice(0, 6);
-  const fontSize = textLines.length > 4 ? 34 : 42;
+  const intensity = Math.max(0, Math.min(1, Number(bump.effectIntensity ?? 45) / 100));
+  const textLines = slateTextLines(title, lines);
+  const fontSize = textLines.length > 6 ? 29 : textLines.length > 4 ? 34 : 42;
   const lineHeight = Math.round(fontSize * 1.35);
   const blockHeight = textLines.length * lineHeight;
   const y = placement === "top" ? 90 : placement === "bottom" ? Math.max(90, 630 - blockHeight) : Math.round((720 - blockHeight) / 2);
@@ -3051,6 +3274,15 @@ function slateVideoFilter(title, lines = [], bump = {}) {
 
   filters.push(...effectFilters(bump.effects, intensity));
   return filters.join(",");
+}
+
+function slateTextLines(title, lines = []) {
+  const raw = [title, ...lines]
+    .map((line) => String(line || "").trim())
+    .filter(Boolean)
+    .slice(0, 6);
+  const wrapped = raw.flatMap((line, index) => wrapDrawTextLine(line, index === 0 ? 28 : 34));
+  return (wrapped.length ? wrapped : ["DoinkTV"]).slice(0, 8);
 }
 
 function bumpPalette(name) {
@@ -3718,7 +3950,9 @@ function createWeeklyBlockBumpSource(block, kind, startAt, nextSource = null, bu
       creditSize: 19,
       creditPosition: "bottom-right",
       effects: identity.effects,
-      effectIntensity: kind === "intro" ? 52 : 38,
+      effectIntensity: kind === "intro" ? 26 : 20,
+      intentionalGlitch: false,
+      presentation: generatedBumpPresentation(false),
       format: "landscape",
       seed,
       wallpaper: {
@@ -4242,12 +4476,7 @@ async function setBroadcastMode(body) {
 }
 
 async function triggerBroadcastFx(body = {}) {
-  if (!hasAdminOnline()) {
-    state.activeFx = [];
-    timelineSaveNeeded = true;
-    broadcastProgram();
-    return { ok: true, fx: state.activeFx, inactive: true };
-  }
+  markAdminActivity();
   const id = String(body.id || "").trim();
   const preset = FX_PRESETS[id];
   if (!preset) throw new Error("Unknown FX button.");
@@ -4267,8 +4496,8 @@ async function triggerBroadcastFx(body = {}) {
     "frequency-drift",
     "party-damage"
   ]);
-  const isToggle = body.toggle === true || body.mode === "toggle" || toggleFx.has(id);
-  const maxDuration = ["av-warp", "delay", "source-overlay", "playlist-audio", "visual-adjust", "theme-cycle", "dj-mic", "frequency-drift", "party-damage"].includes(id) ? 180 : id === "soundboard-sample" ? 60 : 30;
+  const isToggle = body.force === true ? false : body.toggle === true || body.mode === "toggle" || toggleFx.has(id);
+  const maxDuration = ["av-warp", "delay", "reverb", "source-overlay", "playlist-audio", "visual-adjust", "theme-cycle", "dj-mic", "frequency-drift", "party-damage"].includes(id) ? 180 : id === "soundboard-sample" ? 60 : 30;
   let duration = Math.max(2, Math.min(maxDuration, Number(body.duration || preset.duration)));
   const now = Date.now();
   const commandFx = new Set([
@@ -4282,6 +4511,7 @@ async function triggerBroadcastFx(body = {}) {
     "looper-clear",
     "seed-skip",
     "delay",
+    "reverb",
     "source-overlay",
     "playlist-audio",
     "visual-adjust",
@@ -4361,6 +4591,12 @@ async function triggerBroadcastFx(body = {}) {
     broadcastProgram();
     return { ok: true, fx: state.activeFx };
   }
+  if (id === "reverb" && params.enabled === false) {
+    state.activeFx = active.filter((item) => item.id !== "reverb");
+    await saveState();
+    broadcastProgram();
+    return { ok: true, fx: state.activeFx };
+  }
   if (isToggle && active.some((item) => item.id === id)) {
     state.activeFx = active.filter((item) => item.id !== id);
     await saveState();
@@ -4369,7 +4605,7 @@ async function triggerBroadcastFx(body = {}) {
   }
   const existing = commandFx.has(id) ? null : active.find((item) => item.id === id);
   if (existing) {
-    const continuousFx = new Set(["av-warp", "delay", "visual-adjust"]);
+    const continuousFx = new Set(["av-warp", "delay", "reverb", "visual-adjust"]);
     existing.level = continuousFx.has(id) ? Math.max(1, Number(preset.level || 1)) : Math.min(8, Number(existing.level || preset.level || 1) + 1);
     existing.hits = Number(existing.hits || 1) + 1;
     existing.startedAt = now;
@@ -4384,7 +4620,7 @@ async function triggerBroadcastFx(body = {}) {
     id,
     label: preset.label,
     startedAt: now,
-    expiresAt: (id === "delay" && params.enabled === true) || isToggle ? null : now + duration * 1000,
+    expiresAt: (["delay", "reverb"].includes(id) && params.enabled === true) || isToggle ? null : now + duration * 1000,
     seed: crypto.randomUUID(),
     level: Math.max(1, Number(preset.level || 1)),
     hits: 1,
@@ -4394,6 +4630,181 @@ async function triggerBroadcastFx(body = {}) {
   await saveState();
   broadcastProgram();
   return { ok: true, fx: state.activeFx };
+}
+
+function performanceCueById(id) {
+  return PERFORMANCE_CUES.find((cue) => cue.id === id) || PERFORMANCE_CUES.find((cue) => cue.id === "identity-hit");
+}
+
+function performanceSceneById(id) {
+  return PERFORMANCE_SCENES.find((scene) => scene.id === id) || PERFORMANCE_SCENES[0];
+}
+
+function performanceIntensity(value) {
+  const number = Number(value);
+  return Math.max(0, Math.min(1, Number.isFinite(number) ? number : 0.62));
+}
+
+function scaleMacroValue(macro = {}, key, intensity, minimum = 0) {
+  return Math.max(minimum, Math.min(1, Number(macro[key] || 0) * (0.35 + intensity * 1.05)));
+}
+
+function fxBodyForPerformanceStep(stepId, cue, intensity, options = {}) {
+  const macro = PERFORMANCE_MACROS[cue.macro] || PERFORMANCE_MACROS.identity;
+  const damage = scaleMacroValue(macro, "damage", intensity);
+  const drift = scaleMacroValue(macro, "drift", intensity);
+  const space = scaleMacroValue(macro, "space", intensity);
+  const rhythm = scaleMacroValue(macro, "rhythm", intensity);
+  const page = scaleMacroValue(macro, "page", intensity);
+  const scene = performanceSceneById(cue.sceneId);
+  const duration = Math.round(8 + intensity * 42);
+  if (stepId === "show-cue") {
+    return {
+      id: "show-cue",
+      duration: Math.max(6, Math.min(14, Math.round(6 + intensity * 8))),
+      params: {
+        label: cue.label,
+        scene: scene.label,
+        clip: cue.clip,
+        color: scene.color,
+        intensity: Math.round(intensity * 100),
+        blockPack: options.blockPack?.label || ""
+      }
+    };
+  }
+  if (stepId === "visual-adjust") {
+    return {
+      id: "visual-adjust",
+      duration: Math.max(30, duration + 38),
+      params: {
+        brightness: Math.round(100 + damage * 42 - space * 10),
+        contrast: Math.round(100 + damage * 96),
+        saturation: Math.round(100 + drift * 84 + rhythm * 28),
+        tear: Math.round(damage * 86),
+        tracking: Math.round((damage * 0.58 + drift * 0.52) * 100),
+        smear: Math.round((drift * 0.72 + space * 0.28) * 100)
+      }
+    };
+  }
+  if (stepId === "av-warp") {
+    return {
+      id: "av-warp",
+      duration: Math.max(18, duration),
+      params: {
+        speed: Math.round((1 + (rhythm - drift) * 0.18) * 100) / 100,
+        pitch: Math.round((1 - drift * 0.12 + rhythm * 0.06) * 100) / 100,
+        desync: Math.round((drift * 1.8 - damage * 0.4) * 10) / 10
+      }
+    };
+  }
+  if (stepId === "delay") {
+    return {
+      id: "delay",
+      duration: Math.max(45, duration + 34),
+      params: {
+        enabled: true,
+        sync: true,
+        division: rhythm > 0.55 ? "eighth" : "dotted-eighth",
+        repitch: damage > 0.64 ? "dub" : drift > 0.55 ? "tape" : "digital",
+        target: "both",
+        timeMs: 330,
+        feedback: Math.round((0.18 + damage * 0.52) * 100) / 100,
+        mix: Math.round((0.16 + rhythm * 0.28 + drift * 0.12) * 100) / 100,
+        tone: Math.round(7800 - damage * 5200)
+      }
+    };
+  }
+  if (stepId === "reverb") {
+    return {
+      id: "reverb",
+      duration: Math.max(45, duration + 30),
+      params: {
+        enabled: true,
+        size: Math.round(28 + space * 72),
+        decay: Math.round((0.8 + space * 5.4) * 10) / 10,
+        preDelayMs: Math.round(8 + drift * 92),
+        mix: Math.round((0.12 + space * 0.42) * 100) / 100,
+        tone: Math.round(9200 - damage * 4200),
+        character: space > 0.66 ? "tunnel" : drift > 0.52 ? "hall" : "plate"
+      }
+    };
+  }
+  if (stepId === "frequency-drift" || stepId === "party-damage" || stepId === "signal-loss" || stepId === "tape-warp") {
+    return { id: stepId, duration: Math.max(24, duration), force: true };
+  }
+  if (stepId === "ui-css-panic" || stepId === "fill-popups" || stepId === "os-popups") {
+    return { id: stepId, duration: Math.max(8, Math.round(8 + page * 18)) };
+  }
+  if (["vhs", "color-bars", "kaleidoscope", "floppy-prompt"].includes(stepId)) {
+    return { id: stepId, duration: Math.max(8, Math.min(30, duration)), force: true };
+  }
+  return { id: stepId, duration: Math.max(4, Math.min(30, duration)) };
+}
+
+function performanceBumpBody(cue, intensity, options = {}) {
+  const scene = performanceSceneById(cue.sceneId);
+  const blockName = String(options.blockName || options.blockPack?.label || cue.label || "DoinkTV").trim();
+  const bumpKind = BUMP_CLASSES.some((item) => item.id === cue.bumpClass) ? cue.bumpClass : "manual-bump";
+  const intentionalGlitch = cue.sceneId !== "anime" && cue.sceneId !== "uhf" && intensity > 0.54;
+  const lines = (cue.bumpLines || []).map((title) => ({ time: "", title }));
+  return {
+    title: `${cue.label} bump`,
+    heading: blockName.toUpperCase(),
+    duration: Math.round(12 + intensity * 18),
+    lines,
+    bumpClass: bumpKind,
+    secondsPerLine: 2.2,
+    fontSize: Math.round(46 + intensity * 22),
+    alignment: intensity > 0.7 ? "right" : "left",
+    placement: intensity > 0.58 ? "middle" : "bottom",
+    tone: intensity > 0.65 ? "caption" : "classic",
+    tintStrength: Math.round(18 + intensity * 54),
+    creditText: `${scene.label} / ${cue.label}`,
+    wallpaper: {
+      scheme: cue.sceneId === "anime" ? "blueprint" : cue.sceneId === "party" ? "miami" : cue.sceneId === "uhf" ? "mono" : "broadcast",
+      shapes: cue.sceneId === "training" ? "checkerboard" : intensity > 0.7 ? "memphis" : "stripes",
+      spacing: Math.round(54 + intensity * 54),
+      seed: Math.floor(Math.random() * 100000)
+    },
+    effects: cue.sceneId === "uhf" ? ["vhs", "scanlines"] : cue.sceneId === "anime" ? ["chromatic", "scanlines"] : intentionalGlitch ? ["noise", "flicker"] : ["scanlines"],
+    effectIntensity: Math.round(26 + intensity * 58),
+    intentionalGlitch,
+    presentation: generatedBumpPresentation(intentionalGlitch),
+    position: options.position || "next",
+    performanceCueId: cue.id,
+    performanceSceneId: cue.sceneId
+  };
+}
+
+async function triggerPerformanceCue(body = {}) {
+  const cue = performanceCueById(body.cueId || body.id);
+  const intensity = performanceIntensity(body.intensity);
+  const blockPack = blockIdentityPackFor(programSnapshot().live);
+  if (cue.id === "panic-reset") {
+    await clearBroadcastFx();
+    return { ok: true, cue, fired: [], queuedBump: null, blockPack };
+  }
+  const fired = [];
+  for (const stepId of cue.fx || []) {
+    const fxBody = fxBodyForPerformanceStep(stepId, cue, intensity, { blockPack });
+    await triggerBroadcastFx(fxBody);
+    fired.push(fxBody.id);
+  }
+  if (body.reactive === true) {
+    const recentChat = state.chat.filter((message) => Date.now() - Number(message.createdAt || 0) < 1000 * 60 * 8);
+    if (recentChat.length) {
+      await triggerBroadcastFx({ id: "caller-line", duration: 12 });
+      fired.push("caller-line");
+    }
+    if (publicAudience().displayCount >= 9) {
+      await triggerBroadcastFx({ id: "party-damage", duration: Math.round(20 + intensity * 36), toggle: false });
+      fired.push("party-damage");
+    }
+  }
+  const queuedBump = body.queueBump
+    ? await queueManualBump(performanceBumpBody(cue, intensity, { blockPack, blockName: body.blockName }))
+    : null;
+  return { ok: true, cue, intensity, fired, queuedBump, blockPack, fx: activeBroadcastFx() };
 }
 
 async function clearBroadcastFx() {
@@ -4631,6 +5042,7 @@ async function handleApi(req, res, pathname) {
         schedule: state.schedule,
         weeklyBlocks: state.weeklyBlocks,
         bumpClasses: BUMP_CLASSES,
+        showControl: publicShowControl(),
         liveQueue: state.liveQueue,
         broadcastMode: state.broadcastMode,
         bumpMusic: state.bumpMusic
@@ -4806,6 +5218,12 @@ async function handleApi(req, res, pathname) {
       return;
     }
 
+    if (req.method === "POST" && pathname === "/api/performance-cue") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await triggerPerformanceCue(await readJson(req)));
+      return;
+    }
+
     if (req.method === "DELETE" && pathname === "/api/fx") {
       if (!requireAdmin(req, res)) return;
       sendJson(res, 200, await clearBroadcastFx());
@@ -4867,6 +5285,7 @@ createServer(async (req, res) => {
     return;
   }
   if (url.pathname.startsWith("/bumpgenerator")) {
+    if (!requireAdmin(req, res)) return;
     await serveFile(req, res, BUMP_GENERATOR_DIR, "/bumpgenerator");
     return;
   }

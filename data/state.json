@@ -722,7 +722,13 @@
       "archiveFile": "Animaniacs 09 1993 Commercials C.mp4",
       "fileUrl": "https://archive.org/download/Vintage_Commercials_Advertisements_80s/Animaniacs%2009%201993%20Commercials%20C.mp4",
       "url": "https://archive.org/details/Vintage_Commercials_Advertisements_80s",
-      "randomEligible": true
+      "randomEligible": true,
+      "ingest": {
+        "status": "ready",
+        "message": "Internet Archive media URL is ready for shared HLS playout.",
+        "path": "https://archive.org/download/Vintage_Commercials_Advertisements_80s/Animaniacs%2009%201993%20Commercials%20C.mp4",
+        "updatedAt": 1778432315265
+      }
     },
     {
       "id": "b7ae383c-180b-4b62-a768-53d530b825f0",
@@ -1946,7 +1952,13 @@
       "archiveFile": "rca_victor_512kb.mp4",
       "fileUrl": "https://archive.org/download/rca_victor/rca_victor_512kb.mp4",
       "url": "https://archive.org/details/rca_victor",
-      "randomEligible": true
+      "randomEligible": true,
+      "ingest": {
+        "status": "ready",
+        "message": "Internet Archive media URL is ready for shared HLS playout.",
+        "path": "https://archive.org/download/rca_victor/rca_victor_512kb.mp4",
+        "updatedAt": 1778421844926
+      }
     },
     {
       "id": "7b926738-3bd9-4bb7-89a5-8c9da3eff423",
@@ -2138,7 +2150,13 @@
       "archiveFile": "TruthAbo1940.mp4",
       "fileUrl": "https://archive.org/download/TruthAbo1940/TruthAbo1940.mp4",
       "url": "https://archive.org/details/TruthAbo1940",
-      "randomEligible": true
+      "randomEligible": true,
+      "ingest": {
+        "status": "ready",
+        "message": "Internet Archive media URL is ready for shared HLS playout.",
+        "path": "https://archive.org/download/TruthAbo1940/TruthAbo1940.mp4",
+        "updatedAt": 1778432382286
+      }
     },
     {
       "id": "5dfd720c-0757-4bd7-9db0-f3e736237f59",
@@ -2210,7 +2228,13 @@
       "archiveFile": "tomorrow_television_512kb.mp4",
       "fileUrl": "https://archive.org/download/tomorrow_television/tomorrow_television_512kb.mp4",
       "url": "https://archive.org/details/tomorrow_television",
-      "randomEligible": true
+      "randomEligible": true,
+      "ingest": {
+        "status": "ready",
+        "message": "Internet Archive media URL is ready for shared HLS playout.",
+        "path": "https://archive.org/download/tomorrow_television/tomorrow_television_512kb.mp4",
+        "updatedAt": 1778424877956
+      }
     },
     {
       "id": "276fde99-c403-4d71-9c07-35410033cd9d",
@@ -5492,7 +5516,13 @@
       "archiveFile": "The_Wings_of_Honneamise_1995.mp4",
       "fileUrl": "https://archive.org/download/The_Wings_of_Honneamise_1995/The_Wings_of_Honneamise_1995.mp4",
       "url": "https://archive.org/details/The_Wings_of_Honneamise_1995",
-      "randomEligible": true
+      "randomEligible": true,
+      "ingest": {
+        "status": "ready",
+        "message": "Internet Archive media URL is ready for shared HLS playout.",
+        "path": "https://archive.org/download/The_Wings_of_Honneamise_1995/The_Wings_of_Honneamise_1995.mp4",
+        "updatedAt": 1778420504999
+      }
     },
     {
       "id": "53bc653d-da18-4ef3-9640-849ef08ecefc",
@@ -7036,10 +7066,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 4099,
         "wallpaper": {
@@ -7049,7 +7078,13 @@
           "seed": 4099
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 136.5
+        "audioStart": 136.5,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7081,10 +7116,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 63407,
         "wallpaper": {
@@ -7094,7 +7128,13 @@
           "seed": 63407
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 79.5
+        "audioStart": 79.5,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7126,10 +7166,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 80914,
         "wallpaper": {
@@ -7139,7 +7178,13 @@
           "seed": 80914
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 139.4
+        "audioStart": 139.4,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7171,10 +7216,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 51604,
         "wallpaper": {
@@ -7184,7 +7228,13 @@
           "seed": 51604
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 63.3
+        "audioStart": 63.3,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7216,10 +7266,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 32631,
         "wallpaper": {
@@ -7229,7 +7278,13 @@
           "seed": 32631
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 96.3
+        "audioStart": 96.3,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7261,10 +7316,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 4242,
         "wallpaper": {
@@ -7274,7 +7328,13 @@
           "seed": 4242
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 135.7
+        "audioStart": 135.7,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7306,10 +7366,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 81338,
         "wallpaper": {
@@ -7319,7 +7378,13 @@
           "seed": 81338
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 60.1
+        "audioStart": 60.1,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7351,10 +7416,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 2553,
         "wallpaper": {
@@ -7364,7 +7428,13 @@
           "seed": 2553
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 64.5
+        "audioStart": 64.5,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7396,10 +7466,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 36472,
         "wallpaper": {
@@ -7409,7 +7478,13 @@
           "seed": 36472
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 124.3
+        "audioStart": 124.3,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7441,10 +7516,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 14852,
         "wallpaper": {
@@ -7454,7 +7528,13 @@
           "seed": 14852
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 17.7
+        "audioStart": 17.7,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7486,10 +7566,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 37817,
         "wallpaper": {
@@ -7499,7 +7578,13 @@
           "seed": 37817
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 98
+        "audioStart": 98,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7531,10 +7616,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 9739,
         "wallpaper": {
@@ -7544,7 +7628,13 @@
           "seed": 9739
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 92.7
+        "audioStart": 92.7,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7576,10 +7666,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 83250,
         "wallpaper": {
@@ -7589,7 +7678,13 @@
           "seed": 83250
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 121.8
+        "audioStart": 121.8,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7621,10 +7716,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 19706,
         "wallpaper": {
@@ -7634,7 +7728,13 @@
           "seed": 19706
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 1.9
+        "audioStart": 1.9,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7666,10 +7766,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 74655,
         "wallpaper": {
@@ -7679,7 +7778,13 @@
           "seed": 74655
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 18.1
+        "audioStart": 18.1,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7711,10 +7816,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 77297,
         "wallpaper": {
@@ -7724,7 +7828,13 @@
           "seed": 77297
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 101.5
+        "audioStart": 101.5,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7756,10 +7866,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 5783,
         "wallpaper": {
@@ -7769,7 +7878,13 @@
           "seed": 5783
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 79.3
+        "audioStart": 79.3,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7801,10 +7916,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 55400,
         "wallpaper": {
@@ -7814,7 +7928,13 @@
           "seed": 55400
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 42.2
+        "audioStart": 42.2,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7846,10 +7966,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 33147,
         "wallpaper": {
@@ -7859,7 +7978,13 @@
           "seed": 33147
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 31
+        "audioStart": 31,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7891,10 +8016,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "scanlines",
-          "vhs",
-          "letterbox"
+          "vhs"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 60184,
         "wallpaper": {
@@ -7904,7 +8028,13 @@
           "seed": 60184
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 54.6
+        "audioStart": 54.6,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7936,10 +8066,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "scanlines",
-          "vhs",
-          "letterbox"
+          "vhs"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 42659,
         "wallpaper": {
@@ -7949,7 +8078,13 @@
           "seed": 42659
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 34.2
+        "audioStart": 34.2,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -7981,10 +8116,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "scanlines",
-          "vhs",
-          "letterbox"
+          "vhs"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 91333,
         "wallpaper": {
@@ -7994,7 +8128,13 @@
           "seed": 91333
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 80
+        "audioStart": 80,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8026,10 +8166,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "scanlines",
-          "vhs",
-          "letterbox"
+          "vhs"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 81882,
         "wallpaper": {
@@ -8039,7 +8178,13 @@
           "seed": 81882
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 30.1
+        "audioStart": 30.1,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8071,10 +8216,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "scanlines",
-          "vhs",
-          "letterbox"
+          "vhs"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 30458,
         "wallpaper": {
@@ -8084,7 +8228,13 @@
           "seed": 30458
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 19
+        "audioStart": 19,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8115,10 +8265,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "flicker",
           "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 61959,
         "wallpaper": {
@@ -8128,7 +8277,13 @@
           "seed": 61959
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 45.8
+        "audioStart": 45.8,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8159,10 +8314,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "flicker",
           "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 88664,
         "wallpaper": {
@@ -8172,7 +8326,13 @@
           "seed": 88664
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 85.7
+        "audioStart": 85.7,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8203,10 +8363,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "flicker",
           "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 3380,
         "wallpaper": {
@@ -8216,7 +8375,13 @@
           "seed": 3380
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 93.9
+        "audioStart": 93.9,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8247,10 +8412,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "flicker",
           "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 8081,
         "wallpaper": {
@@ -8260,7 +8424,13 @@
           "seed": 8081
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 124
+        "audioStart": 124,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8291,10 +8461,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "scanlines"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 33588,
         "wallpaper": {
@@ -8304,7 +8473,13 @@
           "seed": 33588
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 90.9
+        "audioStart": 90.9,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8335,10 +8510,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "scanlines"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 75133,
         "wallpaper": {
@@ -8348,7 +8522,13 @@
           "seed": 75133
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 64.3
+        "audioStart": 64.3,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8379,10 +8559,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "scanlines"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 85667,
         "wallpaper": {
@@ -8392,7 +8571,13 @@
           "seed": 85667
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 87
+        "audioStart": 87,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8423,10 +8608,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "scanlines"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 26516,
         "wallpaper": {
@@ -8436,7 +8620,13 @@
           "seed": 26516
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 46
+        "audioStart": 46,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8467,10 +8657,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "scanlines"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 18813,
         "wallpaper": {
@@ -8480,7 +8669,13 @@
           "seed": 18813
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 14.3
+        "audioStart": 14.3,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8511,10 +8706,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "scanlines"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 12099,
         "wallpaper": {
@@ -8524,7 +8718,13 @@
           "seed": 12099
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 110.1
+        "audioStart": 110.1,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8555,10 +8755,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "scanlines"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 49169,
         "wallpaper": {
@@ -8568,7 +8767,13 @@
           "seed": 49169
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 83.9
+        "audioStart": 83.9,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8599,10 +8804,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 35616,
         "wallpaper": {
@@ -8612,7 +8816,13 @@
           "seed": 35616
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 90.3
+        "audioStart": 90.3,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8643,10 +8853,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 41311,
         "wallpaper": {
@@ -8656,7 +8865,13 @@
           "seed": 41311
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 12.7
+        "audioStart": 12.7,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8687,10 +8902,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 56682,
         "wallpaper": {
@@ -8700,7 +8914,13 @@
           "seed": 56682
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 68.5
+        "audioStart": 68.5,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8731,10 +8951,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 41935,
         "wallpaper": {
@@ -8744,7 +8963,13 @@
           "seed": 41935
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 4.2
+        "audioStart": 4.2,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8775,10 +9000,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 48852,
         "wallpaper": {
@@ -8788,7 +9012,13 @@
           "seed": 48852
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 107.3
+        "audioStart": 107.3,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8819,10 +9049,9 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 17150,
         "wallpaper": {
@@ -8832,7 +9061,13 @@
           "seed": 17150
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 70.9
+        "audioStart": 70.9,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8865,7 +9100,7 @@
         "effects": [
           "scanlines"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 61428,
         "wallpaper": {
@@ -8875,7 +9110,13 @@
           "seed": 61428
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 1.7
+        "audioStart": 1.7,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8908,7 +9149,7 @@
         "effects": [
           "scanlines"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 55968,
         "wallpaper": {
@@ -8918,7 +9159,13 @@
           "seed": 55968
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 8.7
+        "audioStart": 8.7,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8951,7 +9198,7 @@
         "effects": [
           "scanlines"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 1625,
         "wallpaper": {
@@ -8961,7 +9208,13 @@
           "seed": 1625
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 2.8
+        "audioStart": 2.8,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -8994,7 +9247,7 @@
         "effects": [
           "scanlines"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 14864,
         "wallpaper": {
@@ -9004,7 +9257,13 @@
           "seed": 14864
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 151.7
+        "audioStart": 151.7,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9037,7 +9296,7 @@
         "effects": [
           "scanlines"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 54184,
         "wallpaper": {
@@ -9047,7 +9306,13 @@
           "seed": 54184
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 86.9
+        "audioStart": 86.9,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9080,7 +9345,7 @@
         "effects": [
           "scanlines"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 84799,
         "wallpaper": {
@@ -9090,7 +9355,13 @@
           "seed": 84799
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 5.9
+        "audioStart": 5.9,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9123,7 +9394,7 @@
         "effects": [
           "scanlines"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 22536,
         "wallpaper": {
@@ -9133,7 +9404,13 @@
           "seed": 22536
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 45.8
+        "audioStart": 45.8,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9166,7 +9443,7 @@
         "effects": [
           "scanlines"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 41156,
         "wallpaper": {
@@ -9176,7 +9453,13 @@
           "seed": 41156
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 55.9
+        "audioStart": 55.9,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9209,7 +9492,7 @@
         "effects": [
           "scanlines"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 14194,
         "wallpaper": {
@@ -9219,7 +9502,13 @@
           "seed": 14194
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 118.4
+        "audioStart": 118.4,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9252,7 +9541,7 @@
         "effects": [
           "scanlines"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 11753,
         "wallpaper": {
@@ -9262,7 +9551,13 @@
           "seed": 11753
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 119.8
+        "audioStart": 119.8,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9293,11 +9588,10 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "vhs",
           "letterbox"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 19064,
         "wallpaper": {
@@ -9307,7 +9601,13 @@
           "seed": 19064
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 30.5
+        "audioStart": 30.5,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9338,11 +9638,10 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "vhs",
           "letterbox"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 7072,
         "wallpaper": {
@@ -9352,7 +9651,13 @@
           "seed": 7072
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 119.9
+        "audioStart": 119.9,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9383,11 +9688,10 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "vhs",
           "letterbox"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 78867,
         "wallpaper": {
@@ -9397,7 +9701,13 @@
           "seed": 78867
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 122.8
+        "audioStart": 122.8,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9428,11 +9738,10 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "vhs",
           "letterbox"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 44476,
         "wallpaper": {
@@ -9442,7 +9751,13 @@
           "seed": 44476
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 5.4
+        "audioStart": 5.4,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9473,11 +9788,10 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "vhs",
           "letterbox"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 59054,
         "wallpaper": {
@@ -9487,7 +9801,13 @@
           "seed": 59054
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 111.5
+        "audioStart": 111.5,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9518,11 +9838,10 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "vhs",
           "letterbox"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 11863,
         "wallpaper": {
@@ -9532,7 +9851,13 @@
           "seed": 11863
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 8.8
+        "audioStart": 8.8,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9563,11 +9888,10 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "vhs",
           "letterbox"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 77676,
         "wallpaper": {
@@ -9577,7 +9901,13 @@
           "seed": 77676
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 83.8
+        "audioStart": 83.8,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9608,11 +9938,10 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "vhs",
           "letterbox"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 64516,
         "wallpaper": {
@@ -9622,7 +9951,13 @@
           "seed": 64516
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 69.8
+        "audioStart": 69.8,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9653,11 +9988,10 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "vhs",
           "letterbox"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 17873,
         "wallpaper": {
@@ -9667,7 +10001,13 @@
           "seed": 17873
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 80.4
+        "audioStart": 80.4,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9698,11 +10038,10 @@
         "creditSize": 19,
         "creditPosition": "bottom-right",
         "effects": [
-          "noise",
           "vhs",
           "letterbox"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 87032,
         "wallpaper": {
@@ -9712,7 +10051,13 @@
           "seed": 87032
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 20.4
+        "audioStart": 20.4,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9744,10 +10089,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 88963,
         "wallpaper": {
@@ -9757,7 +10101,13 @@
           "seed": 88963
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 78.9
+        "audioStart": 78.9,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9789,10 +10139,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 94078,
         "wallpaper": {
@@ -9802,7 +10151,13 @@
           "seed": 94078
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 109.6
+        "audioStart": 109.6,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9834,10 +10189,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 62911,
         "wallpaper": {
@@ -9847,7 +10201,13 @@
           "seed": 62911
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 103.4
+        "audioStart": 103.4,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9879,10 +10239,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 87757,
         "wallpaper": {
@@ -9892,7 +10251,13 @@
           "seed": 87757
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 117
+        "audioStart": 117,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9924,10 +10289,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 77039,
         "wallpaper": {
@@ -9937,7 +10301,13 @@
           "seed": 77039
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 52.7
+        "audioStart": 52.7,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -9969,10 +10339,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 10013,
         "wallpaper": {
@@ -9982,7 +10351,13 @@
           "seed": 10013
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 112.1
+        "audioStart": 112.1,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10014,10 +10389,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 18323,
         "wallpaper": {
@@ -10027,7 +10401,13 @@
           "seed": 18323
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 84
+        "audioStart": 84,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10059,10 +10439,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 21032,
         "wallpaper": {
@@ -10072,7 +10451,13 @@
           "seed": 21032
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 122.4
+        "audioStart": 122.4,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10104,10 +10489,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 91742,
         "wallpaper": {
@@ -10117,7 +10501,13 @@
           "seed": 91742
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 58.3
+        "audioStart": 58.3,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10149,10 +10539,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 78126,
         "wallpaper": {
@@ -10162,7 +10551,13 @@
           "seed": 78126
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 96.5
+        "audioStart": 96.5,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10194,10 +10589,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 50085,
         "wallpaper": {
@@ -10207,7 +10601,13 @@
           "seed": 50085
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 82.9
+        "audioStart": 82.9,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10239,10 +10639,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 3140,
         "wallpaper": {
@@ -10252,7 +10651,13 @@
           "seed": 3140
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 103.8
+        "audioStart": 103.8,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10284,10 +10689,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 58313,
         "wallpaper": {
@@ -10297,7 +10701,13 @@
           "seed": 58313
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 140.1
+        "audioStart": 140.1,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10329,10 +10739,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 79488,
         "wallpaper": {
@@ -10342,7 +10751,13 @@
           "seed": 79488
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 24.6
+        "audioStart": 24.6,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10374,10 +10789,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 67457,
         "wallpaper": {
@@ -10387,7 +10801,13 @@
           "seed": 67457
         },
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 118.1
+        "audioStart": 118.1,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10419,10 +10839,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 78417,
         "wallpaper": {
@@ -10432,7 +10851,13 @@
           "seed": 78417
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 11.2
+        "audioStart": 11.2,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10464,10 +10889,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 78476,
         "wallpaper": {
@@ -10477,7 +10901,13 @@
           "seed": 78476
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 56.8
+        "audioStart": 56.8,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10509,10 +10939,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 49186,
         "wallpaper": {
@@ -10522,7 +10951,13 @@
           "seed": 49186
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 53.5
+        "audioStart": 53.5,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10554,10 +10989,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 18614,
         "wallpaper": {
@@ -10567,7 +11001,13 @@
           "seed": 18614
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 11.5
+        "audioStart": 11.5,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10599,10 +11039,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 8966,
         "wallpaper": {
@@ -10612,7 +11051,13 @@
           "seed": 8966
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 105.4
+        "audioStart": 105.4,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10644,10 +11089,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 5543,
         "wallpaper": {
@@ -10657,7 +11101,13 @@
           "seed": 5543
         },
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 80.6
+        "audioStart": 80.6,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10689,10 +11139,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 52,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 54256,
         "wallpaper": {
@@ -10702,7 +11151,13 @@
           "seed": 54256
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 0
+        "audioStart": 0,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10734,10 +11189,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 94300,
         "wallpaper": {
@@ -10747,7 +11201,13 @@
           "seed": 94300
         },
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 125
+        "audioStart": 125,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10779,10 +11239,9 @@
         "creditPosition": "bottom-right",
         "effects": [
           "vhs",
-          "chromatic",
-          "scanlines"
+          "chromatic"
         ],
-        "effectIntensity": 38,
+        "effectIntensity": 28,
         "format": "landscape",
         "seed": 65990,
         "wallpaper": {
@@ -10792,7 +11251,13 @@
           "seed": 65990
         },
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 88.5
+        "audioStart": 88.5,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10826,12 +11291,17 @@
           "seed": 86074
         },
         "effects": [
-          "flicker",
           "letterbox"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 96
+        "audioStart": 96,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10868,9 +11338,15 @@
           "scanlines",
           "letterbox"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 121.5
+        "audioStart": 121.5,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10907,9 +11383,15 @@
           "scanlines",
           "chromatic"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 44.7
+        "audioStart": 44.7,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10943,12 +11425,17 @@
           "seed": 69739
         },
         "effects": [
-          "flicker",
           "chromatic"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 30.3
+        "audioStart": 30.3,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -10982,12 +11469,17 @@
           "seed": 71830
         },
         "effects": [
-          "noise",
           "vhs"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 16.4
+        "audioStart": 16.4,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11020,13 +11512,16 @@
           "spacing": 127,
           "seed": 31901
         },
-        "effects": [
-          "noise",
-          "flicker"
-        ],
-        "effectIntensity": 42,
+        "effects": [],
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 5.2
+        "audioStart": 5.2,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11063,9 +11558,15 @@
           "chromatic",
           "letterbox"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 72.8
+        "audioStart": 72.8,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11099,12 +11600,17 @@
           "seed": 16645
         },
         "effects": [
-          "noise",
           "vhs"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 17
+        "audioStart": 17,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11141,9 +11647,15 @@
           "letterbox",
           "scanlines"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 59
+        "audioStart": 59,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11177,12 +11689,17 @@
           "seed": 85054
         },
         "effects": [
-          "chromatic",
-          "flicker"
+          "chromatic"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 87.2
+        "audioStart": 87.2,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11216,12 +11733,17 @@
           "seed": 3843
         },
         "effects": [
-          "noise",
           "letterbox"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 14.7
+        "audioStart": 14.7,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11255,12 +11777,17 @@
           "seed": 2155
         },
         "effects": [
-          "noise",
           "vhs"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 44.4
+        "audioStart": 44.4,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11294,12 +11821,17 @@
           "seed": 57722
         },
         "effects": [
-          "noise",
           "vhs"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 111.9
+        "audioStart": 111.9,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11333,12 +11865,17 @@
           "seed": 46535
         },
         "effects": [
-          "flicker",
           "chromatic"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 47.4
+        "audioStart": 47.4,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11371,13 +11908,16 @@
           "spacing": 70,
           "seed": 69199
         },
-        "effects": [
-          "flicker",
-          "noise"
-        ],
-        "effectIntensity": 42,
+        "effects": [],
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 46.9
+        "audioStart": 46.9,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11414,9 +11954,15 @@
           "vhs",
           "letterbox"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 24.6
+        "audioStart": 24.6,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11453,9 +11999,15 @@
           "vhs",
           "scanlines"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 148.2
+        "audioStart": 148.2,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11492,9 +12044,15 @@
           "chromatic",
           "scanlines"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 97.1
+        "audioStart": 97.1,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11531,9 +12089,15 @@
           "vhs",
           "letterbox"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 73.1
+        "audioStart": 73.1,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11567,12 +12131,17 @@
           "seed": 36648
         },
         "effects": [
-          "noise",
           "vhs"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 71.7
+        "audioStart": 71.7,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11609,9 +12178,15 @@
           "scanlines",
           "chromatic"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 119.4
+        "audioStart": 119.4,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11645,12 +12220,17 @@
           "seed": 51096
         },
         "effects": [
-          "vhs",
-          "flicker"
+          "vhs"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 80
+        "audioStart": 80,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11687,9 +12267,15 @@
           "chromatic",
           "vhs"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 88.2
+        "audioStart": 88.2,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11723,12 +12309,17 @@
           "seed": 36074
         },
         "effects": [
-          "noise",
           "chromatic"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 52.6
+        "audioStart": 52.6,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11765,9 +12356,15 @@
           "chromatic",
           "scanlines"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 96.4
+        "audioStart": 96.4,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11801,12 +12398,17 @@
           "seed": 43151
         },
         "effects": [
-          "flicker",
           "vhs"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 24
+        "audioStart": 24,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11843,9 +12445,15 @@
           "scanlines",
           "chromatic"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 3.3
+        "audioStart": 3.3,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11879,12 +12487,17 @@
           "seed": 64692
         },
         "effects": [
-          "scanlines",
-          "noise"
+          "scanlines"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 83.4
+        "audioStart": 83.4,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11921,9 +12534,15 @@
           "letterbox",
           "vhs"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 106.5
+        "audioStart": 106.5,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11960,9 +12579,15 @@
           "vhs",
           "letterbox"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 14.3
+        "audioStart": 14.3,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       }
     },
     {
@@ -11996,573 +12621,21 @@
           "seed": 47674
         },
         "effects": [
-          "noise",
           "letterbox"
         ],
-        "effectIntensity": 42,
+        "effectIntensity": 28,
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 7.1
-      }
-    },
-    {
-      "id": "3c2c393e-1166-4701-8c0f-43beb2cc2e44",
-      "type": "bump",
-      "title": "STATION BREAK: stand by bump",
-      "duration": 42,
-      "randomEligible": false,
-      "bump": {
-        "kind": "gap-filler-bump",
-        "bumpClass": "station-break",
-        "heading": "station break",
-        "lines": [
-          "STATION BREAK",
-          "NEXT: DE COFFEESCHOOP: block intro",
-          "11:00 AM"
-        ],
-        "alignment": "right",
-        "placement": "middle",
-        "tone": "caption",
-        "secondsPerLine": 14,
-        "tintStrength": 28,
-        "creditText": "STANDBY FILLER\nNO DEAD AIR",
-        "creditSize": 18,
-        "creditPosition": "bottom-right",
-        "wallpaper": {
-          "shapes": "stripes",
-          "scheme": "arcade",
-          "spacing": 63,
-          "seed": 72999
+        "audioStart": 7.1,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
         },
-        "effects": [
-          "scanlines",
-          "chromatic"
-        ],
-        "effectIntensity": 38,
-        "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 98
+        "intentionalGlitch": false
       }
     },
     {
-      "id": "84404f66-1f09-4c93-8acc-009e63705d2b",
-      "type": "bump",
-      "title": "STATION BREAK: stand by bump",
-      "duration": 42,
-      "randomEligible": false,
-      "bump": {
-        "kind": "gap-filler-bump",
-        "bumpClass": "station-break",
-        "heading": "more shortly",
-        "lines": [
-          "STATION BREAK",
-          "NEXT: DE COFFEESCHOOP: block intro",
-          "11:00 AM"
-        ],
-        "alignment": "center",
-        "placement": "bottom",
-        "tone": "caption",
-        "secondsPerLine": 14,
-        "tintStrength": 16,
-        "creditText": "STANDBY FILLER\nNO DEAD AIR",
-        "creditSize": 18,
-        "creditPosition": "bottom-right",
-        "wallpaper": {
-          "shapes": "lines",
-          "scheme": "pool",
-          "spacing": 127,
-          "seed": 28049
-        },
-        "effects": [
-          "letterbox"
-        ],
-        "effectIntensity": 18,
-        "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 18.8
-      }
-    },
-    {
-      "id": "fa7832dd-66f5-49b2-9cb8-2d49d67fab56",
-      "type": "bump",
-      "title": "STATION BREAK: stand by bump",
-      "duration": 42,
-      "randomEligible": false,
-      "bump": {
-        "kind": "gap-filler-bump",
-        "bumpClass": "station-break",
-        "heading": "more shortly",
-        "lines": [
-          "STATION BREAK",
-          "NEXT: DE COFFEESCHOOP: block intro",
-          "11:00 AM"
-        ],
-        "alignment": "left",
-        "placement": "middle",
-        "tone": "washed",
-        "secondsPerLine": 14,
-        "tintStrength": 16,
-        "creditText": "STANDBY FILLER\nNO DEAD AIR",
-        "creditSize": 18,
-        "creditPosition": "bottom-right",
-        "wallpaper": {
-          "shapes": "argyle",
-          "scheme": "pool",
-          "spacing": 110,
-          "seed": 43409
-        },
-        "effects": [
-          "scanlines"
-        ],
-        "effectIntensity": 18,
-        "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 14.6
-      }
-    },
-    {
-      "id": "20cc27c5-1866-4bc2-bd91-582ed41a98f4",
-      "type": "bump",
-      "title": "STATION BREAK: stand by bump",
-      "duration": 42,
-      "randomEligible": false,
-      "bump": {
-        "kind": "gap-filler-bump",
-        "bumpClass": "station-break",
-        "heading": "please stand by",
-        "lines": [
-          "STATION BREAK",
-          "NEXT: DE COFFEESCHOOP: block intro",
-          "11:00 AM"
-        ],
-        "alignment": "center",
-        "placement": "middle",
-        "tone": "caption",
-        "secondsPerLine": 14,
-        "tintStrength": 16,
-        "creditText": "STANDBY FILLER\nNO DEAD AIR",
-        "creditSize": 18,
-        "creditPosition": "bottom-right",
-        "wallpaper": {
-          "shapes": "lines",
-          "scheme": "broadcast",
-          "spacing": 117,
-          "seed": 43533
-        },
-        "effects": [
-          "letterbox"
-        ],
-        "effectIntensity": 18,
-        "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 68.6
-      }
-    },
-    {
-      "id": "1199c744-5665-4da9-872e-64fee1a61ca3",
-      "type": "bump",
-      "title": "STATION BREAK: stand by bump",
-      "duration": 42,
-      "randomEligible": false,
-      "bump": {
-        "kind": "gap-filler-bump",
-        "bumpClass": "station-break",
-        "heading": "please stand by",
-        "lines": [
-          "STATION BREAK",
-          "NEXT: DE COFFEESCHOOP: block intro",
-          "11:00 AM"
-        ],
-        "alignment": "center",
-        "placement": "bottom",
-        "tone": "caption",
-        "secondsPerLine": 14,
-        "tintStrength": 16,
-        "creditText": "STANDBY FILLER\nNO DEAD AIR",
-        "creditSize": 18,
-        "creditPosition": "bottom-right",
-        "wallpaper": {
-          "shapes": "argyle",
-          "scheme": "midnight",
-          "spacing": 120,
-          "seed": 38980
-        },
-        "effects": [
-          "scanlines"
-        ],
-        "effectIntensity": 18,
-        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2001%20Welcome%20Wagon.mp3",
-        "audioStart": 252.8
-      }
-    },
-    {
-      "id": "ac895abd-6358-456e-96e8-d0f33c18cc38",
-      "type": "bump",
-      "title": "STATION BREAK: stand by bump",
-      "duration": 42,
-      "randomEligible": false,
-      "bump": {
-        "kind": "gap-filler-bump",
-        "bumpClass": "station-break",
-        "heading": "please stand by",
-        "lines": [
-          "STATION BREAK",
-          "NEXT: DE COFFEESCHOOP: block intro",
-          "11:00 AM"
-        ],
-        "alignment": "center",
-        "placement": "bottom",
-        "tone": "caption",
-        "secondsPerLine": 14,
-        "tintStrength": 16,
-        "creditText": "STANDBY FILLER\nNO DEAD AIR",
-        "creditSize": 18,
-        "creditPosition": "bottom-right",
-        "wallpaper": {
-          "shapes": "terrazzo",
-          "scheme": "blueprint",
-          "spacing": 102,
-          "seed": 6234
-        },
-        "effects": [
-          "chromatic"
-        ],
-        "effectIntensity": 18,
-        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2007%20Honse.mp3",
-        "audioStart": 11
-      }
-    },
-    {
-      "id": "b5a3ba2a-e452-4344-bc79-dcced80f1c71",
-      "type": "bump",
-      "title": "STATION BREAK: stand by bump",
-      "duration": 42,
-      "randomEligible": false,
-      "bump": {
-        "kind": "gap-filler-bump",
-        "bumpClass": "station-break",
-        "heading": "station break",
-        "lines": [
-          "STATION BREAK",
-          "NEXT: DE COFFEESCHOOP: block intro",
-          "11:00 AM"
-        ],
-        "alignment": "left",
-        "placement": "middle",
-        "tone": "washed",
-        "secondsPerLine": 14,
-        "tintStrength": 16,
-        "creditText": "STANDBY FILLER\nNO DEAD AIR",
-        "creditSize": 18,
-        "creditPosition": "bottom-right",
-        "wallpaper": {
-          "shapes": "mondrian",
-          "scheme": "pool",
-          "spacing": 133,
-          "seed": 96256
-        },
-        "effects": [
-          "chromatic"
-        ],
-        "effectIntensity": 18,
-        "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 33
-      }
-    },
-    {
-      "id": "ae00d1db-74a8-4b58-973e-0b8c76ec1d5e",
-      "type": "bump",
-      "title": "STATION BREAK: stand by bump",
-      "duration": 42,
-      "randomEligible": false,
-      "bump": {
-        "kind": "gap-filler-bump",
-        "bumpClass": "station-break",
-        "heading": "station break",
-        "lines": [
-          "STATION BREAK",
-          "NEXT: DE COFFEESCHOOP: block intro",
-          "11:00 AM"
-        ],
-        "alignment": "center",
-        "placement": "middle",
-        "tone": "washed",
-        "secondsPerLine": 14,
-        "tintStrength": 16,
-        "creditText": "STANDBY FILLER\nNO DEAD AIR",
-        "creditSize": 18,
-        "creditPosition": "bottom-right",
-        "wallpaper": {
-          "shapes": "argyle",
-          "scheme": "broadcast",
-          "spacing": 155,
-          "seed": 38358
-        },
-        "effects": [
-          "chromatic"
-        ],
-        "effectIntensity": 18,
-        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2001%20Welcome%20Wagon.mp3",
-        "audioStart": 139.8
-      }
-    },
-    {
-      "id": "4851f07e-4ccb-40dc-9776-e2880d41cf09",
-      "type": "bump",
-      "title": "STATION BREAK: stand by bump",
-      "duration": 42,
-      "randomEligible": false,
-      "bump": {
-        "kind": "gap-filler-bump",
-        "bumpClass": "station-break",
-        "heading": "please stand by",
-        "lines": [
-          "STATION BREAK",
-          "NEXT: DE COFFEESCHOOP: block intro",
-          "11:00 AM"
-        ],
-        "alignment": "left",
-        "placement": "bottom",
-        "tone": "caption",
-        "secondsPerLine": 14,
-        "tintStrength": 16,
-        "creditText": "STANDBY FILLER\nNO DEAD AIR",
-        "creditSize": 18,
-        "creditPosition": "bottom-right",
-        "wallpaper": {
-          "shapes": "lines",
-          "scheme": "blueprint",
-          "spacing": 136,
-          "seed": 33243
-        },
-        "effects": [
-          "chromatic"
-        ],
-        "effectIntensity": 18,
-        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2002%20Potion.mp3",
-        "audioStart": 108.3
-      }
-    },
-    {
-      "id": "91aa0e40-aed9-4d0e-90b9-a616b078340f",
-      "type": "bump",
-      "title": "STATION BREAK: stand by bump",
-      "duration": 42,
-      "randomEligible": false,
-      "bump": {
-        "kind": "gap-filler-bump",
-        "bumpClass": "station-break",
-        "heading": "back to program soon",
-        "lines": [
-          "STATION BREAK",
-          "NEXT: DE COFFEESCHOOP: block intro",
-          "11:00 AM"
-        ],
-        "alignment": "left",
-        "placement": "bottom",
-        "tone": "washed",
-        "secondsPerLine": 14,
-        "tintStrength": 16,
-        "creditText": "STANDBY FILLER\nNO DEAD AIR",
-        "creditSize": 18,
-        "creditPosition": "bottom-right",
-        "wallpaper": {
-          "shapes": "argyle",
-          "scheme": "paper",
-          "spacing": 125,
-          "seed": 28357
-        },
-        "effects": [
-          "letterbox"
-        ],
-        "effectIntensity": 18,
-        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2001%20Welcome%20Wagon.mp3",
-        "audioStart": 98.6
-      }
-    },
-    {
-      "id": "4ab56062-59eb-461e-bf84-22e2d2bade22",
-      "type": "bump",
-      "title": "STATION BREAK: stand by bump",
-      "duration": 42,
-      "randomEligible": false,
-      "bump": {
-        "kind": "gap-filler-bump",
-        "bumpClass": "station-break",
-        "heading": "more shortly",
-        "lines": [
-          "STATION BREAK",
-          "NEXT: DE COFFEESCHOOP: block intro",
-          "11:00 AM"
-        ],
-        "alignment": "center",
-        "placement": "bottom",
-        "tone": "washed",
-        "secondsPerLine": 14,
-        "tintStrength": 16,
-        "creditText": "STANDBY FILLER\nNO DEAD AIR",
-        "creditSize": 18,
-        "creditPosition": "bottom-right",
-        "wallpaper": {
-          "shapes": "mondrian",
-          "scheme": "midnight",
-          "spacing": 139,
-          "seed": 1759
-        },
-        "effects": [
-          "scanlines"
-        ],
-        "effectIntensity": 18,
-        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2006%20Ventilated.mp3",
-        "audioStart": 236.1
-      }
-    },
-    {
-      "id": "e4cd46bf-fa33-4402-a110-bc4f2931cefa",
-      "type": "bump",
-      "title": "STATION BREAK: stand by bump",
-      "duration": 42,
-      "randomEligible": false,
-      "bump": {
-        "kind": "gap-filler-bump",
-        "bumpClass": "station-break",
-        "heading": "back to program soon",
-        "lines": [
-          "STATION BREAK",
-          "NEXT: DE COFFEESCHOOP: block intro",
-          "11:00 AM"
-        ],
-        "alignment": "center",
-        "placement": "middle",
-        "tone": "caption",
-        "secondsPerLine": 14,
-        "tintStrength": 16,
-        "creditText": "STANDBY FILLER\nNO DEAD AIR",
-        "creditSize": 18,
-        "creditPosition": "bottom-right",
-        "wallpaper": {
-          "shapes": "terrazzo",
-          "scheme": "blueprint",
-          "spacing": 92,
-          "seed": 17197
-        },
-        "effects": [
-          "letterbox"
-        ],
-        "effectIntensity": 18,
-        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2001%20Welcome%20Wagon.mp3",
-        "audioStart": 189.4
-      }
-    },
-    {
-      "id": "ea54666f-f6a3-49c9-b6a7-4ffd535a8b17",
-      "type": "bump",
-      "title": "STATION BREAK: stand by bump",
-      "duration": 42,
-      "randomEligible": false,
-      "bump": {
-        "kind": "gap-filler-bump",
-        "bumpClass": "station-break",
-        "heading": "back to program soon",
-        "lines": [
-          "STATION BREAK",
-          "NEXT: DE COFFEESCHOOP: block intro",
-          "11:00 AM"
-        ],
-        "alignment": "left",
-        "placement": "middle",
-        "tone": "caption",
-        "secondsPerLine": 14,
-        "tintStrength": 16,
-        "creditText": "STANDBY FILLER\nNO DEAD AIR",
-        "creditSize": 18,
-        "creditPosition": "bottom-right",
-        "wallpaper": {
-          "shapes": "mondrian",
-          "scheme": "pool",
-          "spacing": 93,
-          "seed": 50871
-        },
-        "effects": [
-          "scanlines"
-        ],
-        "effectIntensity": 18,
-        "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 82.5
-      }
-    },
-    {
-      "id": "50a2ea15-6d4e-478e-85d1-7b3f81056c92",
-      "type": "bump",
-      "title": "STATION BREAK: stand by bump",
-      "duration": 42,
-      "randomEligible": false,
-      "bump": {
-        "kind": "gap-filler-bump",
-        "bumpClass": "station-break",
-        "heading": "more shortly",
-        "lines": [
-          "STATION BREAK",
-          "NEXT: DE COFFEESCHOOP: block intro",
-          "11:00 AM"
-        ],
-        "alignment": "left",
-        "placement": "bottom",
-        "tone": "washed",
-        "secondsPerLine": 14,
-        "tintStrength": 28,
-        "creditText": "STANDBY FILLER\nNO DEAD AIR",
-        "creditSize": 18,
-        "creditPosition": "bottom-right",
-        "wallpaper": {
-          "shapes": "starburst",
-          "scheme": "miami",
-          "spacing": 118,
-          "seed": 80384
-        },
-        "effects": [
-          "vhs",
-          "chromatic"
-        ],
-        "effectIntensity": 38,
-        "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 5.8
-      }
-    },
-    {
-      "id": "12d793f7-ca5f-4d3a-ba8b-bbfc4011ceb5",
-      "type": "bump",
-      "title": "STATION BREAK: stand by bump",
-      "duration": 42,
-      "randomEligible": false,
-      "bump": {
-        "kind": "gap-filler-bump",
-        "bumpClass": "station-break",
-        "heading": "please stand by",
-        "lines": [
-          "STATION BREAK",
-          "NEXT: DE COFFEESCHOOP: block intro",
-          "11:00 AM"
-        ],
-        "alignment": "center",
-        "placement": "middle",
-        "tone": "caption",
-        "secondsPerLine": 14,
-        "tintStrength": 16,
-        "creditText": "STANDBY FILLER\nNO DEAD AIR",
-        "creditSize": 18,
-        "creditPosition": "bottom-right",
-        "wallpaper": {
-          "shapes": "lines",
-          "scheme": "midnight",
-          "spacing": 121,
-          "seed": 29014
-        },
-        "effects": [
-          "scanlines"
-        ],
-        "effectIntensity": 18,
-        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2008%20Techbro.mp3",
-        "audioStart": 123.1
-      }
-    },
-    {
-      "id": "33d18305-df6b-4ab0-826e-90740e620cb7",
+      "id": "43590bc8-08ed-4331-89d3-6830ed0f44df",
       "type": "bump",
       "title": "Schedule bump",
       "folderId": "",
@@ -12572,74 +12645,89 @@
         "heading": "coming up",
         "lines": [
           {
-            "title": "Santa's New Ride",
-            "time": "10:04 AM"
+            "title": "tomorrow television 512kb",
+            "time": "6:49 PM"
           },
           {
-            "title": "YourName1960",
-            "time": "10:06 AM"
+            "title": "Animaniacs 09 1993 Commercials C",
+            "time": "7:02 PM"
           },
           {
-            "title": "The Groovie Goolies Archive",
-            "time": "10:17 AM"
-          }
-        ],
-        "alignment": "left",
-        "placement": "middle",
-        "tone": "washed",
-        "seed": 58226,
-        "wallpaper": {
-          "shapes": "plaid",
-          "scheme": "warning",
-          "spacing": 139,
-          "seed": 58226
-        },
-        "effects": [
-          "warp",
-          "fisheye"
-        ],
-        "effectIntensity": 34,
-        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2001%20Welcome%20Wagon.mp3",
-        "audioStart": 56.7
-      },
-      "generatedAt": 1778420086772
-    },
-    {
-      "id": "248c30c6-fcb5-4e17-a152-3fe1f31900d8",
-      "type": "bump",
-      "title": "Schedule bump",
-      "folderId": "",
-      "duration": 20,
-      "bump": {
-        "kind": "auto-bump",
-        "heading": "coming up",
-        "lines": [
-          {
-            "title": "The Groovie Goolies Archive",
-            "time": "10:17 AM"
+            "title": "TruthAbo1940",
+            "time": "7:04 PM"
           }
         ],
         "alignment": "left",
         "placement": "top",
-        "tone": "classic",
-        "seed": 77970,
+        "tone": "washed",
+        "seed": 18957,
         "wallpaper": {
-          "shapes": "argyle",
-          "scheme": "ruby",
-          "spacing": 51,
-          "seed": 77970
+          "shapes": "starburst",
+          "scheme": "blueprint",
+          "spacing": 58,
+          "seed": 18957
         },
         "effects": [
-          "vhs"
+          "chromatic"
         ],
-        "effectIntensity": 67,
-        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2008%20Techbro.mp3",
-        "audioStart": 127.4
+        "effectIntensity": 28,
+        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2005%20Burner%20VIP.mp3",
+        "audioStart": 24.7,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       },
-      "generatedAt": 1778420086772
+      "generatedAt": 1778432382231,
+      "randomEligible": true
     },
     {
-      "id": "2ba0beaa-efb9-45ce-b2ae-4273b7f43b2c",
+      "id": "04da1c57-b24c-4e82-b3ce-3c77f02c43c7",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "kind": "auto-bump",
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Animaniacs 09 1993 Commercials C",
+            "time": "7:02 PM"
+          },
+          {
+            "title": "TruthAbo1940",
+            "time": "7:04 PM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "bottom",
+        "tone": "classic",
+        "seed": 95708,
+        "wallpaper": {
+          "shapes": "tartan",
+          "scheme": "paper",
+          "spacing": 38,
+          "seed": 95708
+        },
+        "effects": [],
+        "effectIntensity": 28,
+        "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
+        "audioStart": 49.1,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
+      },
+      "generatedAt": 1778432382232,
+      "randomEligible": true
+    },
+    {
+      "id": "b7a68134-d084-43c6-9ce8-e75b5fe604b2",
       "type": "bump",
       "title": "Schedule bump",
       "folderId": "",
@@ -12650,25 +12738,32 @@
         "lines": [
           {
             "title": "More DoinkTV shortly",
-            "time": "10:55 AM"
+            "time": "7:15 PM"
           }
         ],
         "alignment": "left",
-        "placement": "top",
-        "tone": "washed",
-        "seed": 79099,
+        "placement": "middle",
+        "tone": "classic",
+        "seed": 23270,
         "wallpaper": {
-          "shapes": "terrazzo",
+          "shapes": "stripes",
           "scheme": "midnight",
-          "spacing": 103,
-          "seed": 79099
+          "spacing": 50,
+          "seed": 23270
         },
         "effects": [],
-        "effectIntensity": 61,
-        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2001%20Welcome%20Wagon.mp3",
-        "audioStart": 161.1
+        "effectIntensity": 28,
+        "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
+        "audioStart": 33.7,
+        "presentation": {
+          "renderMode": "server-slate",
+          "cleanDefault": true,
+          "intentionalGlitch": false
+        },
+        "intentionalGlitch": false
       },
-      "generatedAt": 1778420086772
+      "generatedAt": 1778432382232,
+      "randomEligible": true
     }
   ],
   "sourceFolders": [
@@ -12847,609 +12942,6 @@
       "duration": 472,
       "weeklyBlockId": "late-night-anime",
       "weeklyBlockName": "LATE NIGHT ANIME"
-    },
-    {
-      "id": "2b433e4e-26ad-4416-b48d-6b787906f08a",
-      "sourceId": "e51f997e-95fd-43e8-ae8a-91baa737b573",
-      "title": "STATION BREAK: CBS Commercials 07 25 87 C",
-      "startAt": 1778420156750,
-      "duration": 73,
-      "queuedAt": 1778420086765,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "c7585c3c-8656-4b1c-9fc9-10d9ae0204b6",
-      "sourceId": "3c2c393e-1166-4701-8c0f-43beb2cc2e44",
-      "title": "STATION BREAK: stand by bump",
-      "startAt": 1778420229750,
-      "duration": 42,
-      "queuedAt": 1778420086765,
-      "autoBump": true,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "b6d32c12-5c39-4799-ad26-a3582bd6b236",
-      "sourceId": "e2733732-b46c-4816-b353-d7d6363a926f",
-      "title": "STATION BREAK: Muppet Babies Commercials 1986 2 D",
-      "startAt": 1778420271750,
-      "duration": 120,
-      "queuedAt": 1778420086765,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "4a42e9f5-4e25-4bd9-84db-750da276cd4b",
-      "sourceId": "e51f997e-95fd-43e8-ae8a-91baa737b573",
-      "title": "STATION BREAK: CBS Commercials 07 25 87 C",
-      "startAt": 1778420391750,
-      "duration": 73,
-      "queuedAt": 1778420086765,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "e93b7944-c003-4fdd-820d-a8357dbe6601",
-      "sourceId": "84404f66-1f09-4c93-8acc-009e63705d2b",
-      "title": "STATION BREAK: stand by bump",
-      "startAt": 1778420464750,
-      "duration": 42,
-      "queuedAt": 1778420086765,
-      "autoBump": true,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "a702a2d1-7fd9-4a58-9ba9-5c909447ae04",
-      "sourceId": "162028f3-db54-46ce-a6af-571179374ba6",
-      "title": "STATION BREAK: 1960 commercial for Off insect repellent",
-      "startAt": 1778420506750,
-      "duration": 34,
-      "queuedAt": 1778420086765,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "3b925944-d55d-470f-b496-f30b3d64d131",
-      "sourceId": "851d47a4-4e3c-43c3-a5c0-6b98cd52507f",
-      "title": "STATION BREAK: Animaniacs 09 1993 Commercials E",
-      "startAt": 1778420540750,
-      "duration": 136,
-      "queuedAt": 1778420086765,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "65966c95-93b7-45b2-a13b-ffef9d016ed6",
-      "sourceId": "fa7832dd-66f5-49b2-9cb8-2d49d67fab56",
-      "title": "STATION BREAK: stand by bump",
-      "startAt": 1778420676750,
-      "duration": 42,
-      "queuedAt": 1778420086765,
-      "autoBump": true,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "19fabc2a-8b7d-4471-98f1-cb0089d85a71",
-      "sourceId": "7c9dfda4-eca5-4bab-833d-852e9ed120dd",
-      "title": "STATION BREAK: 1950 Commercial for Camel cigarettes (Ad 2)",
-      "startAt": 1778420718750,
-      "duration": 68,
-      "queuedAt": 1778420086765,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "094efc92-f583-45a9-952a-62347c86ef42",
-      "sourceId": "abd2e49b-9802-4661-b456-099ad2c72b7a",
-      "title": "STATION BREAK: Garfield 5 5 Commercials b",
-      "startAt": 1778420786750,
-      "duration": 131,
-      "queuedAt": 1778420086765,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "455d4c0d-a1c7-4169-abbb-4592223c34d2",
-      "sourceId": "20cc27c5-1866-4bc2-bd91-582ed41a98f4",
-      "title": "STATION BREAK: stand by bump",
-      "startAt": 1778420917750,
-      "duration": 42,
-      "queuedAt": 1778420086766,
-      "autoBump": true,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "ff9d5763-9d82-4c3f-a984-97c8cdc5cbab",
-      "sourceId": "dd02a250-4c33-4351-baee-ebe3b5c1b890",
-      "title": "STATION BREAK: Family Channel Adverts 1993 Mario1 H",
-      "startAt": 1778420959750,
-      "duration": 138,
-      "queuedAt": 1778420086766,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "79662c7b-7a8a-40fe-9101-58fbdb994752",
-      "sourceId": "18c4e67a-3002-451c-8498-60a2d8d87910",
-      "title": "STATION BREAK: 1954 commercial for R.D.X. weightloss pills",
-      "startAt": 1778421097750,
-      "duration": 33,
-      "queuedAt": 1778420086766,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "34a088ff-8a05-4a7b-987c-8663a7fa2401",
-      "sourceId": "1199c744-5665-4da9-872e-64fee1a61ca3",
-      "title": "STATION BREAK: stand by bump",
-      "startAt": 1778421130750,
-      "duration": 42,
-      "queuedAt": 1778420086766,
-      "autoBump": true,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "79b669d6-b980-425a-b10c-13318448b198",
-      "sourceId": "85f3ef20-e05b-473a-9a32-85b2a132aeb4",
-      "title": "STATION BREAK: 1950 Commercial for General Electric television set",
-      "startAt": 1778421172750,
-      "duration": 79,
-      "queuedAt": 1778420086766,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "0994fb5d-6c20-4182-81fd-8e3d528d8311",
-      "sourceId": "071c1a09-90ca-4b68-adea-12e51f363240",
-      "title": "STATION BREAK: Animaniacs 09 1993 Commercials C",
-      "startAt": 1778421251750,
-      "duration": 109,
-      "queuedAt": 1778420086766,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "8bec0565-1f6e-40b6-b8e9-84e5d521d6df",
-      "sourceId": "ac895abd-6358-456e-96e8-d0f33c18cc38",
-      "title": "STATION BREAK: stand by bump",
-      "startAt": 1778421360750,
-      "duration": 42,
-      "queuedAt": 1778420086766,
-      "autoBump": true,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "111efec7-2f48-429b-856d-d9cbfb282006",
-      "sourceId": "0a3ce777-2c24-4189-a05e-7ba6a73a1e3d",
-      "title": "STATION BREAK: Classic Commercial for Chesterfield Cigarettes",
-      "startAt": 1778421402750,
-      "duration": 47,
-      "queuedAt": 1778420086766,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "8f2c67f5-b962-4bc5-aef3-dd58f152e2d7",
-      "sourceId": "b3677d03-9919-4a57-b4b1-e7fad4f8f1a5",
-      "title": "STATION BREAK: 1953 commercial for Lucky Strike cigarettes",
-      "startAt": 1778421449750,
-      "duration": 34,
-      "queuedAt": 1778420086766,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "2e240b00-9703-4762-8f2c-543389918b21",
-      "sourceId": "b5a3ba2a-e452-4344-bc79-dcced80f1c71",
-      "title": "STATION BREAK: stand by bump",
-      "startAt": 1778421483750,
-      "duration": 42,
-      "queuedAt": 1778420086767,
-      "autoBump": true,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "ec82c2e2-899c-43eb-9ba2-fb69752fcab8",
-      "sourceId": "f1a2301b-4c18-475d-9004-6644c1582b25",
-      "title": "STATION BREAK: Family Channel3 Commercials B",
-      "startAt": 1778421525750,
-      "duration": 140,
-      "queuedAt": 1778420086767,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "0dd59e0b-69f1-4074-bda5-4c87050199a8",
-      "sourceId": "95b75cf2-5059-473e-bf2c-1fc6ddc67bf2",
-      "title": "STATION BREAK: Classic Commercial for Post's Sugar Crisps",
-      "startAt": 1778421665750,
-      "duration": 100,
-      "queuedAt": 1778420086767,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "480f72dc-14ef-410c-abfa-7acdf9450386",
-      "sourceId": "ae00d1db-74a8-4b58-973e-0b8c76ec1d5e",
-      "title": "STATION BREAK: stand by bump",
-      "startAt": 1778421765750,
-      "duration": 42,
-      "queuedAt": 1778420086767,
-      "autoBump": true,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "c73fb6d5-3b5d-49bc-a056-e9bb7be1db84",
-      "sourceId": "bdbf0802-5251-4a41-8c08-1666b0598319",
-      "title": "STATION BREAK: Classic Commercial: Metrecal Diet Drink (1965)",
-      "startAt": 1778421807750,
-      "duration": 69,
-      "queuedAt": 1778420086767,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "ae3fd305-8a21-4699-b38d-e9f9fe001f7c",
-      "sourceId": "5ee0a4cb-d51c-4cda-b21c-785954e7e342",
-      "title": "STATION BREAK: Family Channel Adverts 1993 6 McD Sonic J",
-      "startAt": 1778421876750,
-      "duration": 167,
-      "queuedAt": 1778420086767,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "e0506e7a-71d8-4c49-9db0-24505fa08e96",
-      "sourceId": "4851f07e-4ccb-40dc-9776-e2880d41cf09",
-      "title": "STATION BREAK: stand by bump",
-      "startAt": 1778422043750,
-      "duration": 42,
-      "queuedAt": 1778420086767,
-      "autoBump": true,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "d4061c25-aa5c-4033-bf05-392f4e9059eb",
-      "sourceId": "7b926738-3bd9-4bb7-89a5-8c9da3eff423",
-      "title": "STATION BREAK: Ducktales 87 Commercials2 M",
-      "startAt": 1778422085750,
-      "duration": 132,
-      "queuedAt": 1778420086767,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "2d38212b-605d-4d20-9190-9138751399ed",
-      "sourceId": "071c1a09-90ca-4b68-adea-12e51f363240",
-      "title": "STATION BREAK: Animaniacs 09 1993 Commercials C",
-      "startAt": 1778422217750,
-      "duration": 109,
-      "queuedAt": 1778420086767,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "3c9bf36e-d53e-4bc9-87be-00cafeff7540",
-      "sourceId": "91aa0e40-aed9-4d0e-90b9-a616b078340f",
-      "title": "STATION BREAK: stand by bump",
-      "startAt": 1778422326750,
-      "duration": 42,
-      "queuedAt": 1778420086767,
-      "autoBump": true,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "ef3bd54e-0f0d-4db2-bd7a-78246d2ff91c",
-      "sourceId": "851d47a4-4e3c-43c3-a5c0-6b98cd52507f",
-      "title": "STATION BREAK: Animaniacs 09 1993 Commercials E",
-      "startAt": 1778422368750,
-      "duration": 136,
-      "queuedAt": 1778420086767,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "c4cc4fc5-f530-4c6d-94bf-97daf98a5965",
-      "sourceId": "90a99413-ff7f-4920-ba40-45aa5f8d9ad7",
-      "title": "STATION BREAK: Family Channel Adverts 1993 5 Cocoa Krispies N",
-      "startAt": 1778422504750,
-      "duration": 167,
-      "queuedAt": 1778420086767,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "4c24f060-ba02-46ba-9df4-8f930d31ca3b",
-      "sourceId": "4ab56062-59eb-461e-bf84-22e2d2bade22",
-      "title": "STATION BREAK: stand by bump",
-      "startAt": 1778422671750,
-      "duration": 42,
-      "queuedAt": 1778420086768,
-      "autoBump": true,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "b8db7492-359e-4aa1-8130-b67c17e94178",
-      "sourceId": "e51f997e-95fd-43e8-ae8a-91baa737b573",
-      "title": "STATION BREAK: CBS Commercials 07 25 87 C",
-      "startAt": 1778422713750,
-      "duration": 73,
-      "queuedAt": 1778420086768,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "68e00407-6e95-4fd1-b27d-f6fba61e3a4b",
-      "sourceId": "e2733732-b46c-4816-b353-d7d6363a926f",
-      "title": "STATION BREAK: Muppet Babies Commercials 1986 2 D",
-      "startAt": 1778422786750,
-      "duration": 120,
-      "queuedAt": 1778420086768,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "b8091fd5-dbd9-4c9d-af78-ddb4af13cc02",
-      "sourceId": "e4cd46bf-fa33-4402-a110-bc4f2931cefa",
-      "title": "STATION BREAK: stand by bump",
-      "startAt": 1778422906750,
-      "duration": 42,
-      "queuedAt": 1778420086768,
-      "autoBump": true,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "cdbd14b9-c704-4025-bbe6-fe1ed26709b2",
-      "sourceId": "7e5f8dd7-8462-4648-b7ce-9ac180bbdd0f",
-      "title": "STATION BREAK: Family Channel Adverts 1993 6 E",
-      "startAt": 1778422948750,
-      "duration": 148,
-      "queuedAt": 1778420086768,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "5168a9df-2891-4003-8a6f-8631c1885455",
-      "sourceId": "ea79098a-8340-4ace-8fd3-6ece375c0457",
-      "title": "STATION BREAK: Fifties Advertising: UNIVAC Computer Commercial (5 February 1956) (Ad 2 of 2)",
-      "startAt": 1778423096750,
-      "duration": 28,
-      "queuedAt": 1778420086768,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "f7f3d014-dcf9-47ce-a753-2644fd712c8e",
-      "sourceId": "ea54666f-f6a3-49c9-b6a7-4ffd535a8b17",
-      "title": "STATION BREAK: stand by bump",
-      "startAt": 1778423124750,
-      "duration": 42,
-      "queuedAt": 1778420086768,
-      "autoBump": true,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "f9169e02-d944-4996-93f3-f296616751f6",
-      "sourceId": "6733b0e7-ce2d-41f6-926a-4063a9fb912e",
-      "title": "STATION BREAK: WPLG10 Ewok Commercials 1984 E",
-      "startAt": 1778423166750,
-      "duration": 156,
-      "queuedAt": 1778420086768,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "71bdaa94-23a4-471b-8e36-aa5314b948c3",
-      "sourceId": "abd2e49b-9802-4661-b456-099ad2c72b7a",
-      "title": "STATION BREAK: Garfield 5 5 Commercials b",
-      "startAt": 1778423322750,
-      "duration": 131,
-      "queuedAt": 1778420086768,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "5881cf48-b053-4b10-9dd6-fb7f184feff5",
-      "sourceId": "50a2ea15-6d4e-478e-85d1-7b3f81056c92",
-      "title": "STATION BREAK: stand by bump",
-      "startAt": 1778423453750,
-      "duration": 42,
-      "queuedAt": 1778420086768,
-      "autoBump": true,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "a46e487a-265e-415c-ba6c-7ee9efd947ad",
-      "sourceId": "1f963837-6258-4ff7-a4e3-1044116424ae",
-      "title": "STATION BREAK: 1952 commercial for Kellogg's Shredded Wheat",
-      "startAt": 1778423495750,
-      "duration": 75,
-      "queuedAt": 1778420086768,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "e7541fba-5077-46a5-8ef9-6d980457738a",
-      "sourceId": "3d4cc6df-cbbe-403f-8a45-685015addfdb",
-      "title": "STATION BREAK: Family Channel3 Commercials L",
-      "startAt": 1778423570750,
-      "duration": 165,
-      "queuedAt": 1778420086768,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "744d007f-a7ad-4a68-b96b-83626422bc1c",
-      "sourceId": "12d793f7-ca5f-4d3a-ba8b-bbfc4011ceb5",
-      "title": "STATION BREAK: stand by bump",
-      "startAt": 1778423735750,
-      "duration": 42,
-      "queuedAt": 1778420086768,
-      "autoBump": true,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "b97f1afb-5680-4552-bf50-944c30d2c8eb",
-      "sourceId": "588de514-f709-44d5-ba03-cf3bf7773384",
-      "title": "STATION BREAK: KPTV Ducktales Commercials 9 19 87 C",
-      "startAt": 1778423777750,
-      "duration": 137,
-      "queuedAt": 1778420086768,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "a14b5928-1239-4a5b-99a2-8809835b2f81",
-      "sourceId": "309884fc-66b1-41d8-a728-0f4d8975f231",
-      "title": "STATION BREAK: Price is Right Commercials Q",
-      "startAt": 1778423914750,
-      "duration": 102,
-      "queuedAt": 1778420086768,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "b1b6b67e-d5d2-4388-b509-7811247d0ef4",
-      "sourceId": "309884fc-66b1-41d8-a728-0f4d8975f231",
-      "title": "STATION BREAK: Price is Right Commercials Q",
-      "startAt": 1778424016750,
-      "duration": 102,
-      "queuedAt": 1778420129884,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "bf72cd1d-1dd5-4321-b648-06888c129792",
-      "sourceId": "309884fc-66b1-41d8-a728-0f4d8975f231",
-      "title": "STATION BREAK: Price is Right Commercials Q",
-      "startAt": 1778424118750,
-      "duration": 102,
-      "queuedAt": 1778420157905,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
-    },
-    {
-      "id": "53589634-bca6-4c88-becf-e3d0dde9d53f",
-      "sourceId": "309884fc-66b1-41d8-a728-0f4d8975f231",
-      "title": "STATION BREAK: Price is Right Commercials Q",
-      "startAt": 1778424220750,
-      "duration": 102,
-      "queuedAt": 1778420231095,
-      "gapFiller": true,
-      "gapFillerVersion": 5,
-      "weeklyBlockId": "station-break",
-      "weeklyBlockName": "STATION BREAK"
     },
     {
       "id": "825ed193-706b-4e7f-b811-79f052b06fad",
@@ -16417,79 +15909,80 @@
   ],
   "liveQueue": [
     {
-      "id": "3ef2d681-3cb8-4047-b630-5e7fc32409ad",
-      "sourceId": "2497c8e7-72c0-426c-a797-3654d94a3d06",
+      "id": "51541dcb-5844-4873-b768-f18812503bf3",
+      "sourceId": "4d8659e9-f07f-451d-b8a8-980d5f904aec",
       "title": "",
-      "startAt": 1778420086770,
-      "duration": 418,
-      "queuedAt": 1778420086770,
-      "autoQueued": true
-    },
-    {
-      "id": "943e7acd-1af9-42b7-bd0f-ff9865971c94",
-      "sourceId": "6b101748-a2ad-4582-b46b-9f2ff181d67c",
-      "title": "",
-      "startAt": 1778420504770,
-      "duration": 1340,
+      "startAt": 1778432381770,
+      "duration": 10499,
       "sourceOffset": 0,
-      "queuedAt": 1778420086770,
+      "queuedAt": 1778421987941,
       "autoQueued": true
     },
     {
-      "id": "539b1443-2f36-4131-8d33-49cd97368ec9",
-      "sourceId": "33d18305-df6b-4ab0-826e-90740e620cb7",
+      "id": "a0321d36-3533-44ff-95c9-fcc9726d534f",
+      "sourceId": "f19a66b0-71e7-4530-a666-5720e542f9ed",
+      "title": "",
+      "startAt": 1778442880770,
+      "duration": 10499,
+      "sourceOffset": 0,
+      "queuedAt": 1778422596207,
+      "autoQueued": true
+    },
+    {
+      "id": "b28a216f-476f-45b9-9971-fa21cf78a083",
+      "sourceId": "43590bc8-08ed-4331-89d3-6830ed0f44df",
       "title": "Schedule bump",
-      "startAt": 1778421844770,
+      "startAt": 1778453379770,
       "duration": 20,
-      "queuedAt": 1778420086771,
+      "queuedAt": 1778432382229,
       "autoBump": true
     },
     {
-      "id": "417459b2-961c-4601-ac5c-e85633bafe0c",
-      "sourceId": "59500902-1138-4f4b-8ef7-711a71f6d99a",
+      "id": "52c53011-99c7-4bb3-89cd-2f8c6617a259",
+      "sourceId": "0f1e7358-f801-44a3-adc8-28f92f60547b",
       "title": "",
-      "startAt": 1778421864770,
-      "duration": 143,
+      "startAt": 1778453399770,
+      "duration": 737,
       "sourceOffset": 0,
-      "queuedAt": 1778420086770,
+      "queuedAt": 1778424877907,
       "autoQueued": true
     },
     {
-      "id": "da3696f9-5dc7-4b9f-828f-0a499d4d7322",
-      "sourceId": "5911eba7-ff28-4059-a038-975a9b7c8f28",
-      "title": "",
-      "startAt": 1778422007770,
-      "duration": 608,
-      "sourceOffset": 0,
-      "queuedAt": 1778420086770,
-      "autoQueued": true
-    },
-    {
-      "id": "62d04df2-9d56-444d-871c-8750b5c8df12",
-      "sourceId": "248c30c6-fcb5-4e17-a152-3fe1f31900d8",
+      "id": "a05510a3-ec94-4614-ab30-cee916ac99e8",
+      "sourceId": "04da1c57-b24c-4e82-b3ce-3c77f02c43c7",
       "title": "Schedule bump",
-      "startAt": 1778422615770,
+      "startAt": 1778454136770,
       "duration": 20,
-      "queuedAt": 1778420086771,
+      "queuedAt": 1778432382229,
       "autoBump": true
     },
     {
-      "id": "15dd7153-eb84-42a1-ab6a-4b66cfc561ea",
-      "sourceId": "5c0466bf-3d5d-4229-a16b-864cb6ff7e59",
+      "id": "0d9cf2fa-9e79-4cdc-a3c9-51d2d3ad2da6",
+      "sourceId": "071c1a09-90ca-4b68-adea-12e51f363240",
       "title": "",
-      "startAt": 1778422635770,
-      "duration": 2282,
+      "startAt": 1778454156770,
+      "duration": 109,
       "sourceOffset": 0,
-      "queuedAt": 1778420086770,
+      "queuedAt": 1778432315131,
       "autoQueued": true
     },
     {
-      "id": "ec8a7741-bec0-47ac-a8e7-e04f271d3552",
-      "sourceId": "2ba0beaa-efb9-45ce-b2ae-4273b7f43b2c",
+      "id": "0d38a19b-6af8-4283-9388-d05924124667",
+      "sourceId": "8d046ea0-5ddf-40b3-ac04-c783077d960c",
+      "title": "",
+      "startAt": 1778454265770,
+      "duration": 635,
+      "sourceOffset": 0,
+      "queuedAt": 1778432382228,
+      "autoQueued": true
+    },
+    {
+      "id": "c01907df-014d-4f08-96ab-8e4f362e0103",
+      "sourceId": "b7a68134-d084-43c6-9ce8-e75b5fe604b2",
       "title": "Schedule bump",
-      "startAt": 1778424917770,
+      "startAt": 1778454900770,
       "duration": 20,
-      "queuedAt": 1778420086771,
+      "queuedAt": 1778432382229,
       "autoBump": true
     }
   ],
@@ -17206,6 +16699,198 @@
       "suggestions": [],
       "votes": [],
       "createdAt": 1778403128267
+    },
+    {
+      "id": "program:825ed193-706b-4e7f-b811-79f052b06fad",
+      "programId": "825ed193-706b-4e7f-b811-79f052b06fad",
+      "sourceId": "3acd0455-80d3-4884-ba2e-3a873f8d6596",
+      "title": "DE COFFEESCHOOP: block intro",
+      "startAt": 1778425200000,
+      "duration": 16,
+      "weeklyBlockId": "de-coffeeschoop",
+      "weeklyBlockName": "DE COFFEESCHOOP",
+      "isMovie": false,
+      "isShow": false,
+      "suggestionsStatus": "idle",
+      "suggestions": [],
+      "votes": [],
+      "createdAt": 1778425200334
+    },
+    {
+      "id": "program:38095fc6-c756-4caf-b3ba-1af7b095ec4c",
+      "programId": "38095fc6-c756-4caf-b3ba-1af7b095ec4c",
+      "sourceId": "7574e165-fd2f-4e19-933d-258e451bdf6b",
+      "title": "DE COFFEESCHOOP: GrooveTV #208 - Disco Biscuits",
+      "startAt": 1778425216000,
+      "duration": 543,
+      "weeklyBlockId": "de-coffeeschoop",
+      "weeklyBlockName": "DE COFFEESCHOOP",
+      "isMovie": false,
+      "isShow": true,
+      "suggestionsStatus": "idle",
+      "suggestions": [],
+      "votes": [],
+      "createdAt": 1778425216351
+    },
+    {
+      "id": "program:acb860e4-fd7e-4815-b5b9-5f923f5d7329",
+      "programId": "acb860e4-fd7e-4815-b5b9-5f923f5d7329",
+      "sourceId": "5c9bc57a-9186-4137-944f-56ebdcc0cb45",
+      "title": "DE COFFEESCHOOP: break bump",
+      "startAt": 1778425759000,
+      "duration": 18,
+      "weeklyBlockId": "de-coffeeschoop",
+      "weeklyBlockName": "DE COFFEESCHOOP",
+      "isMovie": false,
+      "isShow": false,
+      "suggestionsStatus": "idle",
+      "suggestions": [],
+      "votes": [],
+      "createdAt": 1778425759754
+    },
+    {
+      "id": "program:462fd388-31d9-476c-90e4-55471fc91269",
+      "programId": "462fd388-31d9-476c-90e4-55471fc91269",
+      "sourceId": "7574e165-fd2f-4e19-933d-258e451bdf6b",
+      "title": "DE COFFEESCHOOP: GrooveTV #208 - Disco Biscuits",
+      "startAt": 1778425777000,
+      "duration": 3227,
+      "weeklyBlockId": "de-coffeeschoop",
+      "weeklyBlockName": "DE COFFEESCHOOP",
+      "isMovie": true,
+      "isShow": false,
+      "suggestionsStatus": "empty",
+      "suggestions": [],
+      "votes": [],
+      "createdAt": 1778425777019
+    },
+    {
+      "id": "program:6bf5ec05-7c66-4647-b706-6d0e1d45d5d7",
+      "programId": "6bf5ec05-7c66-4647-b706-6d0e1d45d5d7",
+      "sourceId": "4c1e45bb-ac93-440a-8349-b31f4c6222d2",
+      "title": "DE COFFEESCHOOP: block bump",
+      "startAt": 1778429004000,
+      "duration": 16,
+      "weeklyBlockId": "de-coffeeschoop",
+      "weeklyBlockName": "DE COFFEESCHOOP",
+      "isMovie": false,
+      "isShow": false,
+      "suggestionsStatus": "idle",
+      "suggestions": [],
+      "votes": [],
+      "createdAt": 1778429004136
+    },
+    {
+      "id": "program:043abda5-5c92-42bb-b3d6-587d8558e723",
+      "programId": "043abda5-5c92-42bb-b3d6-587d8558e723",
+      "sourceId": "c7583b29-3377-4b3e-a4d3-4ffe54d1239a",
+      "title": "DE COFFEESCHOOP: 🎭👏𝙎𝙩𝙖𝙣𝙙-𝙐𝙥 𝘾𝙤𝙢𝙚𝙙𝙮👏🎭",
+      "startAt": 1778429020000,
+      "duration": 3794,
+      "weeklyBlockId": "de-coffeeschoop",
+      "weeklyBlockName": "DE COFFEESCHOOP",
+      "isMovie": true,
+      "isShow": false,
+      "suggestionsStatus": "empty",
+      "suggestions": [],
+      "votes": [],
+      "createdAt": 1778429020152
+    },
+    {
+      "id": "program:cf9b547a-2a82-45b9-897e-b6fe8a1cb0d6",
+      "programId": "cf9b547a-2a82-45b9-897e-b6fe8a1cb0d6",
+      "sourceId": "7a518da0-2516-4a3a-93f7-0f9bf032bb7d",
+      "title": "DE COFFEESCHOOP: Merrie Melodies - A Corny Concerto (Bugs Bunny, Daffy Duck, Elmer Fudd)",
+      "startAt": 1778432814000,
+      "duration": 478,
+      "weeklyBlockId": "de-coffeeschoop",
+      "weeklyBlockName": "DE COFFEESCHOOP",
+      "isMovie": false,
+      "isShow": true,
+      "suggestionsStatus": "idle",
+      "suggestions": [],
+      "votes": [],
+      "createdAt": 1778432814863
+    },
+    {
+      "id": "program:5c9f47a2-18b3-47df-aaef-28f3c37aed0c",
+      "programId": "5c9f47a2-18b3-47df-aaef-28f3c37aed0c",
+      "sourceId": "f0138afb-cd86-44d5-98ab-88493bdb704e",
+      "title": "DE COFFEESCHOOP: block bump",
+      "startAt": 1778433292000,
+      "duration": 16,
+      "weeklyBlockId": "de-coffeeschoop",
+      "weeklyBlockName": "DE COFFEESCHOOP",
+      "isMovie": false,
+      "isShow": false,
+      "suggestionsStatus": "idle",
+      "suggestions": [],
+      "votes": [],
+      "createdAt": 1778433292941
+    },
+    {
+      "id": "program:c5d4cc36-feb6-4dae-b56d-f7b32fb0947c",
+      "programId": "c5d4cc36-feb6-4dae-b56d-f7b32fb0947c",
+      "sourceId": "889a7a91-f61f-43ef-8ed2-d9be140bafe1",
+      "title": "DE COFFEESCHOOP: Eve of Destruction",
+      "startAt": 1778433308000,
+      "duration": 415,
+      "weeklyBlockId": "de-coffeeschoop",
+      "weeklyBlockName": "DE COFFEESCHOOP",
+      "isMovie": false,
+      "isShow": true,
+      "suggestionsStatus": "idle",
+      "suggestions": [],
+      "votes": [],
+      "createdAt": 1778433308021
+    },
+    {
+      "id": "program:17b87a20-61e8-4b84-82b7-ef7f2485315c",
+      "programId": "17b87a20-61e8-4b84-82b7-ef7f2485315c",
+      "sourceId": "e0d5fd46-ac0a-44ca-bdb2-34ad66221191",
+      "title": "DE COFFEESCHOOP: Sunset Tower Records, Los Angeles 1971",
+      "startAt": 1778433723000,
+      "duration": 632,
+      "weeklyBlockId": "de-coffeeschoop",
+      "weeklyBlockName": "DE COFFEESCHOOP",
+      "isMovie": false,
+      "isShow": true,
+      "suggestionsStatus": "idle",
+      "suggestions": [],
+      "votes": [],
+      "createdAt": 1778433723043
+    },
+    {
+      "id": "program:26b93e29-46d4-45aa-8ca9-9f0a744c8a2e",
+      "programId": "26b93e29-46d4-45aa-8ca9-9f0a744c8a2e",
+      "sourceId": "dd24a0b4-6f4f-40d8-ae28-238119bbfa8f",
+      "title": "DE COFFEESCHOOP: block bump",
+      "startAt": 1778434355000,
+      "duration": 16,
+      "weeklyBlockId": "de-coffeeschoop",
+      "weeklyBlockName": "DE COFFEESCHOOP",
+      "isMovie": false,
+      "isShow": false,
+      "suggestionsStatus": "idle",
+      "suggestions": [],
+      "votes": [],
+      "createdAt": 1778434355497
+    },
+    {
+      "id": "program:4acee946-3daa-47a1-aaaa-7c2a9bd8dcd4",
+      "programId": "4acee946-3daa-47a1-aaaa-7c2a9bd8dcd4",
+      "sourceId": "f6887396-ac2c-4678-80c1-a2d292a73755",
+      "title": "DE COFFEESCHOOP: Thief of Bagdad",
+      "startAt": 1778434371000,
+      "duration": 669,
+      "weeklyBlockId": "de-coffeeschoop",
+      "weeklyBlockName": "DE COFFEESCHOOP",
+      "isMovie": false,
+      "isShow": true,
+      "suggestionsStatus": "idle",
+      "suggestions": [],
+      "votes": [],
+      "createdAt": 1778434371624
     }
   ],
   "fadeBreaks": {
@@ -17248,6 +16933,14 @@
     "9d3580e0-9b83-4afa-a2cf-c3856cfd68bf": {
       "status": "none",
       "updatedAt": 1778405669942
+    },
+    "f19a66b0-71e7-4530-a666-5720e542f9ed": {
+      "status": "none",
+      "updatedAt": 1778422597927
+    },
+    "0f1e7358-f801-44a3-adc8-28f92f60547b": {
+      "status": "none",
+      "updatedAt": 1778424881600
     }
   }
 }

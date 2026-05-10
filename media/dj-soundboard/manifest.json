@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-05-10T07:35:29.904Z",
+  "generatedAt": "2026-05-10T17:19:25.159Z",
   "groups": {
     "quotes": {
       "label": "Quotes",
@@ -29,6 +29,14 @@
     "stings": {
       "label": "Stings",
       "color": "#8fd06d"
+    },
+    "memes": {
+      "label": "Meme Hits",
+      "color": "#f06c8f"
+    },
+    "morning": {
+      "label": "Morning DJ",
+      "color": "#ff9d5c"
     }
   },
   "sounds": [
@@ -287,6 +295,78 @@
       "path": "/media/dj-soundboard/32-quotes-ufo-description.wav",
       "duration": 19.2,
       "sourceFile": "C:/Loopcloud/ISR_License Free Movie Expansion 2 (970114acf0e8)/LM2_Ufo/LM2_Spoken_Description_02.wav"
+    },
+    {
+      "id": "meme-rimshot",
+      "label": "Rimshot",
+      "group": "memes",
+      "path": "/media/dj-soundboard/33-memes-rimshot.wav",
+      "duration": 1.9,
+      "sourceFile": "https://archive.org/details/rimshot_739"
+    },
+    {
+      "id": "meme-sad-trombone",
+      "label": "Sad Trombone",
+      "group": "memes",
+      "path": "/media/dj-soundboard/34-memes-sad-trombone.wav",
+      "duration": 5,
+      "sourceFile": "https://archive.org/details/sad-trombone-sound-effect-hd-1"
+    },
+    {
+      "id": "meme-twang",
+      "label": "Twang",
+      "group": "memes",
+      "path": "/media/dj-soundboard/35-memes-twang.wav",
+      "duration": 0.9,
+      "sourceFile": "https://archive.org/details/unknown-twang-sound"
+    },
+    {
+      "id": "meme-crickets",
+      "label": "Crickets",
+      "group": "memes",
+      "path": "/media/dj-soundboard/36-memes-crickets.wav",
+      "duration": 4.5,
+      "sourceFile": "https://archive.org/details/78_crickets_gbia0222393b"
+    },
+    {
+      "id": "dj-applause-pop",
+      "label": "Applause Pop",
+      "group": "morning",
+      "path": "/media/dj-soundboard/37-dj-applause-pop.wav",
+      "duration": 4.2,
+      "sourceFile": "https://archive.org/details/78_applause_gbia0467984b"
+    },
+    {
+      "id": "dj-audience-bite",
+      "label": "Audience Bite",
+      "group": "morning",
+      "path": "/media/dj-soundboard/38-dj-audience-heckle.wav",
+      "duration": 4,
+      "sourceFile": "https://archive.org/details/78_audience-re-actions_gbia0467974a"
+    },
+    {
+      "id": "dj-auto-horns",
+      "label": "Auto Horns",
+      "group": "morning",
+      "path": "/media/dj-soundboard/39-dj-auto-horn.wav",
+      "duration": 4,
+      "sourceFile": "https://archive.org/details/78_auto-horn-effects_gbia0467982b"
+    },
+    {
+      "id": "dj-phone-bank",
+      "label": "Phone Bank",
+      "group": "morning",
+      "path": "/media/dj-soundboard/40-dj-phone-bank.wav",
+      "duration": 5,
+      "sourceFile": "https://archive.org/details/78_1-telephone-bell-2-rings-2-telephone-bell-2-rings-3-automatic-bell-3-ring_gbia0426527b"
+    },
+    {
+      "id": "dj-wake-up-panic",
+      "label": "Wake-Up Panic",
+      "group": "morning",
+      "path": "/media/dj-soundboard/41-dj-reveille-panic.wav",
+      "duration": 5.5,
+      "sourceFile": "https://archive.org/details/78_1-bosn-whistle-reveille-2-public-address-system-feed-back-effect-3-winch-4_gbia0033751a"
     }
   ]
 }
