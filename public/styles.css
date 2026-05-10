@@ -4973,35 +4973,114 @@ button:disabled {
   background: rgba(0, 0, 0, 0.26);
 }
 
-.weekly-schedule-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(154px, 1fr));
-  gap: 6px;
-  overflow-x: auto;
-  padding: 0 0 8px;
-}
-
-.weekly-day {
-  min-width: 154px;
-  border: 1px solid rgba(255, 224, 164, 0.14);
+.schedule-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -2px 0 8px;
+  padding: 6px;
+  border: 1px solid rgba(255, 224, 164, 0.12);
   border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(0, 0, 0, 0.12)),
-    rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.2);
 }
 
+.schedule-zoom {
+  display: grid;
+  grid-template-columns: 32px minmax(120px, 1fr) 32px;
+  gap: 6px;
+  align-items: center;
+  min-width: 210px;
+}
+
+.schedule-zoom input {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+#scheduleZoomLabel {
+  color: var(--muted);
+  font-family: "Consolas", "Lucida Console", monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.weekly-schedule-grid {
+  --schedule-hour-height: 42px;
+  overflow: auto;
+  max-height: min(68vh, 780px);
+  padding: 0 0 8px;
+  border: 1px solid rgba(255, 224, 164, 0.1);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.weekly-timeline {
+  display: grid;
+  grid-template-columns: 42px repeat(7, minmax(158px, 1fr));
+  min-width: 1160px;
+  align-items: start;
+}
+
+.weekly-time-rail {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: rgba(9, 10, 12, 0.96);
+  border-right: 1px solid rgba(255, 224, 164, 0.14);
+}
+
+.weekly-corner,
 .weekly-day h3 {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 4;
+  min-height: 32px;
+  border-bottom: 1px solid rgba(255, 224, 164, 0.14);
+  background: rgba(14, 15, 17, 0.96);
+}
+
+.weekly-corner {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-family: "Consolas", "Lucida Console", monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.weekly-time-scale,
+.weekly-day-canvas {
+  position: relative;
+  height: calc(var(--schedule-hour-height) * 24);
+}
+
+.weekly-time-scale span {
+  position: absolute;
+  right: 6px;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-family: "Consolas", "Lucida Console", monospace;
+  font-size: 9px;
+}
+
+.weekly-day {
+  min-width: 158px;
+  border-right: 1px solid rgba(255, 224, 164, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.08)),
+    rgba(0, 0, 0, 0.16);
+}
+
+.weekly-day h3 {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
   margin: 0;
-  padding: 6px 7px;
-  border-bottom: 1px solid rgba(255, 224, 164, 0.14);
-  background: rgba(14, 15, 17, 0.92);
+  padding: 0 8px;
   color: var(--accent);
   font-size: 10px;
   font-weight: 1000;
@@ -5016,16 +5095,19 @@ button:disabled {
   letter-spacing: 0;
 }
 
-.weekly-day-list {
-  display: grid;
-  gap: 5px;
-  align-content: start;
-  min-height: 160px;
-  padding: 6px;
+.weekly-hour-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 224, 164, 0.08);
 }
 
-.weekly-day-list > .message {
-  align-self: start;
+.weekly-day-canvas > .message {
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  top: 44%;
   margin: 0;
   padding: 8px;
   border: 1px dashed rgba(255, 224, 164, 0.16);
@@ -5034,15 +5116,19 @@ button:disabled {
 }
 
 .weekly-entry {
-  display: grid;
-  gap: 4px;
-  padding: 6px;
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  top: var(--entry-top);
+  min-height: max(30px, var(--entry-height));
   border: 1px solid rgba(104, 195, 183, 0.2);
   border-left: 3px solid rgba(104, 195, 183, 0.55);
-  border-radius: 7px;
+  border-radius: 6px;
   background:
-    linear-gradient(180deg, rgba(104, 195, 183, 0.08), rgba(0, 0, 0, 0.1)),
-    rgba(255, 255, 255, 0.035);
+    linear-gradient(180deg, rgba(104, 195, 183, 0.1), rgba(0, 0, 0, 0.18)),
+    rgba(18, 22, 24, 0.94);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
+  overflow: visible;
 }
 
 .weekly-entry.weekly-generated {
@@ -5050,20 +5136,71 @@ button:disabled {
   border-left-color: rgba(143, 208, 109, 0.62);
 }
 
-.weekly-entry strong {
-  color: var(--text);
-  font-size: 11px;
-  font-weight: 1000;
-  letter-spacing: 0.07em;
-  line-height: 1.2;
-  text-transform: uppercase;
+.weekly-entry.weekly-bump {
+  border-color: rgba(255, 224, 164, 0.2);
+  border-left-color: rgba(255, 224, 164, 0.52);
 }
 
-.weekly-entry small {
-  min-height: 14px;
-  color: var(--muted);
+.weekly-entry details {
+  height: 100%;
+}
+
+.weekly-entry details[open] {
+  position: relative;
+  z-index: 6;
+  min-width: 230px;
+  border-radius: 6px;
+  background: rgba(12, 14, 15, 0.98);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.36);
+}
+
+.weekly-entry details[open] summary {
+  min-height: 0;
+}
+
+.weekly-entry summary {
+  display: grid;
+  gap: 2px;
+  min-height: 100%;
+  padding: 6px 7px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.weekly-entry summary::-webkit-details-marker {
+  display: none;
+}
+
+.weekly-entry strong {
+  overflow: hidden;
+  color: var(--text);
   font-size: 10px;
-  line-height: 1.25;
+  font-weight: 1000;
+  letter-spacing: 0.06em;
+  line-height: 1.18;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.weekly-entry span,
+.weekly-entry small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weekly-entry span {
+  font-family: "Consolas", "Lucida Console", monospace;
+}
+
+.weekly-entry-editor {
+  display: grid;
+  gap: 5px;
+  padding: 0 7px 7px;
 }
 
 .weekly-entry input {
@@ -5312,9 +5449,9 @@ select,
     grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
   }
 
-  .weekly-schedule-grid {
-    grid-template-columns: repeat(2, minmax(210px, 1fr));
-    overflow-x: visible;
+  .weekly-timeline {
+    grid-template-columns: 38px repeat(7, minmax(150px, 1fr));
+    min-width: 1088px;
   }
 }
 
@@ -5428,11 +5565,19 @@ select,
     grid-template-columns: 1fr;
   }
 
-  .weekly-schedule-grid {
-    grid-template-columns: 1fr;
+  .schedule-toolbar {
+    display: grid;
   }
 
-  .weekly-day {
+  .schedule-zoom {
     min-width: 0;
+  }
+
+  .weekly-schedule-grid {
+    max-height: 72vh;
+  }
+
+  .weekly-timeline {
+    min-width: 980px;
   }
 }

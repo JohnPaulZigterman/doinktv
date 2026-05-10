@@ -125,6 +125,21 @@ const WEEKLY_BLOCKS = [
     ]
   },
   {
+    id: "sunday-morning-cartoons",
+    name: "SUNDAY MORNING CARTOONS",
+    folderName: "Weekly - SUNDAY MORNING CARTOONS",
+    days: [0],
+    time: "08:00",
+    durationMinutes: 180,
+    minDuration: 45,
+    queries: [
+      "sunday morning cartoons public domain",
+      "classic cartoon collection public domain",
+      "vintage animation cartoon anthology",
+      "family cartoons animation archive"
+    ]
+  },
+  {
     id: "de-coffeeschoop",
     name: "DE COFFEESCHOOP",
     folderName: "Weekly - DE COFFEESCHOOP",
@@ -202,6 +217,23 @@ const WEEKLY_BLOCKS = [
       "classic anime ova 1990s",
       "retro anime cel animation"
     ]
+  },
+  {
+    id: "cereal-ova-club",
+    name: "CEREAL OVA CLUB",
+    folderName: "Weekly - CEREAL OVA CLUB",
+    days: [1, 2, 3, 4, 5],
+    time: "06:00",
+    durationMinutes: 180,
+    minDuration: 600,
+    maxYear: 1993,
+    requireAny: ["anime", "animation", "animated", "ova", "manga", "japan", "japanese"],
+    queries: [
+      "classic anime ova 1980s",
+      "vintage anime ova",
+      "early 90s anime ova",
+      "retro japanese animation"
+    ]
   }
 ];
 
@@ -241,6 +273,18 @@ const WEEKLY_BLOCK_IDENTITIES = {
     tone: "caption",
     fontSize: 48,
     creditText: "SAT AM CARTOON RELAY"
+  },
+  "sunday-morning-cartoons": {
+    heading: "SUNDAY MORNING CARTOONS",
+    taglines: ["blanket fort broadcast", "cartoons before the coffee kicks in", "soft static, hard cereal"],
+    scheme: "mint",
+    shapes: "polka",
+    effects: ["scanlines", "chromatic"],
+    alignment: "left",
+    placement: "middle",
+    tone: "caption",
+    fontSize: 48,
+    creditText: "SUN AM CARTOON RELAY"
   },
   "de-coffeeschoop": {
     heading: "DE COFFEESCHOOP",
@@ -301,6 +345,18 @@ const WEEKLY_BLOCK_IDENTITIES = {
     tone: "caption",
     fontSize: 54,
     creditText: "2AM CEL-SHADED TRANSMISSION"
+  },
+  "cereal-ova-club": {
+    heading: "CEREAL OVA CLUB",
+    taglines: ["rice puffs and tape hiss", "weekday morning OVA milk", "before school, after the future"],
+    scheme: "paper",
+    shapes: "polka",
+    effects: ["scanlines", "vhs"],
+    alignment: "left",
+    placement: "bottom",
+    tone: "caption",
+    fontSize: 52,
+    creditText: "6AM VINTAGE ANIME FEED"
   }
 };
 
@@ -549,15 +605,31 @@ async function ensureState() {
       randomEligible: source.randomEligible ?? source.type !== "youtube"
     }));
   }
-  syncWeeklyBlockTemplates();
+  if (syncWeeklyBlockTemplates()) await saveState();
 }
 
 async function saveState() {
   await mkdir(DATA_DIR, { recursive: true });
-  await writeFile(STATE_PATH, `${JSON.stringify(state, null, 2)}\n`);
+  const payload = `${JSON.stringify(state, null, 2)}\n`;
+  let lastError = null;
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    try {
+      await writeFile(STATE_PATH, payload);
+      return;
+    } catch (error) {
+      lastError = error;
+      await wait(75 * attempt);
+    }
+  }
+  throw lastError;
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function syncWeeklyBlockTemplates() {
+  const before = JSON.stringify(state.weeklyBlocks || []);
   const existing = new Map((state.weeklyBlocks || []).map((block) => [block.id, block]));
   state.weeklyBlocks = WEEKLY_BLOCKS.map((template) => ({
     ...template,
@@ -567,6 +639,7 @@ function syncWeeklyBlockTemplates() {
     folderName: template.folderName,
     queries: template.queries
   }));
+  return JSON.stringify(state.weeklyBlocks || []) !== before;
 }
 
 function weeklyBlockIdentity(block = {}) {
@@ -3499,10 +3572,25 @@ function weeklyArchiveCandidateFitsBlock(block, candidate = {}) {
   ].join(" ").toLowerCase();
   if (WEEKLY_ARCHIVE_EXCLUDE_TERMS.some((term) => haystack.includes(term))) return false;
   if (Number(candidate.duration || 0) < Number(block.minDuration || 45)) return false;
+  if (Number.isFinite(Number(block.maxYear)) && candidateLooksNewerThanBlock(candidate, Number(block.maxYear))) return false;
   if (Array.isArray(block.requireAny) && block.requireAny.length) {
     return block.requireAny.some((term) => haystack.includes(term));
   }
   return true;
+}
+
+function candidateLooksNewerThanBlock(candidate = {}, maxYear = Infinity) {
+  const yearText = [
+    candidate.year,
+    candidate.title,
+    candidate.fileTitle,
+    candidate.description,
+    candidate.archiveId
+  ].join(" ");
+  const years = [...yearText.matchAll(/\b(19\d{2}|20\d{2})\b/g)]
+    .map((match) => Number(match[1]))
+    .filter((year) => Number.isFinite(year));
+  return years.length > 0 && years.every((year) => year > maxYear);
 }
 
 function materializeWeeklySchedule({ lookaheadDays = WEEKLY_SCHEDULE_LOOKAHEAD_DAYS } = {}) {
@@ -4753,17 +4841,23 @@ setInterval(() => syncHlsPlayout().catch((error) => {
   hlsPlayout.status = "error";
   hlsPlayout.error = error.message;
 }), 1000);
-setInterval(flushTimelineSave, 1000);
+setInterval(() => flushTimelineSave().catch((error) => {
+  console.error("Timeline save failed:", error);
+}), 1000);
 setInterval(() => {
   queueAutoIngestForLiveQueue("live queue maintenance");
 }, 15000);
 setInterval(async () => {
-  cleanSchedule();
-  maintainBroadcastTimeline();
-  queueAutoIngestForLiveQueue("live queue maintenance");
-  await pruneHlsDirectory();
-  await flushTimelineSave();
-  await saveState();
+  try {
+    cleanSchedule();
+    maintainBroadcastTimeline();
+    queueAutoIngestForLiveQueue("live queue maintenance");
+    await pruneHlsDirectory();
+    await flushTimelineSave();
+    await saveState();
+  } catch (error) {
+    console.error("Scheduled maintenance failed:", error);
+  }
 }, 1000 * 60 * 5);
 
 createServer(async (req, res) => {

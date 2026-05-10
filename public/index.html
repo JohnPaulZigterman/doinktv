@@ -330,6 +330,14 @@
           </div>
           <button id="refreshScheduleWeekButton" class="secondary compact" type="button">Refresh</button>
         </div>
+        <div class="schedule-toolbar" aria-label="Schedule display controls">
+          <div class="schedule-zoom">
+            <button id="scheduleZoomOutButton" class="secondary compact" type="button" aria-label="Zoom schedule out">-</button>
+            <input id="scheduleZoomInput" type="range" min="0" max="4" step="1" value="2" aria-label="Schedule zoom">
+            <button id="scheduleZoomInButton" class="secondary compact" type="button" aria-label="Zoom schedule in">+</button>
+          </div>
+          <span id="scheduleZoomLabel">Zoom</span>
+        </div>
         <div id="weeklyScheduleGrid" class="weekly-schedule-grid"></div>
         <p id="weeklyScheduleMessage" class="message"></p>
       </aside>

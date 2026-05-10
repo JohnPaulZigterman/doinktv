@@ -217,6 +217,10 @@ const scheduleList = document.querySelector("#scheduleList");
 const weeklyScheduleGrid = document.querySelector("#weeklyScheduleGrid");
 const weeklyScheduleMessage = document.querySelector("#weeklyScheduleMessage");
 const refreshScheduleWeekButton = document.querySelector("#refreshScheduleWeekButton");
+const scheduleZoomInput = document.querySelector("#scheduleZoomInput");
+const scheduleZoomOutButton = document.querySelector("#scheduleZoomOutButton");
+const scheduleZoomInButton = document.querySelector("#scheduleZoomInButton");
+const scheduleZoomLabel = document.querySelector("#scheduleZoomLabel");
 const queueList = document.querySelector("#queueList");
 const clearQueueButton = document.querySelector("#clearQueueButton");
 const sourceTypeSelect = sourceForm.elements.type;
@@ -257,6 +261,14 @@ let draggedSourceId = "";
 let adminDataCache = { sourceFolders: [], sources: [] };
 let programVotePoll = null;
 let railResizeDrag = null;
+const scheduleZoomLevels = [
+  { label: "Fit", hourHeight: 18 },
+  { label: "Cozy", hourHeight: 28 },
+  { label: "Standard", hourHeight: 42 },
+  { label: "Detailed", hourHeight: 62 },
+  { label: "Deep", hourHeight: 86 }
+];
+let scheduleZoomLevel = clamp(Number(localStorage.getItem("doink_schedule_zoom") || 2), 0, scheduleZoomLevels.length - 1);
 const expandedSourceFolders = new Set(JSON.parse(localStorage.getItem("doink_expanded_source_folders") || "[]"));
 const collapsedFxSections = new Set(JSON.parse(localStorage.getItem("doink_collapsed_fx_sections") || "[]"));
 const availableThemeList = ["station", "woodsy", "mountain", "deep-ocean", "rainforest", "frutiger-aero", "aero-lime", "aero-sunset", "candy-static", "terminal-green", "hotdog-stand", "midnight-laundromat", "mall-kiosk"];
@@ -3484,42 +3496,97 @@ function localDatetimeValue(timestamp) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function scheduleTimeLabel(timestamp) {
+  return new Date(timestamp).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+function scheduleEntryClasses(entry = {}) {
+  return [
+    "weekly-entry",
+    entry.weeklyBlockId ? "weekly-generated" : "",
+    entry.blockBump ? "weekly-bump" : "",
+    entry.gapFiller ? "weekly-filler" : ""
+  ].filter(Boolean).join(" ");
+}
+
+function setScheduleZoomLevel(level) {
+  scheduleZoomLevel = clamp(Number(level) || 0, 0, scheduleZoomLevels.length - 1);
+  localStorage.setItem("doink_schedule_zoom", String(scheduleZoomLevel));
+  applyScheduleZoom();
+}
+
+function applyScheduleZoom() {
+  const level = scheduleZoomLevels[scheduleZoomLevel] || scheduleZoomLevels[2];
+  if (weeklyScheduleGrid) {
+    weeklyScheduleGrid.style.setProperty("--schedule-hour-height", `${level.hourHeight}px`);
+    weeklyScheduleGrid.dataset.zoom = String(scheduleZoomLevel);
+  }
+  if (scheduleZoomInput) scheduleZoomInput.value = String(scheduleZoomLevel);
+  if (scheduleZoomLabel) scheduleZoomLabel.textContent = `${level.label} zoom`;
+}
+
 function renderWeeklySchedule(data = adminDataCache) {
   if (!weeklyScheduleGrid) return;
+  applyScheduleZoom();
   const start = weekStartDate();
   const end = start.getTime() + 7 * 24 * 60 * 60 * 1000;
   const sources = data.sources || [];
   const entries = (data.schedule || [])
     .filter((entry) => entry.startAt >= start.getTime() && entry.startAt < end)
+    .filter((entry) => !entry.gapFiller)
     .sort((a, b) => a.startAt - b.startAt);
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  weeklyScheduleGrid.innerHTML = dayNames.map((day, index) => {
+  const hours = Array.from({ length: 24 }, (_, hour) => hour);
+  weeklyScheduleGrid.innerHTML = `
+    <div class="weekly-timeline">
+      <div class="weekly-time-rail" aria-hidden="true">
+        <div class="weekly-corner">Time</div>
+        <div class="weekly-time-scale">
+          ${hours.map((hour) => `<span style="top:${(hour / 24) * 100}%">${hour === 0 ? "12a" : hour < 12 ? `${hour}a` : hour === 12 ? "12p" : `${hour - 12}p`}</span>`).join("")}
+        </div>
+      </div>
+      ${dayNames.map((day, index) => {
     const dayStart = start.getTime() + index * 24 * 60 * 60 * 1000;
     const dayEnd = dayStart + 24 * 60 * 60 * 1000;
     const dayEntries = entries.filter((entry) => entry.startAt >= dayStart && entry.startAt < dayEnd);
     return `
       <section class="weekly-day">
         <h3>${day}<span>${new Date(dayStart).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span></h3>
-        <div class="weekly-day-list">
-          ${dayEntries.length ? dayEntries.map((entry) => renderWeeklyScheduleEntry(entry, sources)).join("") : `<p class="message">No scheduled blocks.</p>`}
+        <div class="weekly-day-canvas">
+          ${hours.map((hour) => `<span class="weekly-hour-line" style="top:${(hour / 24) * 100}%"></span>`).join("")}
+          ${dayEntries.length ? dayEntries.map((entry) => renderWeeklyScheduleEntry(entry, sources, dayStart)).join("") : `<p class="message">No scheduled blocks.</p>`}
         </div>
       </section>`;
-  }).join("");
+  }).join("")}
+    </div>`;
 }
 
-function renderWeeklyScheduleEntry(entry, sources = []) {
+function renderWeeklyScheduleEntry(entry, sources = [], dayStart = weekStartDate().getTime()) {
   const source = sources.find((item) => item.id === entry.sourceId);
+  const minutesFromStart = clamp((entry.startAt - dayStart) / 60000, 0, 24 * 60);
+  const durationMinutes = Math.max(5, Number(entry.duration || 0) / 60);
+  const top = (minutesFromStart / (24 * 60)) * 100;
+  const height = Math.min(100 - top, Math.max(1.2, (durationMinutes / (24 * 60)) * 100));
+  const blockName = entry.weeklyBlockName || (entry.blockBump ? "Block bump" : "Manual");
+  const sourceTitle = source?.title || "Unknown source";
   return `
-    <form class="weekly-entry${entry.weeklyBlockId ? " weekly-generated" : ""}" data-weekly-schedule-entry="${entry.id}">
-      <strong>${escapeHtml(entry.weeklyBlockName || "Manual")}</strong>
-      <small>${escapeHtml(source?.title || "Unknown source")}</small>
-      <input name="title" value="${escapeHtml(entry.title || "")}" placeholder="${escapeHtml(source?.title || "Title")}">
-      <input name="startAt" type="datetime-local" value="${localDatetimeValue(entry.startAt)}" required>
-      <input name="duration" type="number" min="5" step="1" value="${Math.round(entry.duration)}" required>
-      <div class="weekly-entry-actions">
-        <button class="secondary compact" type="submit">Save</button>
-        <button class="danger compact" data-delete-schedule="${entry.id}" type="button">Delete</button>
-      </div>
+    <form class="${scheduleEntryClasses(entry)}" data-weekly-schedule-entry="${entry.id}" style="--entry-top:${top.toFixed(3)}%; --entry-height:${height.toFixed(3)}%;">
+      <details>
+        <summary>
+          <strong>${escapeHtml(blockName)}</strong>
+          <span>${scheduleTimeLabel(entry.startAt)} · ${formatDuration(entry.duration)}</span>
+          <small>${escapeHtml(sourceTitle)}</small>
+        </summary>
+        <div class="weekly-entry-editor">
+          <input name="title" value="${escapeHtml(entry.title || "")}" placeholder="${escapeHtml(sourceTitle || "Title")}">
+          <input name="startAt" type="datetime-local" value="${localDatetimeValue(entry.startAt)}" required>
+          <input name="duration" type="number" min="5" step="1" value="${Math.round(entry.duration)}" required>
+          <div class="weekly-entry-actions">
+            <button class="secondary compact" type="submit">Save</button>
+            <button class="danger compact" data-delete-schedule="${entry.id}" type="button">Delete</button>
+          </div>
+        </div>
+      </details>
     </form>`;
 }
 
@@ -3893,6 +3960,9 @@ seedWeeklyScheduleButton?.addEventListener("click", async () => {
 });
 
 refreshScheduleWeekButton?.addEventListener("click", loadAdmin);
+scheduleZoomInput?.addEventListener("input", () => setScheduleZoomLevel(scheduleZoomInput.value));
+scheduleZoomOutButton?.addEventListener("click", () => setScheduleZoomLevel(scheduleZoomLevel - 1));
+scheduleZoomInButton?.addEventListener("click", () => setScheduleZoomLevel(scheduleZoomLevel + 1));
 
 weeklyScheduleGrid?.addEventListener("submit", async (event) => {
   const form = event.target.closest("[data-weekly-schedule-entry]");
