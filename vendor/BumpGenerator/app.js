@@ -43,6 +43,9 @@ const wallpaperPreview = document.querySelector("#wallpaperPreview");
 const wallpaperPreviewCtx = wallpaperPreview.getContext("2d");
 const randomizeWallpaperBtn = document.querySelector("#randomizeWallpaperBtn");
 const useWallpaperBtn = document.querySelector("#useWallpaperBtn");
+const presetButtons = [...document.querySelectorAll("[data-bump-preset]")];
+const audioStartField = document.querySelector("[data-audio-start-field]");
+const effectIntensityField = document.querySelector("[data-effect-intensity-field]");
 
 let backgroundImage = null;
 let backgroundVideo = null;
@@ -66,6 +69,122 @@ const state = {
   previewAudioEnabled: false,
 };
 
+const bumpPresets = {
+  block: {
+    label: "Block bump",
+    lines: ["we now return to the scheduled weirdness."],
+    secondsPerLine: 4,
+    fontSize: 46,
+    placement: "middle",
+    alignment: "left",
+    tone: "caption",
+    tintStrength: 62,
+    wallpaperShapes: "memphis",
+    wallpaperScheme: "arcade",
+    wallpaperSpacing: 86,
+    useWallpaper: true,
+    effects: ["vhs", "scanlines", "chromatic"],
+    effectIntensity: 38,
+  },
+  station: {
+    label: "Station ID",
+    lines: ["DOINK TV", "broadcasting from somewhere nearby."],
+    secondsPerLine: 3,
+    fontSize: 60,
+    placement: "middle",
+    alignment: "center",
+    tone: "classic",
+    tintStrength: 52,
+    wallpaperShapes: "starburst",
+    wallpaperScheme: "broadcast",
+    wallpaperSpacing: 72,
+    useWallpaper: true,
+    effects: ["noise", "scanlines", "flicker"],
+    effectIntensity: 34,
+  },
+  ad: {
+    label: "Ad break",
+    lines: ["a brief word from whoever paid us in cash."],
+    secondsPerLine: 5,
+    fontSize: 44,
+    placement: "bottom",
+    alignment: "left",
+    tone: "washed",
+    tintStrength: 70,
+    wallpaperShapes: "checkerboard",
+    wallpaperScheme: "warning",
+    wallpaperSpacing: 94,
+    useWallpaper: true,
+    effects: ["vhs", "dvd", "scanlines"],
+    effectIntensity: 42,
+  },
+  next: {
+    label: "Next up",
+    lines: ["next up", "something else entirely."],
+    secondsPerLine: 3,
+    fontSize: 52,
+    placement: "bottom",
+    alignment: "left",
+    tone: "caption",
+    tintStrength: 60,
+    wallpaperShapes: "stripes",
+    wallpaperScheme: "miami",
+    wallpaperSpacing: 78,
+    useWallpaper: true,
+    effects: ["chromatic", "scanlines"],
+    effectIntensity: 30,
+  },
+  music: {
+    label: "Music bump",
+    lines: ["full song bump", "please enjoy the moving picture part."],
+    secondsPerLine: 5,
+    fontSize: 44,
+    placement: "middle",
+    alignment: "left",
+    tone: "washed",
+    tintStrength: 48,
+    wallpaperShapes: "argyle",
+    wallpaperScheme: "pool",
+    wallpaperSpacing: 90,
+    useWallpaper: true,
+    effects: ["flicker", "chromatic"],
+    effectIntensity: 26,
+  },
+  emergency: {
+    label: "Emergency nonsense",
+    lines: ["technical difficulties", "remain unreasonable."],
+    secondsPerLine: 2,
+    fontSize: 58,
+    placement: "middle",
+    alignment: "center",
+    tone: "classic",
+    tintStrength: 84,
+    wallpaperShapes: "stripes",
+    wallpaperScheme: "warning",
+    wallpaperSpacing: 58,
+    useWallpaper: true,
+    effects: ["noise", "vhs", "dvd", "warp", "chromatic", "flicker", "scanlines"],
+    effectIntensity: 78,
+  },
+  silent: {
+    label: "Silent card",
+    lines: ["please stand by."],
+    secondsPerLine: 6,
+    fontSize: 48,
+    placement: "middle",
+    alignment: "center",
+    tone: "classic",
+    tintStrength: 35,
+    wallpaperShapes: "mixed",
+    wallpaperScheme: "mono",
+    wallpaperSpacing: 110,
+    useWallpaper: false,
+    effects: [],
+    effectIntensity: 0,
+    clearAudio: true,
+  },
+};
+
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
@@ -76,6 +195,11 @@ function selectedPlacement() {
 
 function selectedAlignment() {
   return document.querySelector("input[name='alignment']:checked").value;
+}
+
+function setRadioValue(name, value) {
+  const input = document.querySelector(`input[name="${name}"][value="${value}"]`);
+  if (input) input.checked = true;
 }
 
 function secondsPerLine() {
@@ -113,6 +237,11 @@ function updateAudioStartReadout() {
   audioStartValue.textContent = max > 0 ? `${formatTimecode(current)} / ${formatTimecode(max)}` : "0:00";
 }
 
+function updateAdaptiveControls() {
+  audioStartField?.classList.toggle("is-hidden", audioStart.disabled);
+  effectIntensityField?.classList.toggle("is-hidden", selectedEffects().length === 0);
+}
+
 function stopPreviewAudio() {
   state.previewAudioEnabled = false;
   if (previewAudio) {
@@ -126,6 +255,7 @@ function resetAudioStart() {
   audioStart.max = "0";
   audioStart.disabled = true;
   updateAudioStartReadout();
+  updateAdaptiveControls();
 }
 
 function clearAudioProbeUrl() {
@@ -151,6 +281,7 @@ function configureAudioStart(file) {
     audioStart.max = String(max.toFixed(1));
     audioStart.disabled = max === 0;
     updateAudioStartReadout();
+    updateAdaptiveControls();
   };
   probe.onerror = resetAudioStart;
 }
@@ -171,6 +302,7 @@ function configureServerAudio(asset) {
     audioStart.max = String(max.toFixed(1));
     audioStart.disabled = false;
     updateAudioStartReadout();
+    updateAdaptiveControls();
   } else {
     const probe = new Audio();
     probe.preload = "metadata";
@@ -180,6 +312,7 @@ function configureServerAudio(asset) {
       audioStart.max = String(duration.toFixed(1));
       audioStart.disabled = duration === 0;
       updateAudioStartReadout();
+      updateAdaptiveControls();
     };
     probe.onerror = resetAudioStart;
   }
@@ -1603,7 +1736,8 @@ function updateLineLabels() {
   updateLineRemoveButtons();
 }
 
-function addTextLine(value = "") {
+function addTextLine(value = "", options = {}) {
+  const { focus = true, restart = true } = options;
   const row = document.createElement("div");
   row.className = "text-line";
   row.innerHTML = `
@@ -1614,8 +1748,67 @@ function addTextLine(value = "") {
   textLines.append(row);
   bindTextLine(row);
   updateLineLabels();
-  row.querySelector(".line-input").focus();
+  if (focus) row.querySelector(".line-input").focus();
+  if (restart) restartPreview();
+}
+
+function setTextLineValues(lines) {
+  textLines.innerHTML = "";
+  const values = Array.isArray(lines) && lines.length ? lines : [""];
+  values.forEach((line) => addTextLine(line, { focus: false, restart: false }));
+  updateLineLabels();
+}
+
+function syncControlReadouts() {
+  secondsPerLineValue.textContent = `${secondsPerLineInput.value}s`;
+  fontSizeValue.textContent = fontSizeInput.value;
+  tintStrengthValue.textContent = `${tintStrength.value}%`;
+  effectIntensityValue.textContent = `${effectIntensity.value}%`;
+  wallpaperSpacingValue.textContent = wallpaperSpacing.value;
+  updateAudioStartReadout();
+  updateAdaptiveControls();
+}
+
+function applyBumpPreset(name) {
+  const preset = bumpPresets[name];
+  if (!preset) return;
+
+  presetButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.bumpPreset === name);
+  });
+
+  setTextLineValues(preset.lines);
+  secondsPerLineInput.value = String(preset.secondsPerLine);
+  fontSizeInput.value = String(preset.fontSize);
+  setRadioValue("placement", preset.placement);
+  setRadioValue("alignment", preset.alignment);
+  formatInput.value = preset.format || "landscape";
+  toneInput.value = preset.tone;
+  tintStrength.value = String(preset.tintStrength);
+  wallpaperShapes.value = preset.wallpaperShapes;
+  wallpaperScheme.value = preset.wallpaperScheme;
+  wallpaperSpacing.value = String(preset.wallpaperSpacing);
+  state.usingWallpaper = Boolean(preset.useWallpaper);
+  effectToggles.forEach((toggle) => {
+    toggle.checked = preset.effects.includes(toggle.value);
+  });
+  effectIntensity.value = String(preset.effectIntensity);
+  if (preset.clearAudio) {
+    selectedServerAudio = null;
+    serverSongSelect.value = "";
+    songInput.value = "";
+    clearAudioProbeUrl();
+    previewAudio = null;
+    creditText.value = "";
+    creditWasAutoFilled = true;
+    resetAudioStart();
+  }
+
+  renderWallpaperPreview();
+  syncControlReadouts();
+  setCanvasFormat();
   restartPreview();
+  status.textContent = `${preset.label} preset loaded.`;
 }
 
 function optionLabel(asset) {
@@ -1765,12 +1958,16 @@ creditSize.addEventListener("input", () => {
 });
 
 addLineBtn.addEventListener("click", () => addTextLine());
+presetButtons.forEach((button) => {
+  button.addEventListener("click", () => applyBumpPreset(button.dataset.bumpPreset));
+});
 
 [...textLines.querySelectorAll(".text-line")].forEach(bindTextLine);
 updateLineLabels();
 
 [secondsPerLineInput, formatInput, toneInput, tintStrength, effectIntensity, ...effectToggles, creditPosition, creditFont, creditSize, ...document.querySelectorAll("input[name='placement'], input[name='alignment']")]
   .forEach((input) => input.addEventListener("input", restartPreview));
+effectToggles.forEach((input) => input.addEventListener("input", updateAdaptiveControls));
 
 previewBtn.addEventListener("click", startPreviewWithAudio);
 renderBtn.addEventListener("click", renderVideo);
@@ -1788,5 +1985,6 @@ window.addEventListener("message", (event) => {
 
 durationLabel.textContent = `${durationSeconds().toFixed(1)}s`;
 renderWallpaperPreview();
-restartPreview();
+syncControlReadouts();
+applyBumpPreset("block");
 loadServerAssets();

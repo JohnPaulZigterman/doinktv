@@ -24,6 +24,14 @@ const STATE_PATH = path.join(DATA_DIR, "state.json");
 const AUTO_BUMP_INTERVAL_MS = 1000 * 60 * 3;
 const AUTO_BUMP_DURATION = 20;
 const BLOCK_BUMP_DURATION = 16;
+const GAP_FILLER_MIN_GAP_SECONDS = 20;
+const GAP_FILLER_LOOKAHEAD_MS = 1000 * 60 * 90;
+const GAP_FILLER_MIN_SOURCE_SECONDS = 8;
+const GAP_FILLER_MAX_SOURCE_SECONDS = 210;
+const GAP_FILLER_BUMP_DURATION = 42;
+const GAP_FILLER_MAX_ENTRIES = 48;
+const GAP_FILLER_BLOCK_NAME = "STATION BREAK";
+const GAP_FILLER_VERSION = 5;
 const FADE_BREAK_MIN_SECONDS = 60 * 5.5;
 const FADE_BREAK_MIN_SOURCE_DURATION = 60 * 12;
 const FADE_BREAK_MIN_REMAINING_SECONDS = 60 * 4;
@@ -1204,6 +1212,7 @@ function publicProgram() {
 
 function publicProgramVotePoll(live) {
   if (!live?.id || !live.source) return null;
+  if (live.gapFiller) return null;
   if (isClearlyPornographicArchiveCandidate({ ...live.source, title: live.title || live.source.title })) return null;
   const poll = ensureProgramVotePoll(live);
   maybeQueueComparableFilmSuggestions(poll, live);
@@ -1492,6 +1501,7 @@ function programSnapshot() {
         lane: live.broadcastLane || "scheduled",
         weeklyBlockId: live.weeklyBlockId || "",
         weeklyBlockName: live.weeklyBlockName || "",
+        gapFiller: Boolean(live.gapFiller),
         source: live.source
         }
       : null,
@@ -1505,6 +1515,7 @@ function programSnapshot() {
           lane: next.broadcastLane || "scheduled",
           weeklyBlockId: next.weeklyBlockId || "",
           weeklyBlockName: next.weeklyBlockName || "",
+          gapFiller: Boolean(next.gapFiller),
           source: next.source
         }
       : null
@@ -1512,11 +1523,175 @@ function programSnapshot() {
 }
 
 function isAudienceScheduleEntry(entry) {
-  return entry?.source && !entry.autoBump && !isBumpSource(entry.source);
+  return entry?.source && !entry.gapFiller && !entry.autoBump && !isBumpSource(entry.source);
 }
 
 function isBumpSource(source) {
   return source?.type === "bump";
+}
+
+function maintainScheduledGapFillers() {
+  const now = Date.now();
+  const realSchedule = state.schedule
+    .filter((entry) => !entry.gapFiller)
+    .filter((entry) => entryEnd(entry) > now - 1000 * 60)
+    .sort((a, b) => a.startAt - b.startAt);
+  const currentReal = realSchedule.find((entry) => now >= entry.startAt && now < entryEnd(entry));
+  const nextReal = realSchedule.find((entry) => entry.startAt > now);
+  const beforeCount = state.schedule.length;
+
+  state.schedule = state.schedule.filter((entry) => {
+    if (!entry.gapFiller) return true;
+    if (entry.gapFillerVersion !== GAP_FILLER_VERSION) return false;
+    if (entryEnd(entry) < now - 1000 * 30) return false;
+    if (!nextReal || currentReal) return entryEnd(entry) < now + 1000 * 5;
+    if (entry.startAt >= nextReal.startAt) return false;
+    return !realSchedule.some((realEntry) => entriesOverlap(entry, realEntry));
+  });
+
+  let changed = state.schedule.length !== beforeCount;
+  if (currentReal || !nextReal) {
+    if (changed) pruneUnusedBumpSources();
+    return changed;
+  }
+
+  const fillUntil = Math.min(nextReal.startAt, now + GAP_FILLER_LOOKAHEAD_MS);
+  if ((fillUntil - now) / 1000 < GAP_FILLER_MIN_GAP_SECONDS) {
+    if (changed) pruneUnusedBumpSources();
+    return changed;
+  }
+
+  const existingFillers = state.schedule
+    .filter((entry) => entry.gapFiller && entryEnd(entry) > now - 1000 && entry.startAt < fillUntil)
+    .sort((a, b) => a.startAt - b.startAt);
+  let cursor = existingFillers.reduce((latest, entry) => Math.max(latest, entryEnd(entry)), now);
+  if (cursor >= fillUntil - GAP_FILLER_MIN_GAP_SECONDS * 1000) {
+    if (changed) pruneUnusedBumpSources();
+    return changed;
+  }
+
+  const candidates = gapFillerCandidates();
+  let index = existingFillers.length;
+  while (cursor < fillUntil - GAP_FILLER_MIN_GAP_SECONDS * 1000 && index < GAP_FILLER_MAX_ENTRIES) {
+    const remaining = Math.floor((fillUntil - cursor) / 1000);
+    const useBump = index % 3 === 0 || remaining < GAP_FILLER_MIN_SOURCE_SECONDS + 4;
+    const entry = useBump
+      ? createGapFillerBumpEntry(cursor, nextReal, index, remaining)
+      : createGapFillerSourceEntry(cursor, nextReal, candidates, index, remaining);
+    if (!entry) break;
+    state.schedule.push(entry);
+    cursor = entryEnd(entry);
+    index += 1;
+    changed = true;
+  }
+
+  if (changed) {
+    state.schedule.sort((a, b) => a.startAt - b.startAt);
+    pruneUnusedBumpSources();
+  }
+  return changed;
+}
+
+function gapFillerCandidates() {
+  const folders = new Map((state.sourceFolders || []).map((folder) => [folder.id, folder.name || ""]));
+  const scored = [];
+  for (const source of state.sources || []) {
+    if (!source || isBumpSource(source) || source.type === "youtube") continue;
+    const duration = Number(source.duration || 0);
+    if (duration < GAP_FILLER_MIN_SOURCE_SECONDS || duration > GAP_FILLER_MAX_SOURCE_SECONDS) continue;
+    const haystack = `${source.title || ""} ${source.archiveFile || ""} ${folders.get(source.folderId) || ""}`;
+    if (isClearlyPornographicArchiveCandidate({ ...source, title: haystack })) continue;
+    const adScore = /(^|[^a-z])(commercials?|ads?|adverts?|advertisements?|promo|psa|bumper|trailer|station\s*(id|ident|break)|ident)([^a-z]|$)/i.test(haystack) ? 80 : 0;
+    const shortScore = Math.max(0, GAP_FILLER_MAX_SOURCE_SECONDS - duration) / 8;
+    if (!adScore) continue;
+    scored.push({ source, score: adScore + shortScore });
+  }
+  return scored
+    .sort((a, b) => b.score - a.score || a.source.title.localeCompare(b.source.title))
+    .map((item) => item.source);
+}
+
+function createGapFillerSourceEntry(cursor, nextReal, candidates = [], index = 0, remaining = 0) {
+  const pool = candidates.filter((source) => Number(source.duration || 0) <= remaining - 3);
+  if (!pool.length) return createGapFillerBumpEntry(cursor, nextReal, index, remaining);
+  const seed = Math.abs(hashString(`${new Date(cursor).toDateString()}:${index}:${nextReal.id || nextReal.startAt}`));
+  const source = pool[seed % pool.length];
+  return {
+    id: crypto.randomUUID(),
+    sourceId: source.id,
+    title: `${GAP_FILLER_BLOCK_NAME}: ${source.title}`,
+    startAt: cursor,
+    duration: Math.round(source.duration),
+    queuedAt: Date.now(),
+    gapFiller: true,
+    gapFillerVersion: GAP_FILLER_VERSION,
+    weeklyBlockId: "station-break",
+    weeklyBlockName: GAP_FILLER_BLOCK_NAME
+  };
+}
+
+function createGapFillerBumpEntry(cursor, nextReal, index = 0, remaining = GAP_FILLER_BUMP_DURATION) {
+  const duration = Math.max(GAP_FILLER_MIN_GAP_SECONDS, Math.min(GAP_FILLER_BUMP_DURATION, Math.floor(remaining)));
+  const bumpSource = createGapFillerBumpSource(nextReal, cursor, index, duration);
+  state.sources.push(bumpSource);
+  return {
+    id: crypto.randomUUID(),
+    sourceId: bumpSource.id,
+    title: bumpSource.title,
+    startAt: cursor,
+    duration: bumpSource.duration,
+    queuedAt: Date.now(),
+    autoBump: true,
+    gapFiller: true,
+    gapFillerVersion: GAP_FILLER_VERSION,
+    weeklyBlockId: "station-break",
+    weeklyBlockName: GAP_FILLER_BLOCK_NAME
+  };
+}
+
+function createGapFillerBumpSource(nextReal = {}, cursor = Date.now(), index = 0, duration = GAP_FILLER_BUMP_DURATION) {
+  const seed = Math.abs(hashString(`gap:${nextReal.id || nextReal.startAt}:${cursor}:${index}`)) % 100000;
+  const deliberateGlitch = seed % 7 === 3;
+  const music = randomBumpMusic(duration);
+  return {
+    id: crypto.randomUUID(),
+    type: "bump",
+    title: `${GAP_FILLER_BLOCK_NAME}: stand by bump`,
+    duration,
+    randomEligible: false,
+    bump: {
+      kind: "gap-filler-bump",
+      bumpClass: "station-break",
+      heading: sample(["more shortly", "station break", "please stand by", "back to program soon"]),
+      lines: [
+        GAP_FILLER_BLOCK_NAME,
+        nextReal?.title ? `NEXT: ${nextReal.title}` : "PROGRAMMING RESUMES SHORTLY",
+        nextReal?.startAt ? formatEstTime(nextReal.startAt) : ""
+      ].filter(Boolean),
+      alignment: deliberateGlitch ? sample(["left", "center", "right"]) : sample(["left", "center"]),
+      placement: deliberateGlitch ? sample(["top", "middle", "bottom"]) : sample(["middle", "bottom"]),
+      tone: deliberateGlitch ? sample(["classic", "caption", "washed"]) : sample(["caption", "washed"]),
+      secondsPerLine: Math.max(4, Math.round((duration / 3) * 10) / 10),
+      tintStrength: deliberateGlitch ? 28 : 16,
+      creditText: "STANDBY FILLER\nNO DEAD AIR",
+      creditSize: 18,
+      creditPosition: "bottom-right",
+      wallpaper: {
+        shapes: deliberateGlitch
+          ? sample(["checkerboard", "stripes", "memphis", "diamonds", "starburst"])
+          : sample(["lines", "polka", "argyle", "terrazzo", "mondrian"]),
+        scheme: deliberateGlitch
+          ? sample(["broadcast", "warning", "arcade", "miami"])
+          : sample(["midnight", "pool", "paper", "broadcast", "blueprint"]),
+        spacing: deliberateGlitch ? 62 + Math.floor(Math.random() * 74) : 92 + Math.floor(Math.random() * 70),
+        seed
+      },
+      effects: deliberateGlitch ? sampleMany(["noise", "vhs", "scanlines", "chromatic", "letterbox"], 2) : sampleMany(["scanlines", "chromatic", "letterbox"], 1),
+      effectIntensity: deliberateGlitch ? 38 : 18,
+      audio: music.path,
+      audioStart: music.start
+    }
+  };
 }
 
 function formatEstTime(timestamp) {
@@ -2427,11 +2602,16 @@ function broadcastProgram() {
 }
 
 function maintainBroadcastTimeline() {
-  if (state.broadcastMode !== "queue") return false;
+  const gapFilled = maintainScheduledGapFillers();
+  if (state.broadcastMode !== "queue") {
+    if (gapFilled) timelineSaveNeeded = true;
+    return gapFilled;
+  }
   const changed = maintainLiveQueueContinuity();
   const backfilled = backfillLiveQueue();
+  if (gapFilled) timelineSaveNeeded = true;
   if (changed || backfilled) timelineSaveNeeded = true;
-  return changed || backfilled;
+  return gapFilled || changed || backfilled;
 }
 
 function maintainLiveQueueContinuity() {
@@ -2994,7 +3174,8 @@ async function createChatMessage(req, body) {
 
 function cleanSchedule() {
   const cutoff = Date.now() - 1000 * 60 * 60 * 12;
-  state.schedule = state.schedule.filter((entry) => entry.startAt + entry.duration * 1000 > cutoff);
+  const gapCutoff = Date.now() - 1000 * 60 * 5;
+  state.schedule = state.schedule.filter((entry) => entry.startAt + entry.duration * 1000 > (entry.gapFiller ? gapCutoff : cutoff));
   state.liveQueue = state.liveQueue.filter((entry) => entry.startAt + entry.duration * 1000 > cutoff);
 }
 

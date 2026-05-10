@@ -1532,7 +1532,13 @@
       "archiveFile": "Pancake1967.mpg",
       "fileUrl": "https://archive.org/download/ClassicAuntJemimaCommercial1967/Pancake1967.mpg",
       "url": "https://archive.org/details/ClassicAuntJemimaCommercial1967",
-      "randomEligible": true
+      "randomEligible": true,
+      "ingest": {
+        "status": "ready",
+        "message": "Internet Archive media URL is ready for shared HLS playout.",
+        "path": "https://archive.org/download/ClassicAuntJemimaCommercial1967/Pancake1967.mpg",
+        "updatedAt": 1778405668017
+      }
     },
     {
       "id": "63eb3427-4faf-43d6-93d2-c9c5ee4f8e55",
@@ -1556,7 +1562,13 @@
       "archiveFile": "trik_trak_edit.mp4",
       "fileUrl": "https://archive.org/download/trik_trak/trik_trak_edit.mp4",
       "url": "https://archive.org/details/trik_trak",
-      "randomEligible": true
+      "randomEligible": true,
+      "ingest": {
+        "status": "ready",
+        "message": "Internet Archive media URL is ready for shared HLS playout.",
+        "path": "https://archive.org/download/trik_trak/trik_trak_edit.mp4",
+        "updatedAt": 1778405894056
+      }
     },
     {
       "id": "cea289fd-ad80-40a0-ad83-ca2004ff5d5c",
@@ -1628,7 +1640,13 @@
       "archiveFile": "Muppet Babies Commercials 1986_2 D.mp4",
       "fileUrl": "https://archive.org/download/Vintage_Commercials_Advertisements_80s/Muppet%20Babies%20Commercials%201986_2%20D.mp4",
       "url": "https://archive.org/details/Vintage_Commercials_Advertisements_80s",
-      "randomEligible": true
+      "randomEligible": true,
+      "ingest": {
+        "status": "ready",
+        "message": "Internet Archive media URL is ready for shared HLS playout.",
+        "path": "https://archive.org/download/Vintage_Commercials_Advertisements_80s/Muppet%20Babies%20Commercials%201986_2%20D.mp4",
+        "updatedAt": 1778405668180
+      }
     },
     {
       "id": "0183ae0a-bd8f-4e54-8611-8c811f9ef1ca",
@@ -1664,7 +1682,13 @@
       "archiveFile": "High Art Radha Mitchell drip clip.ia.mp4",
       "fileUrl": "https://archive.org/download/high-art-radha-mitchell-drip-clip/High%20Art%20Radha%20Mitchell%20drip%20clip.ia.mp4",
       "url": "https://archive.org/details/high-art-radha-mitchell-drip-clip",
-      "randomEligible": true
+      "randomEligible": true,
+      "ingest": {
+        "status": "ready",
+        "message": "Internet Archive media URL is ready for shared HLS playout.",
+        "path": "https://archive.org/download/high-art-radha-mitchell-drip-clip/High%20Art%20Radha%20Mitchell%20drip%20clip.ia.mp4",
+        "updatedAt": 1778405668040
+      }
     },
     {
       "id": "00de2a03-8dc4-4270-aed3-8cc625d613f7",
@@ -4931,157 +4955,6 @@
       "randomEligible": true
     },
     {
-      "id": "f4d9d3cb-a4f7-4648-8ee6-ea057836be5b",
-      "type": "bump",
-      "title": "Schedule bump",
-      "folderId": "",
-      "duration": 20,
-      "bump": {
-        "heading": "coming up",
-        "lines": [
-          {
-            "title": "Chevrole1936 3",
-            "time": "3:36 AM"
-          },
-          {
-            "title": "Baman Piderman - Play Da Song (Ep #16)",
-            "time": "3:45 AM"
-          },
-          {
-            "title": "[AnimeRG] Pokémon 0040 Snow Wa [480p] [x265] [pseudo]",
-            "time": "3:50 AM"
-          }
-        ],
-        "alignment": "left",
-        "placement": "middle",
-        "tone": "washed",
-        "seed": 11389,
-        "wallpaper": {
-          "shapes": "terrazzo",
-          "scheme": "pool",
-          "spacing": 112,
-          "seed": 11389
-        },
-        "effects": [
-          "dvd"
-        ],
-        "effectIntensity": 54,
-        "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
-        "audioStart": 3.1
-      },
-      "generatedAt": 1778391001582,
-      "randomEligible": true
-    },
-    {
-      "id": "1027f935-cfef-41ac-89d5-4d5a0fe09289",
-      "type": "bump",
-      "title": "Schedule bump",
-      "folderId": "",
-      "duration": 20,
-      "bump": {
-        "heading": "coming up",
-        "lines": [
-          {
-            "title": "Baman Piderman - Play Da Song (Ep #16)",
-            "time": "3:45 AM"
-          },
-          {
-            "title": "[AnimeRG] Pokémon 0040 Snow Wa [480p] [x265] [pseudo]",
-            "time": "3:50 AM"
-          }
-        ],
-        "alignment": "left",
-        "placement": "middle",
-        "tone": "classic",
-        "seed": 19778,
-        "wallpaper": {
-          "shapes": "starburst",
-          "scheme": "mint",
-          "spacing": 155,
-          "seed": 19778
-        },
-        "effects": [
-          "flicker",
-          "scanlines"
-        ],
-        "effectIntensity": 57,
-        "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
-        "audioStart": 116.1
-      },
-      "generatedAt": 1778391001583,
-      "randomEligible": true
-    },
-    {
-      "id": "5a8b61cb-5b07-41f0-8247-7d772c9dec85",
-      "type": "bump",
-      "title": "Schedule bump",
-      "folderId": "",
-      "duration": 20,
-      "bump": {
-        "heading": "coming up",
-        "lines": [
-          {
-            "title": "[AnimeRG] Pokémon 0040 Snow Wa [480p] [x265] [pseudo]",
-            "time": "3:50 AM"
-          }
-        ],
-        "alignment": "left",
-        "placement": "top",
-        "tone": "caption",
-        "seed": 16153,
-        "wallpaper": {
-          "shapes": "starburst",
-          "scheme": "arcade",
-          "spacing": 54,
-          "seed": 16153
-        },
-        "effects": [
-          "letterbox",
-          "warp"
-        ],
-        "effectIntensity": 29,
-        "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
-        "audioStart": 9.4
-      },
-      "generatedAt": 1778391001583,
-      "randomEligible": true
-    },
-    {
-      "id": "f9be7111-0a1b-44c1-ae73-3903378bc07c",
-      "type": "bump",
-      "title": "Schedule bump",
-      "folderId": "",
-      "duration": 20,
-      "bump": {
-        "heading": "coming up",
-        "lines": [
-          {
-            "title": "More DoinkTV shortly",
-            "time": "4:12 AM"
-          }
-        ],
-        "alignment": "left",
-        "placement": "top",
-        "tone": "classic",
-        "seed": 44350,
-        "wallpaper": {
-          "shapes": "starburst",
-          "scheme": "miami",
-          "spacing": 48,
-          "seed": 44350
-        },
-        "effects": [
-          "noise",
-          "letterbox"
-        ],
-        "effectIntensity": 58,
-        "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
-        "audioStart": 65.1
-      },
-      "generatedAt": 1778391001583,
-      "randomEligible": true
-    },
-    {
       "id": "6aee0464-29de-4559-a35e-e4f0e11f014f",
       "type": "internet-archive",
       "title": "Nike Commercial: Three Is a Magic Number",
@@ -5355,7 +5228,13 @@
       "archiveFile": "soundie_5_512kb.mp4",
       "fileUrl": "https://archive.org/download/soundie_5/soundie_5_512kb.mp4",
       "url": "https://archive.org/details/soundie_5",
-      "randomEligible": true
+      "randomEligible": true,
+      "ingest": {
+        "status": "ready",
+        "message": "Internet Archive media URL is ready for shared HLS playout.",
+        "path": "https://archive.org/download/soundie_5/soundie_5_512kb.mp4",
+        "updatedAt": 1778406575116
+      }
     },
     {
       "id": "c8c9920a-6c4e-4adb-9534-02abdce669a6",
@@ -12112,6 +11991,680 @@
         "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
         "audioStart": 7.1
       }
+    },
+    {
+      "id": "836b31cb-72ef-4d09-b5c9-86e8a7027a86",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "kind": "auto-bump",
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Popeye Public Domain Collection",
+            "time": "7:58 AM"
+          },
+          {
+            "title": "Muppet Babies Commercials 1986 2 D",
+            "time": "8:20 AM"
+          },
+          {
+            "title": "trik trak edit",
+            "time": "8:22 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "middle",
+        "tone": "classic",
+        "seed": 29570,
+        "wallpaper": {
+          "shapes": "plaid",
+          "scheme": "ruby",
+          "spacing": 147,
+          "seed": 29570
+        },
+        "effects": [],
+        "effectIntensity": 33,
+        "audio": "/media/bump-music/Sambattle%20%5BCL%5D.mp3",
+        "audioStart": 84.4
+      },
+      "generatedAt": 1778406574979,
+      "randomEligible": true
+    },
+    {
+      "id": "c36e06e0-c4f5-4c58-b16c-ab78d84d0b7a",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "kind": "auto-bump",
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Muppet Babies Commercials 1986 2 D",
+            "time": "8:20 AM"
+          },
+          {
+            "title": "trik trak edit",
+            "time": "8:22 AM"
+          },
+          {
+            "title": "Hawaiian Hula Song",
+            "time": "8:24 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "top",
+        "tone": "classic",
+        "seed": 54668,
+        "wallpaper": {
+          "shapes": "checkerboard",
+          "scheme": "arcade",
+          "spacing": 40,
+          "seed": 54668
+        },
+        "effects": [
+          "flicker"
+        ],
+        "effectIntensity": 65,
+        "audio": "/media/bump-music/Special%20Sauce%20%5BCL%5D.mp3",
+        "audioStart": 38.6
+      },
+      "generatedAt": 1778406574980,
+      "randomEligible": true
+    },
+    {
+      "id": "a513a44c-9654-4b24-afd1-83bec5b10559",
+      "type": "bump",
+      "title": "Schedule bump",
+      "folderId": "",
+      "duration": 20,
+      "bump": {
+        "kind": "auto-bump",
+        "heading": "coming up",
+        "lines": [
+          {
+            "title": "Hawaiian Hula Song",
+            "time": "8:24 AM"
+          }
+        ],
+        "alignment": "left",
+        "placement": "bottom",
+        "tone": "washed",
+        "seed": 54391,
+        "wallpaper": {
+          "shapes": "mondrian",
+          "scheme": "ruby",
+          "spacing": 56,
+          "seed": 54391
+        },
+        "effects": [],
+        "effectIntensity": 50,
+        "audio": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
+        "audioStart": 74.4
+      },
+      "generatedAt": 1778406574981,
+      "randomEligible": true
+    },
+    {
+      "id": "c32c0120-76c7-468b-805b-ffd605a641be",
+      "type": "bump",
+      "title": "STATION BREAK: stand by bump",
+      "duration": 42,
+      "randomEligible": false,
+      "bump": {
+        "kind": "gap-filler-bump",
+        "bumpClass": "station-break",
+        "heading": "please stand by",
+        "lines": [
+          "STATION BREAK",
+          "NEXT: DE COFFEESCHOOP: block intro",
+          "11:00 AM"
+        ],
+        "alignment": "left",
+        "placement": "bottom",
+        "tone": "washed",
+        "secondsPerLine": 14,
+        "tintStrength": 16,
+        "creditText": "STANDBY FILLER\nNO DEAD AIR",
+        "creditSize": 18,
+        "creditPosition": "bottom-right",
+        "wallpaper": {
+          "shapes": "mondrian",
+          "scheme": "midnight",
+          "spacing": 127,
+          "seed": 91375
+        },
+        "effects": [
+          "chromatic"
+        ],
+        "effectIntensity": 18,
+        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2004%20Loot%20Run.mp3",
+        "audioStart": 189.6
+      }
+    },
+    {
+      "id": "c6846d48-c812-45e8-a993-4f9abc7d6e7b",
+      "type": "bump",
+      "title": "STATION BREAK: stand by bump",
+      "duration": 42,
+      "randomEligible": false,
+      "bump": {
+        "kind": "gap-filler-bump",
+        "bumpClass": "station-break",
+        "heading": "please stand by",
+        "lines": [
+          "STATION BREAK",
+          "NEXT: DE COFFEESCHOOP: block intro",
+          "11:00 AM"
+        ],
+        "alignment": "left",
+        "placement": "middle",
+        "tone": "washed",
+        "secondsPerLine": 14,
+        "tintStrength": 16,
+        "creditText": "STANDBY FILLER\nNO DEAD AIR",
+        "creditSize": 18,
+        "creditPosition": "bottom-right",
+        "wallpaper": {
+          "shapes": "lines",
+          "scheme": "pool",
+          "spacing": 115,
+          "seed": 42204
+        },
+        "effects": [
+          "letterbox"
+        ],
+        "effectIntensity": 18,
+        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2006%20Ventilated.mp3",
+        "audioStart": 106.1
+      }
+    },
+    {
+      "id": "88ced8d1-ff87-4b7a-aab5-8521d80852b3",
+      "type": "bump",
+      "title": "STATION BREAK: stand by bump",
+      "duration": 42,
+      "randomEligible": false,
+      "bump": {
+        "kind": "gap-filler-bump",
+        "bumpClass": "station-break",
+        "heading": "more shortly",
+        "lines": [
+          "STATION BREAK",
+          "NEXT: DE COFFEESCHOOP: block intro",
+          "11:00 AM"
+        ],
+        "alignment": "center",
+        "placement": "bottom",
+        "tone": "washed",
+        "secondsPerLine": 14,
+        "tintStrength": 16,
+        "creditText": "STANDBY FILLER\nNO DEAD AIR",
+        "creditSize": 18,
+        "creditPosition": "bottom-right",
+        "wallpaper": {
+          "shapes": "argyle",
+          "scheme": "midnight",
+          "spacing": 132,
+          "seed": 26844
+        },
+        "effects": [
+          "chromatic"
+        ],
+        "effectIntensity": 18,
+        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2009%20Bell%20Fed.mp3",
+        "audioStart": 27.5
+      }
+    },
+    {
+      "id": "73237ca8-66ed-4f3a-8961-db09f6f9aec6",
+      "type": "bump",
+      "title": "STATION BREAK: stand by bump",
+      "duration": 42,
+      "randomEligible": false,
+      "bump": {
+        "kind": "gap-filler-bump",
+        "bumpClass": "station-break",
+        "heading": "station break",
+        "lines": [
+          "STATION BREAK",
+          "NEXT: DE COFFEESCHOOP: block intro",
+          "11:00 AM"
+        ],
+        "alignment": "left",
+        "placement": "bottom",
+        "tone": "washed",
+        "secondsPerLine": 14,
+        "tintStrength": 16,
+        "creditText": "STANDBY FILLER\nNO DEAD AIR",
+        "creditSize": 18,
+        "creditPosition": "bottom-right",
+        "wallpaper": {
+          "shapes": "terrazzo",
+          "scheme": "paper",
+          "spacing": 142,
+          "seed": 44640
+        },
+        "effects": [
+          "chromatic"
+        ],
+        "effectIntensity": 18,
+        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2002%20Potion.mp3",
+        "audioStart": 118.9
+      }
+    },
+    {
+      "id": "fb59e1b0-bb4f-45af-a050-5b08d88c28eb",
+      "type": "bump",
+      "title": "STATION BREAK: stand by bump",
+      "duration": 42,
+      "randomEligible": false,
+      "bump": {
+        "kind": "gap-filler-bump",
+        "bumpClass": "station-break",
+        "heading": "please stand by",
+        "lines": [
+          "STATION BREAK",
+          "NEXT: DE COFFEESCHOOP: block intro",
+          "11:00 AM"
+        ],
+        "alignment": "left",
+        "placement": "middle",
+        "tone": "washed",
+        "secondsPerLine": 14,
+        "tintStrength": 16,
+        "creditText": "STANDBY FILLER\nNO DEAD AIR",
+        "creditSize": 18,
+        "creditPosition": "bottom-right",
+        "wallpaper": {
+          "shapes": "lines",
+          "scheme": "paper",
+          "spacing": 125,
+          "seed": 67815
+        },
+        "effects": [
+          "scanlines"
+        ],
+        "effectIntensity": 18,
+        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2003%20Underthrush.mp3",
+        "audioStart": 47.9
+      }
+    },
+    {
+      "id": "b57892ce-a5e3-49ca-a037-6d2a5f2a3365",
+      "type": "bump",
+      "title": "STATION BREAK: stand by bump",
+      "duration": 42,
+      "randomEligible": false,
+      "bump": {
+        "kind": "gap-filler-bump",
+        "bumpClass": "station-break",
+        "heading": "more shortly",
+        "lines": [
+          "STATION BREAK",
+          "NEXT: DE COFFEESCHOOP: block intro",
+          "11:00 AM"
+        ],
+        "alignment": "left",
+        "placement": "middle",
+        "tone": "classic",
+        "secondsPerLine": 14,
+        "tintStrength": 28,
+        "creditText": "STANDBY FILLER\nNO DEAD AIR",
+        "creditSize": 18,
+        "creditPosition": "bottom-right",
+        "wallpaper": {
+          "shapes": "checkerboard",
+          "scheme": "arcade",
+          "spacing": 122,
+          "seed": 89897
+        },
+        "effects": [
+          "vhs",
+          "noise"
+        ],
+        "effectIntensity": 38,
+        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2007%20Honse.mp3",
+        "audioStart": 4.5
+      }
+    },
+    {
+      "id": "0132baa0-cf83-4da9-a271-6bcc105c11a6",
+      "type": "bump",
+      "title": "STATION BREAK: stand by bump",
+      "duration": 42,
+      "randomEligible": false,
+      "bump": {
+        "kind": "gap-filler-bump",
+        "bumpClass": "station-break",
+        "heading": "back to program soon",
+        "lines": [
+          "STATION BREAK",
+          "NEXT: DE COFFEESCHOOP: block intro",
+          "11:00 AM"
+        ],
+        "alignment": "center",
+        "placement": "bottom",
+        "tone": "caption",
+        "secondsPerLine": 14,
+        "tintStrength": 16,
+        "creditText": "STANDBY FILLER\nNO DEAD AIR",
+        "creditSize": 18,
+        "creditPosition": "bottom-right",
+        "wallpaper": {
+          "shapes": "polka",
+          "scheme": "pool",
+          "spacing": 158,
+          "seed": 5480
+        },
+        "effects": [
+          "letterbox"
+        ],
+        "effectIntensity": 18,
+        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2004%20Loot%20Run.mp3",
+        "audioStart": 129.6
+      }
+    },
+    {
+      "id": "09e28d65-dabf-431d-85b5-33dd283f716b",
+      "type": "bump",
+      "title": "STATION BREAK: stand by bump",
+      "duration": 42,
+      "randomEligible": false,
+      "bump": {
+        "kind": "gap-filler-bump",
+        "bumpClass": "station-break",
+        "heading": "more shortly",
+        "lines": [
+          "STATION BREAK",
+          "NEXT: DE COFFEESCHOOP: block intro",
+          "11:00 AM"
+        ],
+        "alignment": "center",
+        "placement": "middle",
+        "tone": "caption",
+        "secondsPerLine": 14,
+        "tintStrength": 16,
+        "creditText": "STANDBY FILLER\nNO DEAD AIR",
+        "creditSize": 18,
+        "creditPosition": "bottom-right",
+        "wallpaper": {
+          "shapes": "terrazzo",
+          "scheme": "broadcast",
+          "spacing": 110,
+          "seed": 60535
+        },
+        "effects": [
+          "letterbox"
+        ],
+        "effectIntensity": 18,
+        "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
+        "audioStart": 104.5
+      }
+    },
+    {
+      "id": "daac48f1-1582-4b48-bd07-d61e93b54867",
+      "type": "bump",
+      "title": "STATION BREAK: stand by bump",
+      "duration": 42,
+      "randomEligible": false,
+      "bump": {
+        "kind": "gap-filler-bump",
+        "bumpClass": "station-break",
+        "heading": "station break",
+        "lines": [
+          "STATION BREAK",
+          "NEXT: DE COFFEESCHOOP: block intro",
+          "11:00 AM"
+        ],
+        "alignment": "center",
+        "placement": "bottom",
+        "tone": "caption",
+        "secondsPerLine": 14,
+        "tintStrength": 16,
+        "creditText": "STANDBY FILLER\nNO DEAD AIR",
+        "creditSize": 18,
+        "creditPosition": "bottom-right",
+        "wallpaper": {
+          "shapes": "lines",
+          "scheme": "blueprint",
+          "spacing": 147,
+          "seed": 62888
+        },
+        "effects": [
+          "chromatic"
+        ],
+        "effectIntensity": 18,
+        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2008%20Techbro.mp3",
+        "audioStart": 26.2
+      }
+    },
+    {
+      "id": "e6679630-796f-4368-952d-db30b3cee1ed",
+      "type": "bump",
+      "title": "STATION BREAK: stand by bump",
+      "duration": 42,
+      "randomEligible": false,
+      "bump": {
+        "kind": "gap-filler-bump",
+        "bumpClass": "station-break",
+        "heading": "back to program soon",
+        "lines": [
+          "STATION BREAK",
+          "NEXT: DE COFFEESCHOOP: block intro",
+          "11:00 AM"
+        ],
+        "alignment": "center",
+        "placement": "middle",
+        "tone": "caption",
+        "secondsPerLine": 14,
+        "tintStrength": 16,
+        "creditText": "STANDBY FILLER\nNO DEAD AIR",
+        "creditSize": 18,
+        "creditPosition": "bottom-right",
+        "wallpaper": {
+          "shapes": "terrazzo",
+          "scheme": "broadcast",
+          "spacing": 127,
+          "seed": 65309
+        },
+        "effects": [
+          "chromatic"
+        ],
+        "effectIntensity": 18,
+        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2003%20Underthrush.mp3",
+        "audioStart": 36.9
+      }
+    },
+    {
+      "id": "87cabc75-ad3b-4718-a40f-fc177cf73a74",
+      "type": "bump",
+      "title": "STATION BREAK: stand by bump",
+      "duration": 42,
+      "randomEligible": false,
+      "bump": {
+        "kind": "gap-filler-bump",
+        "bumpClass": "station-break",
+        "heading": "more shortly",
+        "lines": [
+          "STATION BREAK",
+          "NEXT: DE COFFEESCHOOP: block intro",
+          "11:00 AM"
+        ],
+        "alignment": "left",
+        "placement": "middle",
+        "tone": "caption",
+        "secondsPerLine": 14,
+        "tintStrength": 16,
+        "creditText": "STANDBY FILLER\nNO DEAD AIR",
+        "creditSize": 18,
+        "creditPosition": "bottom-right",
+        "wallpaper": {
+          "shapes": "argyle",
+          "scheme": "paper",
+          "spacing": 121,
+          "seed": 10983
+        },
+        "effects": [
+          "chromatic"
+        ],
+        "effectIntensity": 18,
+        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2001%20Welcome%20Wagon.mp3",
+        "audioStart": 64.9
+      }
+    },
+    {
+      "id": "b3b17a2f-5faa-4d8d-8899-69ff775e5a72",
+      "type": "bump",
+      "title": "STATION BREAK: stand by bump",
+      "duration": 42,
+      "randomEligible": false,
+      "bump": {
+        "kind": "gap-filler-bump",
+        "bumpClass": "station-break",
+        "heading": "back to program soon",
+        "lines": [
+          "STATION BREAK",
+          "NEXT: DE COFFEESCHOOP: block intro",
+          "11:00 AM"
+        ],
+        "alignment": "left",
+        "placement": "bottom",
+        "tone": "caption",
+        "secondsPerLine": 14,
+        "tintStrength": 16,
+        "creditText": "STANDBY FILLER\nNO DEAD AIR",
+        "creditSize": 18,
+        "creditPosition": "bottom-right",
+        "wallpaper": {
+          "shapes": "polka",
+          "scheme": "broadcast",
+          "spacing": 108,
+          "seed": 81696
+        },
+        "effects": [
+          "scanlines"
+        ],
+        "effectIntensity": 18,
+        "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
+        "audioStart": 18.9
+      }
+    },
+    {
+      "id": "4e41088b-1129-41a2-a55c-3c10cd9a1dbd",
+      "type": "bump",
+      "title": "STATION BREAK: stand by bump",
+      "duration": 42,
+      "randomEligible": false,
+      "bump": {
+        "kind": "gap-filler-bump",
+        "bumpClass": "station-break",
+        "heading": "please stand by",
+        "lines": [
+          "STATION BREAK",
+          "NEXT: DE COFFEESCHOOP: block intro",
+          "11:00 AM"
+        ],
+        "alignment": "left",
+        "placement": "top",
+        "tone": "caption",
+        "secondsPerLine": 14,
+        "tintStrength": 28,
+        "creditText": "STANDBY FILLER\nNO DEAD AIR",
+        "creditSize": 18,
+        "creditPosition": "bottom-right",
+        "wallpaper": {
+          "shapes": "starburst",
+          "scheme": "broadcast",
+          "spacing": 125,
+          "seed": 13919
+        },
+        "effects": [
+          "letterbox",
+          "scanlines"
+        ],
+        "effectIntensity": 38,
+        "audio": "/media/bump-music/Upriver%20%5BCL%5D.mp3",
+        "audioStart": 19.2
+      }
+    },
+    {
+      "id": "7dc1c572-f94f-4ce8-a74f-24e9b44c202b",
+      "type": "bump",
+      "title": "STATION BREAK: stand by bump",
+      "duration": 42,
+      "randomEligible": false,
+      "bump": {
+        "kind": "gap-filler-bump",
+        "bumpClass": "station-break",
+        "heading": "station break",
+        "lines": [
+          "STATION BREAK",
+          "NEXT: DE COFFEESCHOOP: block intro",
+          "11:00 AM"
+        ],
+        "alignment": "center",
+        "placement": "bottom",
+        "tone": "caption",
+        "secondsPerLine": 14,
+        "tintStrength": 16,
+        "creditText": "STANDBY FILLER\nNO DEAD AIR",
+        "creditSize": 18,
+        "creditPosition": "bottom-right",
+        "wallpaper": {
+          "shapes": "argyle",
+          "scheme": "broadcast",
+          "spacing": 156,
+          "seed": 54851
+        },
+        "effects": [
+          "letterbox"
+        ],
+        "effectIntensity": 18,
+        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2007%20Honse.mp3",
+        "audioStart": 3.4
+      }
+    },
+    {
+      "id": "c4a09499-fec5-4866-b504-dd880ea04335",
+      "type": "bump",
+      "title": "STATION BREAK: stand by bump",
+      "duration": 42,
+      "randomEligible": false,
+      "bump": {
+        "kind": "gap-filler-bump",
+        "bumpClass": "station-break",
+        "heading": "back to program soon",
+        "lines": [
+          "STATION BREAK",
+          "NEXT: DE COFFEESCHOOP: block intro",
+          "11:00 AM"
+        ],
+        "alignment": "center",
+        "placement": "bottom",
+        "tone": "washed",
+        "secondsPerLine": 14,
+        "tintStrength": 16,
+        "creditText": "STANDBY FILLER\nNO DEAD AIR",
+        "creditSize": 18,
+        "creditPosition": "bottom-right",
+        "wallpaper": {
+          "shapes": "polka",
+          "scheme": "paper",
+          "spacing": 111,
+          "seed": 53570
+        },
+        "effects": [
+          "chromatic"
+        ],
+        "effectIntensity": 18,
+        "audio": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2003%20Underthrush.mp3",
+        "audioStart": 180.6
+      }
     }
   ],
   "sourceFolders": [
@@ -12290,6 +12843,597 @@
       "duration": 472,
       "weeklyBlockId": "late-night-anime",
       "weeklyBlockName": "LATE NIGHT ANIME"
+    },
+    {
+      "id": "ec44c587-b676-4b61-a3ed-388f19f51c15",
+      "sourceId": "e51f997e-95fd-43e8-ae8a-91baa737b573",
+      "title": "STATION BREAK: CBS Commercials 07 25 87 C",
+      "startAt": 1778406752433,
+      "duration": 73,
+      "queuedAt": 1778406682450,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "bba6a494-fcee-4b8b-ac60-0d98a6b24d15",
+      "sourceId": "c32c0120-76c7-468b-805b-ffd605a641be",
+      "title": "STATION BREAK: stand by bump",
+      "startAt": 1778406825433,
+      "duration": 42,
+      "queuedAt": 1778406682451,
+      "autoBump": true,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "454a1603-326f-4e43-af58-3058742b419c",
+      "sourceId": "e2733732-b46c-4816-b353-d7d6363a926f",
+      "title": "STATION BREAK: Muppet Babies Commercials 1986 2 D",
+      "startAt": 1778406867433,
+      "duration": 120,
+      "queuedAt": 1778406682451,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "8055e0ff-505a-4a4a-a8e8-4b50b8dc7e02",
+      "sourceId": "e51f997e-95fd-43e8-ae8a-91baa737b573",
+      "title": "STATION BREAK: CBS Commercials 07 25 87 C",
+      "startAt": 1778406987433,
+      "duration": 73,
+      "queuedAt": 1778406682451,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "fe47fb89-6c65-4b84-ba48-6dd91f023ddd",
+      "sourceId": "c6846d48-c812-45e8-a993-4f9abc7d6e7b",
+      "title": "STATION BREAK: stand by bump",
+      "startAt": 1778407060433,
+      "duration": 42,
+      "queuedAt": 1778406682451,
+      "autoBump": true,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "13f19fb1-e93d-40d7-bcc0-e7fa1e0749e9",
+      "sourceId": "162028f3-db54-46ce-a6af-571179374ba6",
+      "title": "STATION BREAK: 1960 commercial for Off insect repellent",
+      "startAt": 1778407102433,
+      "duration": 34,
+      "queuedAt": 1778406682451,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "a7b676e4-e09c-4697-b5f6-29dcfccca9c4",
+      "sourceId": "851d47a4-4e3c-43c3-a5c0-6b98cd52507f",
+      "title": "STATION BREAK: Animaniacs 09 1993 Commercials E",
+      "startAt": 1778407136433,
+      "duration": 136,
+      "queuedAt": 1778406682451,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "508cab99-f2bf-4645-bbe5-5fa06e6cb2db",
+      "sourceId": "88ced8d1-ff87-4b7a-aab5-8521d80852b3",
+      "title": "STATION BREAK: stand by bump",
+      "startAt": 1778407272433,
+      "duration": 42,
+      "queuedAt": 1778406682452,
+      "autoBump": true,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "923d3966-e253-446a-b14c-ed382455742a",
+      "sourceId": "7c9dfda4-eca5-4bab-833d-852e9ed120dd",
+      "title": "STATION BREAK: 1950 Commercial for Camel cigarettes (Ad 2)",
+      "startAt": 1778407314433,
+      "duration": 68,
+      "queuedAt": 1778406682452,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "c8910997-6eb2-4feb-8c1c-1db5fd2d2d24",
+      "sourceId": "abd2e49b-9802-4661-b456-099ad2c72b7a",
+      "title": "STATION BREAK: Garfield 5 5 Commercials b",
+      "startAt": 1778407382433,
+      "duration": 131,
+      "queuedAt": 1778406682452,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "33e9e447-9c66-4c85-9cd5-84ba4aa52356",
+      "sourceId": "73237ca8-66ed-4f3a-8961-db09f6f9aec6",
+      "title": "STATION BREAK: stand by bump",
+      "startAt": 1778407513433,
+      "duration": 42,
+      "queuedAt": 1778406682452,
+      "autoBump": true,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "6899b70a-bc7f-4dd7-8f52-a2df474ab3e9",
+      "sourceId": "dd02a250-4c33-4351-baee-ebe3b5c1b890",
+      "title": "STATION BREAK: Family Channel Adverts 1993 Mario1 H",
+      "startAt": 1778407555433,
+      "duration": 138,
+      "queuedAt": 1778406682452,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "b9bf5ad4-a075-4056-b5ab-a64fb682b396",
+      "sourceId": "18c4e67a-3002-451c-8498-60a2d8d87910",
+      "title": "STATION BREAK: 1954 commercial for R.D.X. weightloss pills",
+      "startAt": 1778407693433,
+      "duration": 33,
+      "queuedAt": 1778406682452,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "fe97b52e-77a1-4c42-90ce-852caf577d0b",
+      "sourceId": "fb59e1b0-bb4f-45af-a050-5b08d88c28eb",
+      "title": "STATION BREAK: stand by bump",
+      "startAt": 1778407726433,
+      "duration": 42,
+      "queuedAt": 1778406682453,
+      "autoBump": true,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "df292d39-e0b8-4f2c-b156-5a26c8fb04d5",
+      "sourceId": "85f3ef20-e05b-473a-9a32-85b2a132aeb4",
+      "title": "STATION BREAK: 1950 Commercial for General Electric television set",
+      "startAt": 1778407768433,
+      "duration": 79,
+      "queuedAt": 1778406682453,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "144a175b-8493-4cb5-994d-8a2db2422195",
+      "sourceId": "071c1a09-90ca-4b68-adea-12e51f363240",
+      "title": "STATION BREAK: Animaniacs 09 1993 Commercials C",
+      "startAt": 1778407847433,
+      "duration": 109,
+      "queuedAt": 1778406682453,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "f977b0e1-fa84-4123-ad2c-6e30b208f961",
+      "sourceId": "b57892ce-a5e3-49ca-a037-6d2a5f2a3365",
+      "title": "STATION BREAK: stand by bump",
+      "startAt": 1778407956433,
+      "duration": 42,
+      "queuedAt": 1778406682453,
+      "autoBump": true,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "f0b8a189-7fb4-46b0-b9d5-c7a83170bda9",
+      "sourceId": "0a3ce777-2c24-4189-a05e-7ba6a73a1e3d",
+      "title": "STATION BREAK: Classic Commercial for Chesterfield Cigarettes",
+      "startAt": 1778407998433,
+      "duration": 47,
+      "queuedAt": 1778406682453,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "4eea18d3-eb7c-4e91-8373-e04c059edd0d",
+      "sourceId": "b3677d03-9919-4a57-b4b1-e7fad4f8f1a5",
+      "title": "STATION BREAK: 1953 commercial for Lucky Strike cigarettes",
+      "startAt": 1778408045433,
+      "duration": 34,
+      "queuedAt": 1778406682453,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "88e9c393-5dc2-4efa-9f00-d80f41e14d31",
+      "sourceId": "0132baa0-cf83-4da9-a271-6bcc105c11a6",
+      "title": "STATION BREAK: stand by bump",
+      "startAt": 1778408079433,
+      "duration": 42,
+      "queuedAt": 1778406682453,
+      "autoBump": true,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "82db5005-47c8-4853-917c-8e758bde0c1b",
+      "sourceId": "f1a2301b-4c18-475d-9004-6644c1582b25",
+      "title": "STATION BREAK: Family Channel3 Commercials B",
+      "startAt": 1778408121433,
+      "duration": 140,
+      "queuedAt": 1778406682453,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "feee1211-536d-4a04-ab10-287936453207",
+      "sourceId": "95b75cf2-5059-473e-bf2c-1fc6ddc67bf2",
+      "title": "STATION BREAK: Classic Commercial for Post's Sugar Crisps",
+      "startAt": 1778408261433,
+      "duration": 100,
+      "queuedAt": 1778406682453,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "bea85285-f0a3-42bc-9ef6-6e7de5df871b",
+      "sourceId": "09e28d65-dabf-431d-85b5-33dd283f716b",
+      "title": "STATION BREAK: stand by bump",
+      "startAt": 1778408361433,
+      "duration": 42,
+      "queuedAt": 1778406682454,
+      "autoBump": true,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "5e83d00b-9de0-4793-b776-62bca229c542",
+      "sourceId": "bdbf0802-5251-4a41-8c08-1666b0598319",
+      "title": "STATION BREAK: Classic Commercial: Metrecal Diet Drink (1965)",
+      "startAt": 1778408403433,
+      "duration": 69,
+      "queuedAt": 1778406682454,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "3f84ffe4-ce0c-4aae-b5d1-e8a0a16e0ae8",
+      "sourceId": "5ee0a4cb-d51c-4cda-b21c-785954e7e342",
+      "title": "STATION BREAK: Family Channel Adverts 1993 6 McD Sonic J",
+      "startAt": 1778408472433,
+      "duration": 167,
+      "queuedAt": 1778406682454,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "ecab530b-f9fa-4c2d-ae85-7eb30f0c1726",
+      "sourceId": "daac48f1-1582-4b48-bd07-d61e93b54867",
+      "title": "STATION BREAK: stand by bump",
+      "startAt": 1778408639433,
+      "duration": 42,
+      "queuedAt": 1778406682454,
+      "autoBump": true,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "480b7abb-0a79-4b82-bd54-47aca982e761",
+      "sourceId": "7b926738-3bd9-4bb7-89a5-8c9da3eff423",
+      "title": "STATION BREAK: Ducktales 87 Commercials2 M",
+      "startAt": 1778408681433,
+      "duration": 132,
+      "queuedAt": 1778406682455,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "628a339e-faf5-4ecd-be14-bbe743839ea7",
+      "sourceId": "071c1a09-90ca-4b68-adea-12e51f363240",
+      "title": "STATION BREAK: Animaniacs 09 1993 Commercials C",
+      "startAt": 1778408813433,
+      "duration": 109,
+      "queuedAt": 1778406682455,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "fd904792-9164-417c-ac45-3a1ef32721c8",
+      "sourceId": "e6679630-796f-4368-952d-db30b3cee1ed",
+      "title": "STATION BREAK: stand by bump",
+      "startAt": 1778408922433,
+      "duration": 42,
+      "queuedAt": 1778406682455,
+      "autoBump": true,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "6213c05d-d1b4-4057-9fb6-1a5e394e5e70",
+      "sourceId": "851d47a4-4e3c-43c3-a5c0-6b98cd52507f",
+      "title": "STATION BREAK: Animaniacs 09 1993 Commercials E",
+      "startAt": 1778408964433,
+      "duration": 136,
+      "queuedAt": 1778406682455,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "03bcc730-767b-4356-8514-94d81980da96",
+      "sourceId": "90a99413-ff7f-4920-ba40-45aa5f8d9ad7",
+      "title": "STATION BREAK: Family Channel Adverts 1993 5 Cocoa Krispies N",
+      "startAt": 1778409100433,
+      "duration": 167,
+      "queuedAt": 1778406682455,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "73cafde7-5f11-41f5-ae23-118788fe97dc",
+      "sourceId": "87cabc75-ad3b-4718-a40f-fc177cf73a74",
+      "title": "STATION BREAK: stand by bump",
+      "startAt": 1778409267433,
+      "duration": 42,
+      "queuedAt": 1778406682455,
+      "autoBump": true,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "fa90ce16-5cf1-4432-892e-dfceb5002901",
+      "sourceId": "e51f997e-95fd-43e8-ae8a-91baa737b573",
+      "title": "STATION BREAK: CBS Commercials 07 25 87 C",
+      "startAt": 1778409309433,
+      "duration": 73,
+      "queuedAt": 1778406682456,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "20ed0929-2f3c-4641-813b-1b6ef4f7563f",
+      "sourceId": "e2733732-b46c-4816-b353-d7d6363a926f",
+      "title": "STATION BREAK: Muppet Babies Commercials 1986 2 D",
+      "startAt": 1778409382433,
+      "duration": 120,
+      "queuedAt": 1778406682456,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "c26c975a-4d9d-4435-a820-320bcc0ac55e",
+      "sourceId": "b3b17a2f-5faa-4d8d-8899-69ff775e5a72",
+      "title": "STATION BREAK: stand by bump",
+      "startAt": 1778409502433,
+      "duration": 42,
+      "queuedAt": 1778406682456,
+      "autoBump": true,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "2d0bc1c1-daaa-4377-8eb5-a1d48d8b2978",
+      "sourceId": "7e5f8dd7-8462-4648-b7ce-9ac180bbdd0f",
+      "title": "STATION BREAK: Family Channel Adverts 1993 6 E",
+      "startAt": 1778409544433,
+      "duration": 148,
+      "queuedAt": 1778406682456,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "bd2fc1be-49ec-480b-9935-0cc316cacb15",
+      "sourceId": "ea79098a-8340-4ace-8fd3-6ece375c0457",
+      "title": "STATION BREAK: Fifties Advertising: UNIVAC Computer Commercial (5 February 1956) (Ad 2 of 2)",
+      "startAt": 1778409692433,
+      "duration": 28,
+      "queuedAt": 1778406682456,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "a4236471-4d08-4a32-ac17-cb80045c1227",
+      "sourceId": "4e41088b-1129-41a2-a55c-3c10cd9a1dbd",
+      "title": "STATION BREAK: stand by bump",
+      "startAt": 1778409720433,
+      "duration": 42,
+      "queuedAt": 1778406682456,
+      "autoBump": true,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "b8d40b3c-ca23-444e-8a71-a61e96370034",
+      "sourceId": "6733b0e7-ce2d-41f6-926a-4063a9fb912e",
+      "title": "STATION BREAK: WPLG10 Ewok Commercials 1984 E",
+      "startAt": 1778409762433,
+      "duration": 156,
+      "queuedAt": 1778406682456,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "95534f9f-9c0c-44ae-89af-24e01806daa0",
+      "sourceId": "abd2e49b-9802-4661-b456-099ad2c72b7a",
+      "title": "STATION BREAK: Garfield 5 5 Commercials b",
+      "startAt": 1778409918433,
+      "duration": 131,
+      "queuedAt": 1778406682456,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "c8772d8b-1b0c-42cb-b822-c85fceba1d45",
+      "sourceId": "7dc1c572-f94f-4ce8-a74f-24e9b44c202b",
+      "title": "STATION BREAK: stand by bump",
+      "startAt": 1778410049433,
+      "duration": 42,
+      "queuedAt": 1778406682457,
+      "autoBump": true,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "119e1fd9-aff7-43e4-8a80-e76f74572c46",
+      "sourceId": "1f963837-6258-4ff7-a4e3-1044116424ae",
+      "title": "STATION BREAK: 1952 commercial for Kellogg's Shredded Wheat",
+      "startAt": 1778410091433,
+      "duration": 75,
+      "queuedAt": 1778406682457,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "b69b8b28-34b8-45a9-9f74-53a58be8fe01",
+      "sourceId": "3d4cc6df-cbbe-403f-8a45-685015addfdb",
+      "title": "STATION BREAK: Family Channel3 Commercials L",
+      "startAt": 1778410166433,
+      "duration": 165,
+      "queuedAt": 1778406682457,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "83774300-eb9b-4733-bf78-77b159ffc7fd",
+      "sourceId": "c4a09499-fec5-4866-b504-dd880ea04335",
+      "title": "STATION BREAK: stand by bump",
+      "startAt": 1778410331433,
+      "duration": 42,
+      "queuedAt": 1778406682457,
+      "autoBump": true,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "5a8e824d-abf5-4fdc-8c22-51b388362455",
+      "sourceId": "588de514-f709-44d5-ba03-cf3bf7773384",
+      "title": "STATION BREAK: KPTV Ducktales Commercials 9 19 87 C",
+      "startAt": 1778410373433,
+      "duration": 137,
+      "queuedAt": 1778406682457,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "57d09411-69de-40eb-b08a-6a68ceb4f908",
+      "sourceId": "309884fc-66b1-41d8-a728-0f4d8975f231",
+      "title": "STATION BREAK: Price is Right Commercials Q",
+      "startAt": 1778410510433,
+      "duration": 102,
+      "queuedAt": 1778406682457,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "a9db28d4-420d-4e21-8184-b141dc5e9c52",
+      "sourceId": "309884fc-66b1-41d8-a728-0f4d8975f231",
+      "title": "STATION BREAK: Price is Right Commercials Q",
+      "startAt": 1778410612433,
+      "duration": 102,
+      "queuedAt": 1778406725530,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
+    },
+    {
+      "id": "3dd86672-272f-4d80-bb3b-6fd324eb2370",
+      "sourceId": "309884fc-66b1-41d8-a728-0f4d8975f231",
+      "title": "STATION BREAK: Price is Right Commercials Q",
+      "startAt": 1778410714433,
+      "duration": 102,
+      "queuedAt": 1778406753552,
+      "gapFiller": true,
+      "gapFillerVersion": 5,
+      "weeklyBlockId": "station-break",
+      "weeklyBlockName": "STATION BREAK"
     },
     {
       "id": "825ed193-706b-4e7f-b811-79f052b06fad",
@@ -15257,89 +16401,137 @@
   ],
   "liveQueue": [
     {
-      "id": "13219f75-9c23-4ec9-ad36-09b2ecb6c30f",
-      "sourceId": "b3540004-6680-453d-bce2-d69199eec067",
+      "id": "366f0c18-ffac-4cd6-9ab3-81574719c46a",
+      "sourceId": "f6887396-ac2c-4678-80c1-a2d292a73755",
       "title": "",
-      "startAt": 1778391001575,
-      "duration": 7009,
-      "queuedAt": 1778387531733
+      "startAt": 1778406594904,
+      "duration": 7705,
+      "sourceOffset": 669,
+      "queuedAt": 1778405667926,
+      "autoQueued": true,
+      "fadeBreakResume": true,
+      "fadeBreakOf": "c757961f-0af3-42fa-9f56-c2f41770a81c"
     },
     {
-      "id": "26d5fa0e-c944-40b5-b902-7f661333dd70",
-      "sourceId": "23787575-2803-41f4-a219-dda5c02e80d3",
-      "title": "",
-      "startAt": 1778398010575,
-      "duration": 559,
-      "queuedAt": 1778390505958
-    },
-    {
-      "id": "2977aea1-55ab-4da9-b1ab-436d63bb051c",
-      "sourceId": "f4d9d3cb-a4f7-4648-8ee6-ea057836be5b",
+      "id": "b23ed05e-0efd-4c3d-abda-bf1bdde74cb4",
+      "sourceId": "836b31cb-72ef-4d09-b5c9-86e8a7027a86",
       "title": "Schedule bump",
-      "startAt": 1778398569575,
+      "startAt": 1778414299904,
       "duration": 20,
-      "queuedAt": 1778391001582,
+      "queuedAt": 1778406574974,
       "autoBump": true
     },
     {
-      "id": "4ee5ef96-0ae9-4380-bec5-d43c65a34f74",
-      "sourceId": "5a724454-6e89-463b-9e64-5943a3b9f331",
+      "id": "7c11d444-5ae0-4dc3-9949-fdd5600b4ba8",
+      "sourceId": "9d3580e0-9b83-4afa-a2cf-c3856cfd68bf",
       "title": "",
-      "startAt": 1778398589575,
-      "duration": 547,
-      "queuedAt": 1778390505958
+      "startAt": 1778414319904,
+      "duration": 1306,
+      "sourceOffset": 0,
+      "queuedAt": 1778405667926,
+      "autoQueued": true
     },
     {
-      "id": "d8e51179-7ef1-4e41-a28d-6e601ce1ee46",
-      "sourceId": "1027f935-cfef-41ac-89d5-4d5a0fe09289",
+      "id": "c811711c-cf11-4420-9d34-eff9cbd477fc",
+      "sourceId": "c36e06e0-c4f5-4c58-b16c-ab78d84d0b7a",
       "title": "Schedule bump",
-      "startAt": 1778399136575,
+      "startAt": 1778415625904,
       "duration": 20,
-      "queuedAt": 1778391001582,
+      "queuedAt": 1778406574974,
       "autoBump": true
     },
     {
-      "id": "8a8b7fe0-3f58-4ed6-824f-45f78cc780d9",
-      "sourceId": "cd3577bc-5198-4b29-978c-b9bec1b5af0b",
+      "id": "50fa9639-26c5-45bd-b2d4-adddada8f1cf",
+      "sourceId": "e2733732-b46c-4816-b353-d7d6363a926f",
       "title": "",
-      "startAt": 1778399156575,
-      "duration": 283,
-      "queuedAt": 1778390997412
+      "startAt": 1778415645904,
+      "duration": 120,
+      "sourceOffset": 0,
+      "queuedAt": 1778405667926,
+      "autoQueued": true
     },
     {
-      "id": "ba533f44-ed29-4531-bf44-38ff2cbc884a",
-      "sourceId": "5a8b61cb-5b07-41f0-8247-7d772c9dec85",
+      "id": "c7081f12-456d-4862-bffb-e29c1957ea5a",
+      "sourceId": "0a37fb48-fa72-4a5f-b998-ebc844ba3757",
+      "title": "",
+      "startAt": 1778415765904,
+      "duration": 60,
+      "sourceOffset": 0,
+      "queuedAt": 1778405893965,
+      "autoQueued": true
+    },
+    {
+      "id": "b1ea07ed-cbbe-4d68-8e57-ed289a26f6cd",
+      "sourceId": "a513a44c-9654-4b24-afd1-83bec5b10559",
       "title": "Schedule bump",
-      "startAt": 1778399439575,
+      "startAt": 1778415825904,
       "duration": 20,
-      "queuedAt": 1778391001582,
+      "queuedAt": 1778406574974,
       "autoBump": true
     },
     {
-      "id": "65ef1197-f9a8-4ab1-975a-03e430e46a03",
-      "sourceId": "831b517d-5a3b-463c-b401-2750482aeabd",
+      "id": "060e84bf-cc02-4f50-887a-4798b48d0a04",
+      "sourceId": "ff909ed0-0b74-43a9-82e6-ebf008e9af81",
       "title": "",
-      "startAt": 1778399459575,
-      "duration": 1291,
-      "queuedAt": 1778391001581
-    },
-    {
-      "id": "b34d2019-f79b-4096-8cb2-1e5876527897",
-      "sourceId": "f9be7111-0a1b-44c1-ae73-3903378bc07c",
-      "title": "Schedule bump",
-      "startAt": 1778400750575,
-      "duration": 20,
-      "queuedAt": 1778391001582,
-      "autoBump": true
+      "startAt": 1778415845904,
+      "duration": 111,
+      "sourceOffset": 0,
+      "queuedAt": 1778406574972,
+      "autoQueued": true
     }
   ],
-  "broadcastMode": "scheduled",
+  "broadcastMode": "queue",
   "lastAutoBumpAt": 0,
   "bumpMusic": [
     {
       "name": "Bag Walk [CL]",
       "path": "/media/bump-music/Bag%20Walk%20%5BCL%5D.mp3",
       "duration": 144
+    },
+    {
+      "name": "Doink Wizard - Hinged - 01 Welcome Wagon",
+      "path": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2001%20Welcome%20Wagon.mp3",
+      "duration": 312.1
+    },
+    {
+      "name": "Doink Wizard - Hinged - 02 Potion",
+      "path": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2002%20Potion.mp3",
+      "duration": 267.3
+    },
+    {
+      "name": "Doink Wizard - Hinged - 03 Underthrush",
+      "path": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2003%20Underthrush.mp3",
+      "duration": 353.5
+    },
+    {
+      "name": "Doink Wizard - Hinged - 04 Loot Run",
+      "path": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2004%20Loot%20Run.mp3",
+      "duration": 261.9
+    },
+    {
+      "name": "Doink Wizard - Hinged - 05 Burner VIP",
+      "path": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2005%20Burner%20VIP.mp3",
+      "duration": 270.6
+    },
+    {
+      "name": "Doink Wizard - Hinged - 06 Ventilated",
+      "path": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2006%20Ventilated.mp3",
+      "duration": 312.1
+    },
+    {
+      "name": "Doink Wizard - Hinged - 07 Honse",
+      "path": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2007%20Honse.mp3",
+      "duration": 53.8
+    },
+    {
+      "name": "Doink Wizard - Hinged - 08 Techbro",
+      "path": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2008%20Techbro.mp3",
+      "duration": 283.9
+    },
+    {
+      "name": "Doink Wizard - Hinged - 09 Bell Fed",
+      "path": "/media/bump-music/Doink%20Wizard%20-%20Hinged%20-%2009%20Bell%20Fed.mp3",
+      "duration": 437.4
     },
     {
       "name": "Sambattle [CL]",
@@ -15951,6 +17143,10 @@
     "c1655d05-577e-4b62-aded-b9ad7663a6c4": {
       "status": "none",
       "updatedAt": 1778404414256
+    },
+    "9d3580e0-9b83-4afa-a2cf-c3856cfd68bf": {
+      "status": "none",
+      "updatedAt": 1778405669942
     }
   }
 }
