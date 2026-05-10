@@ -97,6 +97,7 @@ const WEATHER_BUMP_INTERVAL_MS = 1000 * 60 * 45;
 const WEATHER_BUMP_MIN_GAP_MS = 1000 * 60 * 20;
 const WEATHER_BUMP_LOOKAHEAD_MS = 1000 * 60 * 60 * 5;
 const WEATHER_BUMP_DURATION = 34;
+const WEATHER_BUMP_VERSION = 2;
 const BLOCK_BUMP_DURATION = 16;
 const GAP_FILLER_MIN_GAP_SECONDS = 20;
 const GAP_FILLER_LOOKAHEAD_MS = 1000 * 60 * 90;
@@ -2295,6 +2296,20 @@ function weatherDayLabel(dateText = "") {
   return new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(date);
 }
 
+function weatherForecastLine(day = {}) {
+  const rain = Number(day.rain || 0);
+  const wet = rain >= 55 ? `${rain}% rain` : rain >= 20 ? `${rain}% wet` : "mostly dry";
+  return `${weatherDayLabel(day.date)}  ${day.high}/${day.low}F  ${String(day.label || "mixed skies").toUpperCase()}  ${wet}`;
+}
+
+function weatherForecastSummary(forecast = []) {
+  if (!forecast.length) return "FORECAST SIGNAL TEMPORARILY FUZZY";
+  const highs = forecast.map((day) => Number(day.high)).filter(Number.isFinite);
+  const wettest = forecast.reduce((best, day) => Number(day.rain || 0) > Number(best.rain || 0) ? day : best, forecast[0]);
+  const highText = highs.length ? `HIGHS ${Math.min(...highs)}-${Math.max(...highs)}F` : "TEMPERATURES WANDERING";
+  return `${highText} / WETTEST: ${weatherDayLabel(wettest.date).toUpperCase()} ${Math.round(Number(wettest.rain || 0))}%`;
+}
+
 async function createWeatherBumpSource(startAt = Date.now()) {
   const city = weatherCityForTime(startAt);
   const forecast = await weatherForecastForCity(city);
@@ -2303,12 +2318,14 @@ async function createWeatherBumpSource(startAt = Date.now()) {
   const lines = forecast.length
     ? [
         `${city.name}, ${city.country}`,
-        ...forecast.slice(0, 7).map((day) => `${weatherDayLabel(day.date)} ${day.high}/${day.low}F ${day.label} ${day.rain ? `${day.rain}% wet` : "dry-ish"}`)
+        weatherForecastSummary(forecast),
+        ...forecast.slice(0, 4).map(weatherForecastLine)
       ]
     : [
         `${city.name}, ${city.country}`,
-        "forecast signal fuzzy",
-        "weather department is chewing the antenna"
+        "FORECAST SIGNAL TEMPORARILY FUZZY",
+        "WEATHER DEPARTMENT WILL TRY AGAIN SHORTLY",
+        "KEEP ONE EYE ON THE SKY ANYWAY"
       ];
   return {
     id: crypto.randomUUID(),
@@ -2317,34 +2334,35 @@ async function createWeatherBumpSource(startAt = Date.now()) {
     folderId: "",
     duration: WEATHER_BUMP_DURATION,
     randomEligible: false,
+    weatherBumpVersion: WEATHER_BUMP_VERSION,
     bump: {
       kind: "weather-bump",
       bumpClass: "weather-bump",
-      heading: "one-week forecast",
+      heading: "world weather relay",
       lines,
       secondsPerLine: Math.max(3.2, Math.round((WEATHER_BUMP_DURATION / Math.max(1, lines.length)) * 10) / 10),
-      fontSize: 39,
+      fontSize: forecast.length ? 35 : 42,
       alignment: "left",
       placement: "middle",
       tone: "caption",
-      tintStrength: 18,
+      tintStrength: 14,
       creditText: music.creditText,
       creditPosition: "bottom-right",
-      creditSize: 17,
+      creditSize: 22,
       wallpaper: {
-        shapes: sample(["lines", "stripes", "argyle", "terrazzo", "mondrian"]),
-        scheme: sample(["blueprint", "pool", "mint", "broadcast", "paper"]),
+        shapes: sample(["lines", "argyle", "terrazzo", "mondrian"]),
+        scheme: sample(["blueprint", "pool", "mint", "broadcast"]),
         spacing: 84 + (seed % 66),
         seed
       },
       effects: sampleMany(["scanlines", "letterbox", "vhs", "chromatic"], 2),
-      effectIntensity: 14,
+      effectIntensity: 12,
       intentionalGlitch: false,
       presentation: generatedBumpPresentation(false),
       productionStyle: "schedule-card",
       productionAccent: "cool",
       productionBadge: "WORLD WEATHER",
-      productionKicker: `${city.country} / 7 day forecast`,
+      productionKicker: `${city.country} / one-week outlook`,
       audio: music.path,
       audioStart: music.start
     },
@@ -3150,14 +3168,28 @@ async function createWeatherBumpEntry(startAt = Date.now(), now = Date.now()) {
 }
 
 async function ensureWeatherBumps() {
+  const prunedSchedule = pruneOutdatedWeatherBumpsInCollection("schedule");
+  const prunedQueue = pruneOutdatedWeatherBumpsInCollection("liveQueue");
   const scheduleChanged = await ensureWeatherBumpsInCollection("schedule");
   const queueChanged = state.broadcastMode === "queue" ? await ensureWeatherBumpsInCollection("liveQueue") : false;
-  if (scheduleChanged || queueChanged) {
+  if (scheduleChanged || queueChanged || prunedSchedule || prunedQueue) {
     state.schedule.sort((a, b) => a.startAt - b.startAt);
     state.liveQueue.sort((a, b) => a.startAt - b.startAt);
     pruneUnusedBumpSources();
   }
-  return scheduleChanged || queueChanged;
+  return scheduleChanged || queueChanged || prunedSchedule || prunedQueue;
+}
+
+function pruneOutdatedWeatherBumpsInCollection(collectionName) {
+  const entries = Array.isArray(state[collectionName]) ? state[collectionName] : [];
+  const before = entries.length;
+  const now = Date.now();
+  state[collectionName] = entries.filter((entry) => {
+    if (!entry.weatherBump || entryEnd(entry) <= now - 30000) return true;
+    const source = state.sources.find((item) => item.id === entry.sourceId);
+    return Number(source?.weatherBumpVersion || 0) >= WEATHER_BUMP_VERSION;
+  });
+  return state[collectionName].length !== before;
 }
 
 async function ensureWeatherBumpsInCollection(collectionName) {
