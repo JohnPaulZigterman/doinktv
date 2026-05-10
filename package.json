@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "check": "node --check server.js && node --check public/app.js && node --check vendor/BumpGenerator/app.js"
+    "check": "node --check server.js && node --check public/app.js && node --check vendor/BumpGenerator/app.js",
+    "test": "node --test"
   },
   "engines": {
     "node": ">=20 <25"
