@@ -89,7 +89,8 @@ const PUBLIC_DIR = path.join(__dirname, "public");
 const VENDORED_BUMP_GENERATOR_DIR = path.join(__dirname, "vendor", "BumpGenerator");
 const BUMP_GENERATOR_DIR = process.env.BUMP_GENERATOR_DIR
   || (existsSync(VENDORED_BUMP_GENERATOR_DIR) ? VENDORED_BUMP_GENERATOR_DIR : path.join(__dirname, "..", "BumpGenerator"));
-const STATE_PATH = path.join(DATA_DIR, "state.json");
+const STARTER_STATE_PATH = path.join(DATA_DIR, "state.json");
+const STATE_PATH = process.env.DOINK_STATE_PATH || path.join(DATA_DIR, "runtime", "state.json");
 const HLS_HANDOFF_LEAD_MS = 2400;
 const AUTO_BUMP_INTERVAL_MS = 1000 * 60 * 3;
 const AUTO_BUMP_DURATION = 20;
@@ -633,9 +634,9 @@ const MAINTENANCE_FINDINGS = [
   {
     severity: "high",
     area: "Operational data",
-    finding: "data/state.json is both starter state and runtime state, while logs are local runtime artifacts.",
-    impact: "Commits can accidentally capture generated schedule/filler churn, and deployments need a persistence story.",
-    refactor: "Keep runtime logs ignored, document starter-state intent, and move production state to a persistent disk or external store."
+    finding: "Runtime state now writes to ignored data/runtime/state.json, seeded from checked-in data/state.json when needed.",
+    impact: "Generated schedule/filler churn is less likely to leak into commits, but deployments still need persistent storage.",
+    refactor: "Keep data/state.json as starter state, set DOINK_STATE_PATH to persistent storage in production, and avoid committing runtime cache churn."
   },
   {
     severity: "high",
@@ -647,9 +648,9 @@ const MAINTENANCE_FINDINGS = [
   {
     severity: "medium",
     area: "Tests",
-    finding: "npm run check currently verifies syntax only.",
-    impact: "Scheduling priority, vote weighting, Archive filters, FX decay, and queue protection can regress silently.",
-    refactor: "Add node:test coverage for pure server helpers and a lightweight browser smoke script for critical UI flows."
+    finding: "Core policy tests now cover schedule priority, longform breaks, weather spacing, language fit, porn filtering, and weekly repeats.",
+    impact: "The most load-bearing programming rules have regression coverage, while UI and FX browser smoke tests are still missing.",
+    refactor: "Add a lightweight browser smoke script for critical admin and viewer flows."
   },
   {
     severity: "medium",
@@ -958,6 +959,7 @@ async function ensureState() {
   await mkdir(HLS_DIR, { recursive: true });
   const loadedState = await loadStationState({
     statePath: STATE_PATH,
+    seedPath: STARTER_STATE_PATH,
     defaultState: stationStateDefaults({ communityDefaults: COMMUNITY_DEFAULTS }),
     normalizers: {
       normalizeCommunityState,
