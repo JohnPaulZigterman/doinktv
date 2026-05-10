@@ -9,14 +9,28 @@
   <body>
     <header class="topbar">
       <div class="brand-lockup">
-        <div class="brand-mark">D</div>
-        <div>
-          <div class="brand">DoinkTV</div>
-          <div class="tagline">Synchronized broadcast</div>
-        </div>
+        <div class="brand">DOINKTV</div>
       </div>
 
       <div class="top-actions">
+        <label class="theme-picker">
+          <span>Theme</span>
+          <select id="themeSelect" aria-label="Theme">
+            <option value="station">Default</option>
+            <option value="woodsy">Woodsy</option>
+            <option value="mountain">Mountain</option>
+            <option value="deep-ocean">Deep Ocean</option>
+            <option value="rainforest">Rainforest</option>
+            <option value="frutiger-aero">Frutiger Aero</option>
+            <option value="aero-lime">Aero Lime</option>
+            <option value="aero-sunset">Aero Sunset</option>
+            <option value="candy-static">Candy Static</option>
+            <option value="terminal-green">Terminal Green</option>
+            <option value="hotdog-stand">Hotdog Stand</option>
+            <option value="midnight-laundromat">Midnight Laundromat</option>
+            <option value="mall-kiosk">Mall Kiosk</option>
+          </select>
+        </label>
         <div id="liveBadge" class="badge">Waiting for signal</div>
         <button id="adminToggle" class="ghost-button" type="button" aria-expanded="false">Log In</button>
       </div>
@@ -58,6 +72,12 @@
           </div>
           <video id="streamPlayer" playsinline autoplay></video>
           <div id="youtubePlayer" class="youtube-player"></div>
+          <div id="streamLoading" class="stream-loading hidden" role="status" aria-live="polite">
+            <span>Loading broadcast</span>
+            <div class="stream-loading-bar" aria-hidden="true"><i></i></div>
+          </div>
+          <div id="fxOverlay" class="fx-overlay" aria-hidden="true"></div>
+          <div id="fxAudioLayer" class="fx-audio-layer" aria-hidden="true"></div>
           <button id="playOverlayButton" class="play-overlay hidden" type="button">
             <span>Play broadcast</span>
           </button>
@@ -79,6 +99,7 @@
           <button id="showBroadcastPanelButton" class="auth-tab" type="button">Broadcast</button>
           <button id="showQueuePanelButton" class="auth-tab" type="button">Queue</button>
           <button id="showBumpPanelButton" class="auth-tab" type="button">Bumps</button>
+          <button id="showFxPanelButton" class="auth-tab" type="button">FX</button>
           <button id="showChatPanelButton" class="auth-tab active" type="button">Chat</button>
         </div>
         <div class="chat-top">
@@ -117,6 +138,7 @@
           <button id="showBroadcastPanelButtonAlt" class="auth-tab active" type="button">Broadcast</button>
           <button id="showQueuePanelButtonAlt" class="auth-tab" type="button">Queue</button>
           <button id="showBumpPanelButtonAlt" class="auth-tab" type="button">Bumps</button>
+          <button id="showFxPanelButtonAlt" class="auth-tab" type="button">FX</button>
           <button id="showChatPanelButtonAlt" class="auth-tab" type="button">Chat</button>
         </div>
         <div class="panel-top">
@@ -145,10 +167,30 @@
             <p id="playlistImportMessage" class="message"></p>
           </form>
 
+          <form id="archiveImportForm" class="stack compact-stack">
+            <h3>Import Internet Archive</h3>
+            <input name="url" placeholder="Archive collection or item URL" required>
+            <input name="folderName" placeholder="Folder name (optional)">
+            <input name="rows" type="number" min="1" max="100" value="50" placeholder="Max videos">
+            <button type="submit">Import archive</button>
+            <p id="archiveImportMessage" class="message"></p>
+          </form>
+
+          <form id="sourceSearchForm" class="stack compact-stack source-search">
+            <h3>Source Search</h3>
+            <div class="inline-form">
+              <input name="query" placeholder="Search Internet Archive media" autocomplete="off">
+              <button type="submit">Search</button>
+            </div>
+            <p id="sourceSearchMessage" class="message"></p>
+            <div id="sourceSearchResults" class="search-results"></div>
+          </form>
+
           <form id="sourceForm" class="stack">
             <h3>Add source</h3>
             <select name="type">
               <option value="youtube">YouTube</option>
+              <option value="internet-archive">Internet Archive</option>
               <option value="local">Server file</option>
             </select>
             <select name="folderId">
@@ -156,6 +198,10 @@
             </select>
             <div class="source-field" data-source-field="youtube">
               <input name="youtube" placeholder="YouTube URL or ID">
+            </div>
+            <div class="source-field hidden" data-source-field="internet-archive">
+              <input name="archive" placeholder="Archive item URL or identifier">
+              <input name="archiveFile" type="hidden">
             </div>
             <div class="source-field hidden" data-source-field="local">
               <input name="path" placeholder="media/example.mp4">
@@ -211,6 +257,7 @@
           <button id="showBroadcastPanelButtonQueue" class="auth-tab" type="button">Broadcast</button>
           <button id="showQueuePanelButtonQueue" class="auth-tab active" type="button">Queue</button>
           <button id="showBumpPanelButtonQueue" class="auth-tab" type="button">Bumps</button>
+          <button id="showFxPanelButtonQueue" class="auth-tab" type="button">FX</button>
           <button id="showChatPanelButtonQueue" class="auth-tab" type="button">Chat</button>
         </div>
         <div class="panel-top">
@@ -229,6 +276,7 @@
           <button id="showBroadcastPanelButtonBump" class="auth-tab" type="button">Broadcast</button>
           <button id="showQueuePanelButtonBump" class="auth-tab" type="button">Queue</button>
           <button id="showBumpPanelButtonBump" class="auth-tab active" type="button">Bumps</button>
+          <button id="showFxPanelButtonBump" class="auth-tab" type="button">FX</button>
           <button id="showChatPanelButtonBump" class="auth-tab" type="button">Chat</button>
         </div>
         <div class="panel-top">
@@ -238,6 +286,332 @@
           </div>
         </div>
         <iframe class="bump-frame" src="/bumpgenerator/" title="Bump Generator"></iframe>
+      </aside>
+
+      <aside id="fxPanel" class="admin-panel hidden" aria-label="FX controls">
+        <div class="rail-tabs hidden" data-admin-rail-tabs>
+          <button id="showBroadcastPanelButtonFx" class="auth-tab" type="button">Broadcast</button>
+          <button id="showQueuePanelButtonFx" class="auth-tab" type="button">Queue</button>
+          <button id="showBumpPanelButtonFx" class="auth-tab" type="button">Bumps</button>
+          <button id="showFxPanelButtonFx" class="auth-tab active" type="button">FX</button>
+          <button id="showChatPanelButtonFx" class="auth-tab" type="button">Chat</button>
+        </div>
+        <div class="panel-top">
+          <div>
+            <h2>FX Soundboard</h2>
+            <p>Throw synchronized chaos into the broadcast</p>
+          </div>
+          <button id="clearFxButton" class="danger compact" type="button">Clear FX</button>
+        </div>
+        <div class="fx-board">
+          <section>
+            <h3 class="looper-heading">
+              <span>Signal Looper</span>
+              <span class="looper-bpm-display">
+                <span id="looperBeatLight" class="looper-beat-light" aria-hidden="true"></span>
+                <output id="looperBpmValue">120 BPM</output>
+              </span>
+            </h3>
+            <div class="looper-control-panel fx-wide">
+              <div class="looper-row">
+                <label>
+                  <span>Layer</span>
+                  <select id="looperLayerSelect">
+                    <option value="1">Layer 1</option>
+                    <option value="2">Layer 2</option>
+                    <option value="3">Layer 3</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Shape</span>
+                  <select id="looperShapeSelect">
+                    <option value="full">Full frame</option>
+                    <option value="window">Window</option>
+                    <option value="strip">Tall strip</option>
+                    <option value="band">Wide band</option>
+                    <option value="square">Square</option>
+                  </select>
+                </label>
+              </div>
+              <label class="fx-slider">
+                <span>Motion <output id="looperMotionValue">still</output></span>
+                <select id="looperMotionSelect">
+                  <option value="still" selected>still</option>
+                  <option value="bounce">beat bounce</option>
+                  <option value="pulse">pulse</option>
+                  <option value="jitter">jitter</option>
+                  <option value="slide">slide</option>
+                  <option value="spin">slow spin</option>
+                </select>
+              </label>
+              <div class="looper-row looper-action-row">
+                <button id="looperCaptureButton" data-fx="looper-capture" data-layer="1" type="button">Capture layer</button>
+                <button id="looperApplyButton" class="secondary" type="button">Apply move/style</button>
+                <button data-fx="looper-clear" type="button">Clear loops</button>
+              </div>
+              <label class="fx-slider">
+                <span>Opacity <output id="looperOpacityValue">54%</output></span>
+                <input id="looperOpacitySlider" type="range" min="0" max="100" step="1" value="54">
+              </label>
+              <label class="fx-slider">
+                <span>Blend <output id="looperBlendValue">screen</output></span>
+                <select id="looperBlendSelect">
+                  <option value="normal">normal</option>
+                  <option value="screen" selected>screen</option>
+                  <option value="overlay">overlay</option>
+                  <option value="hard-light">hard light</option>
+                  <option value="lighten">lighten</option>
+                  <option value="multiply">multiply</option>
+                  <option value="difference">difference</option>
+                  <option value="exclusion">exclusion</option>
+                </select>
+              </label>
+              <label class="fx-slider">
+                <span>X position <output id="looperXValue">0</output></span>
+                <input id="looperXSlider" type="range" min="-50" max="50" step="1" value="0">
+              </label>
+              <label class="fx-slider">
+                <span>Y position <output id="looperYValue">0</output></span>
+                <input id="looperYSlider" type="range" min="-50" max="50" step="1" value="0">
+              </label>
+              <label class="fx-slider">
+                <span>Size <output id="looperSizeValue">100%</output></span>
+                <input id="looperSizeSlider" type="range" min="18" max="140" step="1" value="100">
+              </label>
+              <label class="fx-slider">
+                <span>Crop/zoom <output id="looperZoomValue">100%</output></span>
+                <input id="looperZoomSlider" type="range" min="80" max="240" step="1" value="100">
+              </label>
+            </div>
+            <button data-fx="looper-bpm-down">BPM -</button>
+            <button data-fx="looper-bpm-up">BPM +</button>
+            <div class="looper-monitor fx-wide">
+              <div class="looper-monitor-top">
+                <strong id="looperStatus">Idle</strong>
+                <button id="looperPlayToggle" class="secondary compact" type="button">Pause replay</button>
+              </div>
+              <div class="looper-window">
+                <div id="looperReplayHead" class="looper-replay-head"></div>
+                <div id="looperWaveform" class="looper-waveform" aria-hidden="true"></div>
+              </div>
+              <div class="looper-layer-monitor" aria-label="Looper layers">
+                <span data-looper-layer-status="1">L1</span>
+                <span data-looper-layer-status="2">L2</span>
+                <span data-looper-layer-status="3">L3</span>
+              </div>
+            </div>
+            <input id="skipperSeed" class="fx-wide" type="text" placeholder="Seed">
+            <select id="skipperDivision" class="fx-wide">
+              <option value="sixteenth">1/16 note</option>
+              <option value="sixteenth-triplet">1/16 triplet</option>
+              <option value="dotted-sixteenth">dotted 1/16</option>
+              <option value="eighth">1/8 note</option>
+              <option value="eighth-triplet">1/8 triplet</option>
+              <option value="dotted-eighth">dotted 1/8</option>
+              <option value="quarter" selected>1/4 note</option>
+              <option value="quarter-triplet">1/4 triplet</option>
+              <option value="dotted-quarter">dotted 1/4</option>
+              <option value="half">1/2 note</option>
+              <option value="half-triplet">1/2 triplet</option>
+              <option value="dotted-half">dotted 1/2</option>
+              <option value="whole">whole note</option>
+              <option value="whole-triplet">whole triplet</option>
+              <option value="dotted-whole">dotted whole</option>
+            </select>
+            <button class="fx-wide" data-fx="seed-skip">Seed skip</button>
+          </section>
+          <section>
+            <h3>A/V Warp</h3>
+            <label class="fx-slider">
+              <span>Speed <output id="warpSpeedValue">1.00x</output></span>
+              <input id="warpSpeedSlider" type="range" min="0.25" max="2" step="0.01" value="1">
+            </label>
+            <label class="fx-slider">
+              <span>Pitch <output id="warpPitchValue">1.00x</output></span>
+              <input id="warpPitchSlider" type="range" min="0.5" max="2" step="0.01" value="1">
+            </label>
+            <label class="fx-slider">
+              <span>Desync <output id="warpDesyncValue">0.0s</output></span>
+              <input id="warpDesyncSlider" type="range" min="-4" max="4" step="0.1" value="0">
+            </label>
+            <button id="warpResetButton" class="fx-wide secondary" type="button">Reset warp</button>
+          </section>
+          <section>
+            <h3>Delay</h3>
+            <label class="fx-slider">
+              <span>Time <output id="delayTimeValue">375ms</output></span>
+              <input id="delayTimeSlider" type="range" min="40" max="2000" step="5" value="375">
+            </label>
+            <label class="fx-slider">
+              <span>Feedback <output id="delayFeedbackValue">35%</output></span>
+              <input id="delayFeedbackSlider" type="range" min="0" max="88" step="1" value="35">
+            </label>
+            <label class="fx-slider">
+              <span>Mix <output id="delayMixValue">32%</output></span>
+              <input id="delayMixSlider" type="range" min="0" max="100" step="1" value="32">
+            </label>
+            <label class="fx-slider">
+              <span>Tone <output id="delayToneValue">4.8k</output></span>
+              <input id="delayToneSlider" type="range" min="800" max="12000" step="100" value="4800">
+            </label>
+            <label class="fx-check fx-wide">
+              <input id="delaySyncToggle" type="checkbox" checked>
+              <span>Tempo sync</span>
+            </label>
+            <select id="delayDivisionSelect" class="fx-wide">
+              <option value="sixteenth">1/16 note</option>
+              <option value="dotted-sixteenth">dotted 1/16</option>
+              <option value="eighth">1/8 note</option>
+              <option value="eighth-triplet">1/8 triplet</option>
+              <option value="dotted-eighth" selected>dotted 1/8</option>
+              <option value="quarter">1/4 note</option>
+              <option value="quarter-triplet">1/4 triplet</option>
+              <option value="dotted-quarter">dotted 1/4</option>
+              <option value="half">1/2 note</option>
+            </select>
+            <select id="delayRepitchSelect" class="fx-wide">
+              <option value="digital">Digital clean</option>
+              <option value="tape" selected>Tape repitch</option>
+              <option value="dub">Dub darken</option>
+              <option value="slap">Slapback</option>
+            </select>
+            <button id="delayToggleButton" class="fx-wide" type="button" aria-pressed="false">Delay off</button>
+          </section>
+          <section>
+            <h3>Signal Damage</h3>
+            <button data-fx="glitch">Glitch</button>
+            <button data-fx="signal-loss">Signal loss</button>
+            <button data-fx="tape-warp">Tape warp</button>
+            <button data-fx="vhs">VHS distortion</button>
+            <button data-fx="dvd-skip">DVD skip</button>
+            <button data-fx="frozen">Frozen frame</button>
+          </section>
+          <section>
+            <h3>Format Crimes</h3>
+            <button data-fx="color-bars">Color bars</button>
+            <button data-fx="aspect-bad">Wrong aspect</button>
+            <button data-fx="crop-bad">Fake crop issue</button>
+            <button data-fx="pixelate">Pixelate</button>
+            <button data-fx="glass">Glass block</button>
+            <button data-fx="melt">Melt</button>
+          </section>
+          <section>
+            <h3>Color + Optics</h3>
+            <button data-fx="invert">Invert</button>
+            <button data-fx="palette-swap">Palette swap</button>
+            <button data-fx="kaleidoscope">Kaleidoscope</button>
+            <button data-fx="color-acid">Acid green</button>
+            <button data-fx="color-hot">Hot magenta</button>
+            <button data-fx="color-ice">Ice cyan</button>
+          </section>
+          <section>
+            <h3>Page Warps</h3>
+            <button data-fx="theme-cycle">Theme cycle</button>
+            <button data-fx="theme-random">Random theme</button>
+            <button data-fx="theme-aero-blast">Aero blast</button>
+            <button data-fx="ui-tilt">Tilt room</button>
+            <button data-fx="ui-shake">Shake room</button>
+            <button data-fx="ui-melt">Melt UI</button>
+            <button data-fx="page-glare">Windshield glare</button>
+            <button data-fx="cursor-party">Pointer trails</button>
+            <button data-fx="ui-font-warp">Font rot</button>
+            <button data-fx="ui-spacing-collapse">Spacing collapse</button>
+            <button data-fx="ui-panel-drift">Panel drift</button>
+            <button data-fx="ui-low-res">Low-res UI</button>
+            <button data-fx="ui-contrast-crush">Contrast crush</button>
+            <button data-fx="ui-z-index-slip">Stacking slip</button>
+            <button data-fx="ui-scroll-sick">Scroll sickness</button>
+            <button data-fx="ui-css-panic">CSS panic</button>
+          </section>
+          <section>
+            <h3>Visual Abuse</h3>
+            <label class="fx-slider">
+              <span>Brightness <output id="visualBrightnessValue">100%</output></span>
+              <input id="visualBrightnessSlider" type="range" min="-100" max="300" step="1" value="100">
+            </label>
+            <label class="fx-slider">
+              <span>Contrast <output id="visualContrastValue">100%</output></span>
+              <input id="visualContrastSlider" type="range" min="-100" max="300" step="1" value="100">
+            </label>
+            <label class="fx-slider">
+              <span>Saturation <output id="visualSaturationValue">100%</output></span>
+              <input id="visualSaturationSlider" type="range" min="-100" max="300" step="1" value="100">
+            </label>
+            <button id="visualResetButton" class="fx-wide secondary" type="button">Reset visuals</button>
+          </section>
+          <section>
+            <h3>Screen Fill</h3>
+            <button data-fx="fill-water">Water</button>
+            <button data-fx="fill-shapes">Shapes</button>
+            <button data-fx="fill-marbles">Marbles</button>
+            <button data-fx="fill-stickers">Stickers</button>
+            <button data-fx="fill-confetti">Confetti junk</button>
+            <button data-fx="fill-popups">Popup mess</button>
+            <button data-fx="fill-bubbles">Bubble wrap</button>
+            <button data-fx="fill-static-panels">Static panels</button>
+          </section>
+          <section>
+            <h3>OS Panic</h3>
+            <button data-fx="os-popups">Windows errors</button>
+            <button data-fx="blue-screen">Blue screen</button>
+            <button data-fx="floppy-prompt">Insert floppy</button>
+            <button data-fx="retro-os">Old OS shell</button>
+            <button data-fx="illegal-operation">Illegal operation</button>
+          </section>
+          <section>
+            <h3>Source Overlay</h3>
+            <select id="overlaySourceSelect" class="fx-wide">
+              <option value="">Choose source...</option>
+            </select>
+            <select id="overlayBlendSelect">
+              <option value="screen">Screen</option>
+              <option value="multiply">Multiply</option>
+              <option value="overlay">Overlay</option>
+              <option value="hard-light">Hard light</option>
+              <option value="difference">Difference</option>
+              <option value="color-dodge">Color dodge</option>
+              <option value="normal">Normal</option>
+            </select>
+            <select id="overlayCropSelect">
+              <option value="contain">Contain</option>
+              <option value="cover">Cover</option>
+              <option value="center">Center crop</option>
+              <option value="tiny">Tiny chaos</option>
+            </select>
+            <label class="fx-slider">
+              <span>Opacity <output id="overlayOpacityValue">55%</output></span>
+              <input id="overlayOpacitySlider" type="range" min="5" max="100" step="1" value="55">
+            </label>
+            <label class="fx-slider">
+              <span>Scale <output id="overlayScaleValue">100%</output></span>
+              <input id="overlayScaleSlider" type="range" min="35" max="180" step="5" value="100">
+            </label>
+            <label class="fx-slider">
+              <span>Duration <output id="overlayDurationValue">45s</output></span>
+              <input id="overlayDurationSlider" type="range" min="5" max="180" step="5" value="45">
+            </label>
+            <button id="overlaySourceButton" class="fx-wide" type="button">Play source over stream</button>
+          </section>
+          <section>
+            <h3>DJ Stingers</h3>
+            <button data-fx="amen-break">Amen break</button>
+            <button data-fx="radio-sting">FM morning radio</button>
+            <button data-fx="hum">Audio hum</button>
+            <button data-fx="countdown">Countdown</button>
+            <button data-fx="gun">Shoot stream</button>
+            <button data-fx="gif-loops">GIF loops</button>
+            <button class="fx-wide" data-fx="playlist-audio">Random playlist audio</button>
+          </section>
+          <section>
+            <h3>Memes + Intoxicated</h3>
+            <button data-fx="meme-jazz">You like jazz?</button>
+            <button data-fx="meme-done">Done this</button>
+            <button data-fx="weed">Weed</button>
+            <button data-fx="beer">Beer</button>
+            <button data-fx="lsd">LSD</button>
+          </section>
+        </div>
+        <p id="fxMessage" class="message"></p>
       </aside>
     </main>
     <div id="youtubeMetadataPlayer" class="metadata-player" aria-hidden="true"></div>

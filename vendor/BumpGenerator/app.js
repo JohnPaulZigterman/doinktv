@@ -261,9 +261,17 @@ function doinkQueuePayload() {
     heading: "bump",
     lines: textLineValues(),
     duration: durationSeconds(),
+    secondsPerLine: secondsPerLine(),
+    fontSize: Number(fontSizeInput.value) || 58,
     placement: selectedPlacement(),
     alignment: selectedAlignment(),
     tone: toneInput.value,
+    tintStrength: Number(tintStrength.value) || 0,
+    creditText: creditText.value.trim(),
+    creditPosition: creditPosition.value,
+    creditFont: creditFont.value,
+    creditSize: Number(creditSize.value) || 24,
+    format: formatInput.value,
     wallpaper: wallpaperConfig(),
     effects: selectedEffects(),
     effectIntensity: Number(effectIntensity.value) || 0
@@ -434,6 +442,11 @@ function wallpaperPalette(name) {
 }
 
 function drawWallpaperShape(target, shape, x, y, size, rotation) {
+  if (["potleaf", "cats", "birds", "penguins", "dinosaurs"].includes(shape)) {
+    drawNoveltyShape(target, shape, x, y, size, rotation);
+    return;
+  }
+
   if (shape === "circles") {
     target.beginPath();
     target.arc(x, y, size * 0.44, 0, Math.PI * 2);
@@ -469,6 +482,101 @@ function drawWallpaperShape(target, shape, x, y, size, rotation) {
 
   drawPolygon(target, x, y, size * 0.46, 6, rotation);
   target.fill();
+}
+
+function drawNoveltyShape(target, shape, x, y, size, rotation) {
+  target.save();
+  target.translate(x, y);
+  target.rotate(rotation);
+  target.scale(size / 72, size / 72);
+  target.beginPath();
+
+  if (shape === "potleaf") drawPotLeaf(target);
+  if (shape === "cats") drawCat(target);
+  if (shape === "birds") drawWeirdBird(target);
+  if (shape === "penguins") drawPenguin(target);
+  if (shape === "dinosaurs") drawDinosaur(target);
+
+  target.fill();
+  target.restore();
+}
+
+function drawPotLeaf(target) {
+  const leaf = (angle, length, width) => {
+    target.save();
+    target.rotate(angle);
+    target.moveTo(0, 0);
+    target.bezierCurveTo(width, -length * 0.36, width * 0.45, -length * 0.88, 0, -length);
+    target.bezierCurveTo(-width * 0.45, -length * 0.88, -width, -length * 0.36, 0, 0);
+    target.restore();
+  };
+  [-0.82, -0.42, 0, 0.42, 0.82].forEach((angle, index) => leaf(angle, 58 - Math.abs(index - 2) * 8, 16));
+  target.rect(-3, -2, 6, 34);
+}
+
+function drawCat(target) {
+  target.moveTo(-30, 12);
+  target.quadraticCurveTo(-24, -18, -6, -24);
+  target.lineTo(-18, -42);
+  target.lineTo(2, -30);
+  target.lineTo(20, -42);
+  target.lineTo(15, -22);
+  target.quadraticCurveTo(34, -10, 28, 14);
+  target.quadraticCurveTo(10, 28, -12, 24);
+  target.quadraticCurveTo(-24, 20, -30, 12);
+  target.moveTo(23, 12);
+  target.quadraticCurveTo(45, 8, 44, -14);
+  target.quadraticCurveTo(38, -4, 30, 0);
+}
+
+function drawWeirdBird(target) {
+  target.moveTo(-34, 14);
+  target.quadraticCurveTo(-22, -28, 14, -18);
+  target.lineTo(40, -30);
+  target.lineTo(30, -5);
+  target.quadraticCurveTo(40, 18, 8, 28);
+  target.quadraticCurveTo(-20, 34, -34, 14);
+  target.moveTo(-8, 26);
+  target.lineTo(-18, 44);
+  target.lineTo(-4, 34);
+  target.lineTo(6, 46);
+  target.lineTo(8, 30);
+}
+
+function drawPenguin(target) {
+  target.moveTo(0, -42);
+  target.quadraticCurveTo(30, -36, 28, 12);
+  target.quadraticCurveTo(22, 44, 0, 48);
+  target.quadraticCurveTo(-24, 44, -28, 12);
+  target.quadraticCurveTo(-30, -36, 0, -42);
+  target.moveTo(-5, -34);
+  target.lineTo(22, -24);
+  target.lineTo(2, -18);
+  target.moveTo(-18, 44);
+  target.lineTo(-34, 54);
+  target.lineTo(-4, 50);
+  target.moveTo(18, 44);
+  target.lineTo(34, 54);
+  target.lineTo(4, 50);
+}
+
+function drawDinosaur(target) {
+  target.moveTo(-38, 16);
+  target.quadraticCurveTo(-20, -16, 18, -10);
+  target.quadraticCurveTo(34, -30, 52, -20);
+  target.lineTo(44, -6);
+  target.quadraticCurveTo(55, 0, 40, 8);
+  target.quadraticCurveTo(20, 34, -10, 24);
+  target.lineTo(-16, 48);
+  target.lineTo(-28, 48);
+  target.lineTo(-24, 20);
+  target.lineTo(-42, 36);
+  target.lineTo(-52, 30);
+  target.quadraticCurveTo(-44, 20, -38, 16);
+  target.moveTo(4, 24);
+  target.lineTo(12, 48);
+  target.lineTo(0, 48);
+  target.lineTo(-8, 26);
 }
 
 function drawStripePattern(target, width, height, time, config, palette) {
@@ -714,7 +822,12 @@ function drawWallpaperBackground(target, width, height, time, config) {
   const startY = -spacing * 2;
   const endX = width + spacing * 2;
   const endY = height + spacing * 2;
-  const shapeChoices = config.shapes === "mixed" ? ["circles", "diamonds", "triangles", "lines"] : [config.shapes];
+  const noveltyShapes = ["potleaf", "cats", "birds", "penguins", "dinosaurs"];
+  const shapeChoices = config.shapes === "mixed"
+    ? ["circles", "diamonds", "triangles", "lines"]
+    : config.shapes === "novelty"
+      ? noveltyShapes
+      : [config.shapes];
 
   target.save();
   target.globalCompositeOperation = "screen";

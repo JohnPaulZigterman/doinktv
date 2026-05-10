@@ -404,6 +404,11 @@ button:disabled,
 
 .preview-shell {
   padding: 12px;
+  position: sticky;
+  top: 14px;
+  align-self: start;
+  max-height: calc(100vh - 28px);
+  overflow: auto;
 }
 
 .stage {
@@ -492,6 +497,9 @@ video {
 
   .preview-shell {
     margin-top: 20px;
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
 }
 

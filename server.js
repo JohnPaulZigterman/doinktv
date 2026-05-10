@@ -20,6 +20,8 @@ const BUMP_GENERATOR_DIR = process.env.BUMP_GENERATOR_DIR
 const STATE_PATH = path.join(DATA_DIR, "state.json");
 const AUTO_BUMP_INTERVAL_MS = 1000 * 60 * 3;
 const AUTO_BUMP_DURATION = 20;
+const MIN_QUEUE_VIDEO_ITEMS = 5;
+const CHAOS_AUDIO_PLAYLIST_ID = "PLWL3FzHaRRMkQqUhks8Y9l35rqY_kKCto";
 
 const ADMIN_USER = process.env.ADMIN_USER || "DoinkWizard";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ChipTanaka12!@";
@@ -28,11 +30,90 @@ const ADMIN_ACCOUNTS = [
   { username: "ChillNeil", password: "ChillyBilly12!@" }
 ];
 const SESSION_TTL_MS = 1000 * 60 * 60 * 12;
+const FX_PRESETS = {
+  glitch: { label: "Glitch", duration: 8 },
+  "signal-loss": { label: "Signal loss", duration: 10 },
+  "tape-warp": { label: "Tape warp", duration: 12 },
+  vhs: { label: "VHS distortion", duration: 14 },
+  "dvd-skip": { label: "DVD skipping", duration: 8 },
+  frozen: { label: "Frozen frame", duration: 6 },
+  "color-bars": { label: "Color bars", duration: 8 },
+  "aspect-bad": { label: "Wrong aspect", duration: 14 },
+  "crop-bad": { label: "Bad crop", duration: 12 },
+  invert: { label: "Invert colors", duration: 10 },
+  kaleidoscope: { label: "Kaleidoscope", duration: 12 },
+  pixelate: { label: "Pixelate", duration: 10 },
+  glass: { label: "Glass block", duration: 12 },
+  melt: { label: "Melt", duration: 10 },
+  "palette-swap": { label: "Palette swap", duration: 12 },
+  "color-acid": { label: "Acid green", duration: 12 },
+  "color-hot": { label: "Hot magenta", duration: 12 },
+  "color-ice": { label: "Ice cyan", duration: 12 },
+  "fill-water": { label: "Water flood", duration: 14 },
+  "fill-shapes": { label: "Shape storm", duration: 14 },
+  "fill-marbles": { label: "Marbles", duration: 14 },
+  "fill-stickers": { label: "Sticker slap", duration: 12 },
+  "fill-confetti": { label: "Confetti junk", duration: 12 },
+  "fill-popups": { label: "Popup mess", duration: 12 },
+  "fill-bubbles": { label: "Bubble wrap", duration: 14 },
+  "fill-static-panels": { label: "Static panels", duration: 12 },
+  "os-popups": { label: "Windows error popups", duration: 12 },
+  "blue-screen": { label: "Blue screen", duration: 8 },
+  "floppy-prompt": { label: "Insert floppy disk", duration: 10 },
+  "retro-os": { label: "Antiquated OS", duration: 12 },
+  "illegal-operation": { label: "Illegal operation", duration: 10 },
+  "playlist-audio": { label: "Random playlist audio", duration: 90 },
+  "visual-adjust": { label: "Visual abuse", duration: 90 },
+  "source-overlay": { label: "Source overlay", duration: 45 },
+  "audio-desync": { label: "Audio desync", duration: 10 },
+  "amen-break": { label: "Amen break", duration: 6 },
+  "radio-sting": { label: "FM morning radio", duration: 7 },
+  hum: { label: "Audio hum", duration: 10 },
+  countdown: { label: "Random countdown", duration: 10 },
+  gun: { label: "Shoot the stream", duration: 4 },
+  "gif-loops": { label: "GIF loops", duration: 12 },
+  "looper-capture": { label: "Capture loop", duration: 18 },
+  "looper-layer-1": { label: "Loop layer 1", duration: 18 },
+  "looper-layer-2": { label: "Loop layer 2", duration: 18 },
+  "looper-layer-3": { label: "Loop layer 3", duration: 18 },
+  "looper-bpm-down": { label: "Looper BPM down", duration: 2 },
+  "looper-bpm-up": { label: "Looper BPM up", duration: 2 },
+  "looper-config": { label: "Looper layer edit", duration: 2 },
+  "looper-clear": { label: "Clear looper", duration: 2 },
+  "seed-skip": { label: "Seed skipper", duration: 30 },
+  "av-warp": { label: "A/V warp", duration: 90 },
+  delay: { label: "Delay", duration: 90 },
+  "theme-cycle": { label: "Theme cycle", duration: 45 },
+  "theme-random": { label: "Random theme shove", duration: 24 },
+  "theme-aero-blast": { label: "Aero blast", duration: 30 },
+  "ui-tilt": { label: "Room tilt", duration: 12 },
+  "ui-shake": { label: "Page shake", duration: 10 },
+  "ui-melt": { label: "Interface melt", duration: 12 },
+  "page-glare": { label: "Windshield glare", duration: 14 },
+  "cursor-party": { label: "Pointer trails", duration: 16 },
+  "ui-font-warp": { label: "Font rot", duration: 14, level: 1 },
+  "ui-spacing-collapse": { label: "Spacing collapse", duration: 14, level: 2 },
+  "ui-panel-drift": { label: "Panel drift", duration: 16, level: 2 },
+  "ui-low-res": { label: "Low-res interface", duration: 16, level: 3 },
+  "ui-contrast-crush": { label: "Contrast crush", duration: 16, level: 3 },
+  "ui-z-index-slip": { label: "Stacking slip", duration: 18, level: 4 },
+  "ui-scroll-sick": { label: "Scroll sickness", duration: 18, level: 4 },
+  "ui-css-panic": { label: "CSS panic", duration: 20, level: 5 },
+  "meme-jazz": { label: "You like jazz?", duration: 5 },
+  "meme-done": { label: "I can't believe you've done this", duration: 5 },
+  weed: { label: "Weed button", duration: 12 },
+  beer: { label: "Beer button", duration: 10 },
+  lsd: { label: "LSD button", duration: 12 }
+};
 
 const sessions = new Map();
 const sseClients = new Set();
 const chatClients = new Set();
 let timelineSaveNeeded = false;
+const autoIngestQueue = [];
+const autoIngestQueued = new Set();
+const autoIngestInFlight = new Set();
+let autoIngestPumpActive = false;
 const ffmpegPath = process.env.FFMPEG_PATH || ffmpegInstaller.path || "ffmpeg";
 let hlsPlayout = {
   id: "",
@@ -51,7 +132,8 @@ let state = {
   bumpMusic: [],
   users: [],
   chat: [],
-  nowPlaying: null
+  nowPlaying: null,
+  activeFx: []
 };
 
 const mimeTypes = {
@@ -86,6 +168,15 @@ async function ensureState() {
     state.users ||= [];
     state.chat ||= [];
     state.nowPlaying ||= null;
+    state.activeFx ||= [];
+    state.sourceFolders = state.sourceFolders.map((folder) => ({
+      ...folder,
+      randomEligible: folder.randomEligible !== false
+    }));
+    state.sources = state.sources.map((source) => ({
+      ...source,
+      randomEligible: source.randomEligible ?? source.type !== "youtube"
+    }));
   }
 }
 
@@ -245,6 +336,27 @@ function normalizeYouTubePlaylistId(input) {
   }
 }
 
+function normalizeInternetArchiveId(input) {
+  const value = String(input || "").trim();
+  if (!value) return "";
+  if (/^[A-Za-z0-9_.-]{3,120}$/.test(value) && !value.includes("http")) return value;
+  try {
+    const url = new URL(value);
+    const parts = url.pathname.split("/").filter(Boolean);
+    const detailsIndex = parts.indexOf("details");
+    if (detailsIndex !== -1 && parts[detailsIndex + 1]) return decodeURIComponent(parts[detailsIndex + 1]);
+    const downloadIndex = parts.indexOf("download");
+    if (downloadIndex !== -1 && parts[downloadIndex + 1]) return decodeURIComponent(parts[downloadIndex + 1]);
+  } catch {
+    return "";
+  }
+  return "";
+}
+
+function archiveDownloadUrl(identifier, fileName) {
+  return `https://archive.org/download/${encodeURIComponent(identifier)}/${String(fileName || "").split("/").map(encodeURIComponent).join("/")}`;
+}
+
 function normalizeSearchQuery(value) {
   return String(value || "")
     .replace(/https?:\/\/\S+/gi, " ")
@@ -315,22 +427,8 @@ async function importYouTubePlaylist(body) {
   const playlistId = normalizeYouTubePlaylistId(body.url || body.playlist || body.playlistId);
   if (!playlistId) throw new Error("Enter a valid YouTube playlist URL.");
 
-  const playlistUrl = `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId)}`;
-  const response = await fetch(playlistUrl, {
-    headers: {
-      "accept-language": "en-US,en;q=0.9",
-      "user-agent": "Mozilla/5.0 DoinkTV Playlist Importer"
-    }
-  });
-  if (!response.ok) throw new Error("Could not load that YouTube playlist.");
-
-  const html = await response.text();
-  const initialData = extractInitialData(html);
-  const title = String(body.folderName || "").trim() || findPlaylistTitle(initialData) || `YouTube playlist ${playlistId}`;
-  const videos = collectPlaylistVideos(initialData);
-  const uniqueVideos = [...new Map(videos.map((video) => [video.youtubeId, video])).values()];
+  const { title, videos: uniqueVideos } = await loadYouTubePlaylist(playlistId, body.folderName);
   if (!uniqueVideos.length) throw new Error("No public videos were found in that playlist.");
-
   const folder = await createUniqueSourceFolder(title);
   let imported = 0;
   let skipped = 0;
@@ -348,7 +446,8 @@ async function importYouTubePlaylist(body) {
       folderId: folder.id,
       duration: video.duration,
       youtubeId: video.youtubeId,
-      url: `https://www.youtube.com/watch?v=${video.youtubeId}`
+      url: `https://www.youtube.com/watch?v=${video.youtubeId}`,
+      randomEligible: false
     });
     imported += 1;
   }
@@ -356,6 +455,24 @@ async function importYouTubePlaylist(body) {
   await saveState();
   broadcastProgram();
   return { folder, imported, skipped };
+}
+
+async function loadYouTubePlaylist(playlistId, fallbackTitle = "") {
+  const playlistUrl = `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId)}`;
+  const response = await fetch(playlistUrl, {
+    headers: {
+      "accept-language": "en-US,en;q=0.9",
+      "user-agent": "Mozilla/5.0 DoinkTV Playlist Importer"
+    }
+  });
+  if (!response.ok) throw new Error("Could not load that YouTube playlist.");
+
+  const html = await response.text();
+  const initialData = extractInitialData(html);
+  const title = String(fallbackTitle || "").trim() || findPlaylistTitle(initialData) || `YouTube playlist ${playlistId}`;
+  const videos = collectPlaylistVideos(initialData);
+  const uniqueVideos = [...new Map(videos.map((video) => [video.youtubeId, video])).values()];
+  return { title, videos: uniqueVideos };
 }
 
 async function getYouTubeInfo(input) {
@@ -377,17 +494,237 @@ async function getYouTubeInfo(input) {
   return { youtubeId, url, title };
 }
 
+async function getInternetArchiveInfo(input, preferredFileName = "") {
+  const archiveId = normalizeInternetArchiveId(input);
+  if (!archiveId) throw new Error("Enter an Internet Archive item URL or identifier.");
+  const data = await loadInternetArchiveMetadata(archiveId);
+  const preferredFile = String(preferredFileName || "").trim();
+  const file = preferredFile
+    ? (Array.isArray(data.files) ? data.files : []).find((item) => item.name === preferredFile && isInternetArchiveVideoFile(item))
+    : chooseInternetArchiveVideoFile(data);
+  if (!file) throw new Error("No playable video file was found on that Internet Archive item.");
+  const title = preferredFile ? archiveFileTitle(file) : String(data.metadata?.title || archiveId).trim();
+  const duration = Math.max(5, Math.round(Number(file.length) || parseDurationText(data.metadata?.runtime) || 300));
+  return {
+    archiveId,
+    archiveFile: file.name,
+    fileUrl: archiveDownloadUrl(archiveId, file.name),
+    url: `https://archive.org/details/${archiveId}`,
+    title,
+    duration,
+    format: file.format || "",
+    size: Number(file.size || 0)
+  };
+}
+
+async function searchInternetArchiveSources(query, rows = 10) {
+  const normalized = normalizeSearchQuery(query);
+  const terms = normalized
+    .split(/\s+/)
+    .filter((term) => /^[a-z0-9][a-z0-9.-]{1,40}$/i.test(term))
+    .slice(0, 10);
+  if (!terms.length) return [];
+
+  const search = new URL("https://archive.org/advancedsearch.php");
+  const fieldQuery = terms
+    .map((term) => `(title:${term} OR description:${term} OR subject:${term})`)
+    .join(" AND ");
+  search.searchParams.set("q", `(${fieldQuery}) AND mediatype:movies`);
+  ["identifier", "title", "description", "creator", "date", "year", "downloads", "publicdate"].forEach((field) => {
+    search.searchParams.append("fl[]", field);
+  });
+  search.searchParams.set("rows", String(Math.max(1, Math.min(20, Number(rows) || 10))));
+  search.searchParams.set("page", "1");
+  search.searchParams.set("sort[]", "downloads desc");
+  search.searchParams.set("output", "json");
+
+  const response = await fetch(search, {
+    headers: { "user-agent": "DoinkTV Internet Archive Source Search" }
+  });
+  if (!response.ok) throw new Error("Could not search Internet Archive right now.");
+  const data = await response.json();
+  const docs = Array.isArray(data.response?.docs) ? data.response.docs : [];
+  const candidates = await Promise.all(docs.map((doc) => internetArchiveSearchResultForDoc(doc).catch(() => null)));
+  return candidates.filter(Boolean);
+}
+
+async function internetArchiveSearchResultForDoc(doc = {}) {
+  const archiveId = String(doc.identifier || "").trim();
+  if (!archiveId) return null;
+  const metadata = await loadInternetArchiveMetadata(archiveId);
+  const file = chooseInternetArchiveVideoFile(metadata);
+  if (!file) return null;
+  const title = String(doc.title || metadata.metadata?.title || archiveId).trim();
+  const description = Array.isArray(doc.description) ? doc.description.join(" ") : String(doc.description || "");
+  return {
+    archiveId,
+    archiveFile: file.name,
+    fileUrl: archiveDownloadUrl(archiveId, file.name),
+    url: `https://archive.org/details/${archiveId}`,
+    title,
+    fileTitle: archiveFileTitle(file),
+    duration: Math.max(5, Math.round(Number(file.length) || parseDurationText(metadata.metadata?.runtime) || 300)),
+    format: file.format || "",
+    size: Number(file.size || 0),
+    creator: Array.isArray(doc.creator) ? doc.creator.join(", ") : String(doc.creator || ""),
+    year: String(doc.year || doc.date || "").slice(0, 12),
+    downloads: Number(doc.downloads || 0),
+    description: description.replace(/\s+/g, " ").trim().slice(0, 220)
+  };
+}
+
+async function loadInternetArchiveMetadata(archiveId) {
+  const response = await fetch(`https://archive.org/metadata/${encodeURIComponent(archiveId)}`, {
+    headers: { "user-agent": "DoinkTV Internet Archive Source Importer" }
+  });
+  if (!response.ok) throw new Error("Could not load that Internet Archive item.");
+  return response.json();
+}
+
+function chooseInternetArchiveVideoFile(item = {}) {
+  return chooseInternetArchiveVideoFiles(item, 1)[0] || null;
+}
+
+function chooseInternetArchiveVideoFiles(item = {}, limit = 50) {
+  const files = Array.isArray(item.files) ? item.files : [];
+  return files
+    .filter((file) => isInternetArchiveVideoFile(file))
+    .sort((a, b) => internetArchiveFileScore(b) - internetArchiveFileScore(a))
+    .slice(0, Math.max(1, limit));
+}
+
+function isInternetArchiveVideoFile(file = {}) {
+  const name = String(file.name || "");
+  const format = String(file.format || "").toLowerCase();
+  if (!name || /_thumb|_meta|_files|_archive\.torrent|\.gif$/i.test(name)) return false;
+  return /\.(mp4|m4v|webm|ogv|mov|mpg|mpeg|avi|mkv)$/i.test(name)
+    || /h\.?264|mpeg4|mpeg-4|matroska|webm|quicktime|ogg video|mpeg|avi/i.test(format);
+}
+
+function internetArchiveFileScore(file = {}) {
+  const name = String(file.name || "").toLowerCase();
+  const format = String(file.format || "").toLowerCase();
+  let score = 0;
+  if (name.endsWith(".mp4")) score += 50;
+  if (/h\.?264|mpeg4|mpeg-4/.test(format)) score += 35;
+  if (/512kb|ia\.mp4/.test(name)) score += 20;
+  if (/derivative/.test(String(file.source || "").toLowerCase())) score += 8;
+  score += Math.min(20, Number(file.size || 0) / 100_000_000);
+  return score;
+}
+
+function archiveFileTitle(file = {}) {
+  return String(file.name || "Untitled archive video")
+    .replace(/\.[^.]+$/, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function importInternetArchiveCollection(body = {}) {
+  const collectionId = normalizeInternetArchiveId(body.url || body.collection || body.collectionId);
+  if (!collectionId) throw new Error("Enter an Internet Archive collection or item URL.");
+  const rows = Math.max(1, Math.min(100, Number(body.rows || 50)));
+  const search = new URL("https://archive.org/advancedsearch.php");
+  search.searchParams.set("q", `collection:${collectionId} AND mediatype:movies`);
+  search.searchParams.set("fl[]", "identifier");
+  search.searchParams.append("fl[]", "title");
+  search.searchParams.set("rows", String(rows));
+  search.searchParams.set("page", "1");
+  search.searchParams.set("output", "json");
+  const response = await fetch(search, {
+    headers: { "user-agent": "DoinkTV Internet Archive Collection Importer" }
+  });
+  if (!response.ok) throw new Error("Could not search that Internet Archive collection.");
+  const data = await response.json();
+  const docs = data.response?.docs || [];
+  if (!docs.length) return importInternetArchiveItemFiles(collectionId, body, rows);
+  const folder = await createUniqueSourceFolder(String(body.folderName || "").trim() || collectionId);
+  let imported = 0;
+  let skipped = 0;
+  for (const doc of docs) {
+    try {
+      const info = await getInternetArchiveInfo(doc.identifier);
+      const exists = state.sources.some((source) => source.type === "internet-archive" && source.archiveId === info.archiveId && source.archiveFile === info.archiveFile && source.folderId === folder.id);
+      if (exists) {
+        skipped += 1;
+        continue;
+      }
+      state.sources.push({
+        id: crypto.randomUUID(),
+        type: "internet-archive",
+        title: info.title || doc.title || info.archiveId,
+        folderId: folder.id,
+        duration: info.duration,
+        archiveId: info.archiveId,
+        archiveFile: info.archiveFile,
+        fileUrl: info.fileUrl,
+        url: info.url,
+        randomEligible: true
+      });
+      imported += 1;
+    } catch {
+      skipped += 1;
+    }
+  }
+  await saveState();
+  broadcastProgram();
+  return { folder, imported, skipped };
+}
+
+async function importInternetArchiveItemFiles(archiveId, body = {}, limit = 50) {
+  const metadata = await loadInternetArchiveMetadata(archiveId);
+  const files = chooseInternetArchiveVideoFiles(metadata, limit);
+  if (!files.length) throw new Error("No playable video files were found on that Internet Archive item.");
+  const folderName = String(body.folderName || "").trim() || String(metadata.metadata?.title || archiveId).trim();
+  const folder = await createUniqueSourceFolder(folderName);
+  let imported = 0;
+  let skipped = 0;
+
+  for (const file of files) {
+    const exists = state.sources.some((source) => source.type === "internet-archive" && source.archiveId === archiveId && source.archiveFile === file.name && source.folderId === folder.id);
+    if (exists) {
+      skipped += 1;
+      continue;
+    }
+    state.sources.push({
+      id: crypto.randomUUID(),
+      type: "internet-archive",
+      title: archiveFileTitle(file),
+      folderId: folder.id,
+      duration: Math.max(5, Math.round(Number(file.length) || parseDurationText(metadata.metadata?.runtime) || 300)),
+      archiveId,
+      archiveFile: file.name,
+      fileUrl: archiveDownloadUrl(archiveId, file.name),
+      url: `https://archive.org/details/${archiveId}`,
+      randomEligible: true
+    });
+    imported += 1;
+  }
+
+  await saveState();
+  broadcastProgram();
+  return { folder, imported, skipped, itemImport: true };
+}
+
 function publicProgram() {
   maintainBroadcastTimeline();
   const program = programSnapshot();
   return {
     ...program,
+    fx: activeBroadcastFx(),
     stream: {
       url: "/stream/live.m3u8",
       status: hlsPlayout.status,
       error: hlsPlayout.error
     }
   };
+}
+
+function activeBroadcastFx() {
+  const now = Date.now();
+  state.activeFx = (state.activeFx || []).filter((fx) => !Number.isFinite(Number(fx.expiresAt)) || fx.expiresAt > now);
+  return state.activeFx;
 }
 
 function programSnapshot() {
@@ -444,14 +781,18 @@ function formatEstTime(timestamp) {
   }).format(new Date(timestamp));
 }
 
-function upcomingNormalQueueItems(startAt, count = 3) {
-  return state.liveQueue
-    .filter((entry) => entry.startAt >= startAt)
+function queueEntriesWithSources(entries = state.liveQueue) {
+  return entries
     .map((entry) => ({
       ...entry,
       source: state.sources.find((source) => source.id === entry.sourceId)
     }))
-    .filter((entry) => entry.source && (!isBumpSource(entry.source) || !entry.autoBump))
+    .filter((entry) => entry.source);
+}
+
+function upcomingNormalQueueItems(startAt, count = 3, entries = state.liveQueue) {
+  return queueEntriesWithSources(entries)
+    .filter((entry) => entry.startAt >= startAt && !isBumpSource(entry.source))
     .sort((a, b) => a.startAt - b.startAt)
     .slice(0, count);
 }
@@ -514,14 +855,9 @@ function randomAutoBumpVisuals() {
   };
 }
 
-function createAutoBumpSource(afterEntryEnd) {
-  const upcoming = upcomingNormalQueueItems(afterEntryEnd, 3);
-  const lines = upcoming.length
-    ? upcoming.map((entry) => ({
-        title: entry.title || entry.source.title,
-        time: formatEstTime(entry.startAt)
-      }))
-    : [{ title: "More DoinkTV shortly", time: formatEstTime(afterEntryEnd) }];
+function createAutoBumpSource(afterEntryEnd, upcomingEntries = null) {
+  const upcoming = upcomingEntries || upcomingNormalQueueItems(afterEntryEnd, 3);
+  const lines = autoBumpLines(afterEntryEnd, upcoming);
   const visuals = randomAutoBumpVisuals();
   const audio = randomBumpMusic(AUTO_BUMP_DURATION);
 
@@ -550,6 +886,15 @@ function createAutoBumpSource(afterEntryEnd) {
   return source;
 }
 
+function autoBumpLines(afterEntryEnd, upcoming) {
+  return upcoming.length
+    ? upcoming.map((entry) => ({
+        title: entry.title || entry.source.title,
+        time: formatEstTime(entry.startAt)
+      }))
+    : [{ title: "More DoinkTV shortly", time: formatEstTime(afterEntryEnd) }];
+}
+
 function createManualBumpSource(body = {}) {
   const duration = Number(body.duration || AUTO_BUMP_DURATION);
   if (!Number.isFinite(duration) || duration < 3 || duration > 120) {
@@ -576,9 +921,17 @@ function createManualBumpSource(body = {}) {
     bump: {
       heading: String(body.heading || "bump").trim() || "bump",
       lines: lines.length ? lines : [{ time: "", title: "DoinkTV continues shortly" }],
+      secondsPerLine: Math.max(0.5, Math.min(30, Number(body.secondsPerLine) || Math.max(1, duration / Math.max(1, lines.length || 1)))),
+      fontSize: Math.max(18, Math.min(120, Number(body.fontSize) || 58)),
       alignment: ["left", "center", "right"].includes(body.alignment) ? body.alignment : "left",
       placement: ["top", "middle", "bottom"].includes(body.placement) ? body.placement : "middle",
       tone: ["classic", "caption", "washed"].includes(body.tone) ? body.tone : "classic",
+      tintStrength: Math.max(0, Math.min(100, Number(body.tintStrength) || 0)),
+      creditText: String(body.creditText || "").trim(),
+      creditPosition: String(body.creditPosition || "bottom-right"),
+      creditFont: String(body.creditFont || "Arial, Helvetica, sans-serif"),
+      creditSize: Math.max(10, Math.min(72, Number(body.creditSize) || 24)),
+      format: String(body.format || "landscape"),
       seed: Number(body.wallpaper?.seed || body.seed || Math.floor(Math.random() * 100000)),
       wallpaper: body.wallpaper || randomAutoBumpVisuals().wallpaper,
       effects: Array.isArray(body.effects) ? body.effects.slice(0, 2) : [],
@@ -702,14 +1055,49 @@ async function readMp3Duration(filePath) {
   return frames ? Math.round(duration * 10) / 10 : 0;
 }
 
-function rebuildLiveQueueTimings({ insertAutoBumps = true } = {}) {
+function queueEntryFromItem(item, startAt, now = Date.now()) {
+  return {
+    id: item.id,
+    sourceId: item.sourceId,
+    title: item.title || "",
+    startAt,
+    duration: item.duration,
+    queuedAt: item.queuedAt || now,
+    autoQueued: item.autoQueued
+  };
+}
+
+function insertAutoBumpAt(rebuilt, cursor, now, sourceEntries = rebuilt) {
+  const upcoming = upcomingNormalQueueItems(cursor, 3, sourceEntries);
+  const bumpSource = createAutoBumpSource(cursor, upcoming);
+  const entry = {
+    id: crypto.randomUUID(),
+    sourceId: bumpSource.id,
+    title: bumpSource.title,
+    startAt: cursor,
+    duration: AUTO_BUMP_DURATION,
+    queuedAt: now,
+    autoBump: true
+  };
+  rebuilt.push(entry);
+  return cursor + AUTO_BUMP_DURATION * 1000;
+}
+
+function refreshAutoBumpLines(entries = state.liveQueue) {
+  for (const entry of entries) {
+    if (!entry.autoBump) continue;
+    const source = state.sources.find((item) => item.id === entry.sourceId);
+    if (!source?.bump) continue;
+    const afterBump = entry.startAt + entry.duration * 1000;
+    source.bump.lines = autoBumpLines(afterBump, upcomingNormalQueueItems(afterBump, 3, entries));
+  }
+}
+
+function rebuildLiveQueueTimings({ insertAutoBumps = true, leadingAutoBump = false } = {}) {
   const now = Date.now();
   const queue = state.liveQueue
     .filter((entry) => entry.startAt + entry.duration * 1000 > now || entry.startAt >= now)
-    .map((entry) => ({
-      ...entry,
-      source: state.sources.find((source) => source.id === entry.sourceId)
-    }))
+    .map((entry) => ({ ...entry, source: state.sources.find((source) => source.id === entry.sourceId) }))
     .filter((entry) => entry.source)
     .sort((a, b) => a.startAt - b.startAt);
 
@@ -717,41 +1105,123 @@ function rebuildLiveQueueTimings({ insertAutoBumps = true } = {}) {
   let cursor = current ? current.startAt + current.duration * 1000 : now;
   let normalSecondsSinceBump = current && !isBumpSource(current.source) ? Math.max(0, (now - current.startAt) / 1000) : 0;
   const rebuilt = current ? [stripQueueSource(current)] : [];
-  const pending = queue.filter((entry) => !current || entry.id !== current.id).filter((entry) => entry.startAt + entry.duration * 1000 > now);
+  const pending = queue
+    .filter((entry) => !current || entry.id !== current.id)
+    .filter((entry) => entry.startAt + entry.duration * 1000 > now)
+    .filter((entry) => !isBumpSource(entry.source) || !entry.autoBump);
 
   for (const item of pending) {
-    if (isBumpSource(item.source) && item.autoBump) continue;
-    const normalEntry = {
-      id: item.id,
-      sourceId: item.sourceId,
-      title: item.title || "",
-      startAt: cursor,
-      duration: item.duration,
-      queuedAt: item.queuedAt || now
-    };
-    rebuilt.push(normalEntry);
+    rebuilt.push(queueEntryFromItem(item, cursor, now));
     cursor += item.duration * 1000;
-    if (isBumpSource(item.source)) continue;
+  }
+
+  cursor = current ? current.startAt + current.duration * 1000 : now;
+  normalSecondsSinceBump = current && !isBumpSource(current.source) ? Math.max(0, (now - current.startAt) / 1000) : 0;
+  const currentPrefix = current ? 1 : 0;
+  const timeline = current ? [rebuilt[0]] : [];
+
+  if (insertAutoBumps && leadingAutoBump && !current && rebuilt.some((entry) => {
+    const source = state.sources.find((item) => item.id === entry.sourceId);
+    return source && !isBumpSource(source);
+  })) {
+    cursor = insertAutoBumpAt(timeline, cursor, now, rebuilt);
+  }
+
+  for (const item of rebuilt.slice(currentPrefix)) {
+    const source = state.sources.find((entrySource) => entrySource.id === item.sourceId);
+    if (!source) continue;
+    const normalEntry = queueEntryFromItem(item, cursor, now);
+    timeline.push(normalEntry);
+    cursor += item.duration * 1000;
+    if (isBumpSource(source)) continue;
     normalSecondsSinceBump += item.duration;
 
     if (insertAutoBumps && normalSecondsSinceBump >= AUTO_BUMP_INTERVAL_MS / 1000) {
-      const bumpSource = createAutoBumpSource(cursor);
-      rebuilt.push({
-        id: crypto.randomUUID(),
-        sourceId: bumpSource.id,
-        title: bumpSource.title,
-        startAt: cursor,
-        duration: AUTO_BUMP_DURATION,
-        queuedAt: now,
-        autoBump: true
-      });
-      cursor += AUTO_BUMP_DURATION * 1000;
+      cursor = insertAutoBumpAt(timeline, cursor, now, rebuilt);
       normalSecondsSinceBump = 0;
     }
   }
 
-  state.liveQueue = rebuilt;
+  state.liveQueue = timeline;
+  refreshAutoBumpLines(state.liveQueue);
   pruneUnusedBumpSources();
+}
+
+function queueStandaloneScheduleBump() {
+  const now = Date.now();
+  const bumpSource = createAutoBumpSource(now, []);
+  state.liveQueue.unshift({
+    id: crypto.randomUUID(),
+    sourceId: bumpSource.id,
+    title: bumpSource.title,
+    startAt: now,
+    duration: AUTO_BUMP_DURATION,
+    queuedAt: now,
+    autoBump: true
+  });
+  refreshAutoBumpLines(state.liveQueue);
+  pruneUnusedBumpSources();
+  return true;
+}
+
+function isRandomEligibleSource(source) {
+  if (!source || source.type === "bump") return false;
+  if (source.randomEligible === false) return false;
+  if (source.randomEligible === undefined && source.type === "youtube") return false;
+  const folderId = source.folderId || "";
+  if (!folderId) return true;
+  const folder = state.sourceFolders.find((item) => item.id === folderId);
+  return folder?.randomEligible !== false;
+}
+
+function backfillLiveQueue(minItems = MIN_QUEUE_VIDEO_ITEMS, { leadingAutoBump = false } = {}) {
+  if (state.broadcastMode !== "queue") return false;
+  const now = Date.now();
+  const playableSources = state.sources.filter(isRandomEligibleSource);
+  if (!playableSources.length) return false;
+
+  const activeOrFuture = state.liveQueue
+    .filter((entry) => entry.startAt + entry.duration * 1000 > now)
+    .sort((a, b) => a.startAt - b.startAt);
+  const queuedVideos = activeOrFuture
+    .map((entry) => ({
+      ...entry,
+      source: state.sources.find((source) => source.id === entry.sourceId)
+    }))
+    .filter((entry) => entry.source && !isBumpSource(entry.source) && !entry.autoBump);
+  const needed = Math.max(0, minItems - queuedVideos.length);
+  if (!needed) return false;
+
+  const recentIds = queuedVideos.slice(-playableSources.length).map((entry) => entry.sourceId);
+  const additions = [];
+  let cursor = activeOrFuture.reduce((latest, entry) => Math.max(latest, entry.startAt + entry.duration * 1000), now);
+  for (let index = 0; index < needed; index += 1) {
+    const source = randomQueueSource(playableSources, recentIds);
+    if (!source) break;
+    recentIds.push(source.id);
+    additions.push({
+      id: crypto.randomUUID(),
+      sourceId: source.id,
+      title: "",
+      startAt: cursor,
+      duration: source.duration,
+      queuedAt: now,
+      autoQueued: true
+    });
+    cursor += source.duration * 1000;
+  }
+
+  state.liveQueue = [...activeOrFuture, ...additions].sort((a, b) => a.startAt - b.startAt);
+  rebuildLiveQueueTimings({ leadingAutoBump });
+  queueAutoIngestSourceIds(additions.map((entry) => entry.sourceId), "automatic queue backfill", { force: true });
+  return additions.length > 0;
+}
+
+function randomQueueSource(sources, recentIds = []) {
+  const recent = new Set(recentIds);
+  const fresh = sources.filter((source) => !recent.has(source.id));
+  const pool = fresh.length ? fresh : sources;
+  return pool[Math.floor(Math.random() * pool.length)] || null;
 }
 
 function stripQueueSource(entry) {
@@ -778,8 +1248,9 @@ function broadcastProgram() {
 function maintainBroadcastTimeline() {
   if (state.broadcastMode !== "queue") return false;
   const changed = maintainLiveQueueContinuity();
-  if (changed) timelineSaveNeeded = true;
-  return changed;
+  const backfilled = backfillLiveQueue();
+  if (changed || backfilled) timelineSaveNeeded = true;
+  return changed || backfilled;
 }
 
 function maintainLiveQueueContinuity() {
@@ -805,6 +1276,7 @@ function maintainLiveQueueContinuity() {
   }
 
   state.liveQueue = queue.map(stripQueueSource);
+  refreshAutoBumpLines(state.liveQueue);
   pruneUnusedBumpSources();
   if (state.sources.filter((source) => isBumpSource(source)).length !== bumpSourceCount) changed = true;
   return changed;
@@ -819,9 +1291,22 @@ async function flushTimelineSave() {
 async function syncHlsPlayout() {
   const program = publicProgram();
   const live = program.live || standbyProgram(program.serverTime);
-  if (hlsPlayout.id === live.id && hlsPlayout.status === "running" && hlsPlayout.process && !hlsPlayout.process.killed) return;
+  if (hlsPlayout.id === live.id && hlsPlayout.status === "running" && hlsPlayout.process && !hlsPlayout.process.killed) {
+    if (Date.now() - hlsPlayout.startedAt < 12000) return;
+    if (await isHlsPlaylistFresh()) return;
+    hlsPlayout.error = "HLS playlist stopped updating; restarting playout.";
+  }
 
   await startHlsPlayout(live);
+}
+
+async function isHlsPlaylistFresh(maxAgeMs = 10000) {
+  try {
+    const playlistStat = await stat(path.join(HLS_DIR, "live.m3u8"));
+    return playlistStat.size > 0 && Date.now() - playlistStat.mtimeMs < maxAgeMs;
+  } catch {
+    return false;
+  }
 }
 
 function standbyProgram(now = Date.now()) {
@@ -846,8 +1331,7 @@ async function startHlsPlayout(live) {
   hlsPlayout.status = "starting";
   hlsPlayout.error = "";
   await mkdir(HLS_DIR, { recursive: true });
-  await rm(HLS_DIR, { recursive: true, force: true });
-  await mkdir(HLS_DIR, { recursive: true });
+  await pruneHlsDirectory();
 
   const args = hlsArgsForProgram(live);
   const child = spawn(ffmpegPath, args, { windowsHide: true });
@@ -871,6 +1355,19 @@ async function startHlsPlayout(live) {
   });
 }
 
+async function pruneHlsDirectory(maxAgeMs = 1000 * 60 * 5) {
+  if (!existsSync(HLS_DIR)) return;
+  const cutoff = Date.now() - maxAgeMs;
+  const entries = await readdir(HLS_DIR, { withFileTypes: true }).catch(() => []);
+  await Promise.all(entries
+    .filter((entry) => entry.isFile() && entry.name !== "live.m3u8")
+    .map(async (entry) => {
+      const filePath = path.join(HLS_DIR, entry.name);
+      const fileStat = await stat(filePath).catch(() => null);
+      if (fileStat && fileStat.mtimeMs < cutoff) await rm(filePath, { force: true });
+    }));
+}
+
 function stopHlsPlayout() {
   if (!hlsPlayout.process) return;
   const child = hlsPlayout.process;
@@ -885,15 +1382,19 @@ function hlsArgsForProgram(live) {
   const playlist = path.join(HLS_DIR, "live.m3u8");
 
   const source = live.source || {};
-  if (source.type === "local") {
-    const filePath = mediaPathFromSource(source.path);
-    if (filePath && existsSync(filePath)) {
+  if (source.type === "local" || source.type === "internet-archive") {
+    const inputPath = source.type === "internet-archive" ? source.fileUrl : mediaPathFromSource(source.path);
+    if (inputPath && (source.type === "internet-archive" || existsSync(inputPath))) {
+      const networkInputArgs = source.type === "internet-archive"
+        ? ["-reconnect", "1", "-reconnect_streamed", "1", "-reconnect_delay_max", "5", "-rw_timeout", "15000000"]
+        : [];
       return [
         "-hide_banner",
         "-loglevel", "warning",
         "-re",
+        ...networkInputArgs,
         "-ss", String(Math.max(0, live.offset || 0)),
-        "-i", filePath,
+        "-i", inputPath,
         "-t", String(remaining),
         "-map", "0:v:0",
         "-map", "0:a:0?",
@@ -939,9 +1440,11 @@ function hlsSlateArgs(live, remaining, segmentPattern, playlist) {
     ? ["-stream_loop", "-1", "-ss", String(Math.max(0, Number(bump.audioStart) || 0)), "-i", audioPath]
     : ["-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000"];
   const lines = Array.isArray(bump.lines) && bump.lines.length
-    ? bump.lines.map((line) => `${line.time ? `${line.time}  ` : ""}${line.title}`).slice(0, 4)
+    ? bump.lines.map((line) => (typeof line === "string" ? line : `${line.time ? `${line.time}  ` : ""}${line.title}`)).slice(0, 8)
     : [live.slateSubtitle || ""].filter(Boolean);
-  const filter = slateVideoFilter(live.title || source.title || "DoinkTV", lines);
+  const filter = isManualBump(bump)
+    ? manualBumpVideoFilter(lines, bump)
+    : slateVideoFilter(live.title || source.title || "DoinkTV", lines, bump);
   return [
     "-hide_banner",
     "-loglevel", "warning",
@@ -972,6 +1475,10 @@ function hlsSlateArgs(live, remaining, segmentPattern, playlist) {
   ];
 }
 
+function isManualBump(bump = {}) {
+  return Boolean(bump.secondsPerLine || bump.fontSize || bump.creditText || bump.tintStrength || bump.format);
+}
+
 function mediaPathFromSource(sourcePath = "") {
   const relativePath = decodeURIComponent(String(sourcePath).replace(/^\/?media\//, ""));
   if (!relativePath || relativePath.includes("..")) return "";
@@ -982,17 +1489,226 @@ function videoFilter() {
   return "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=yuv420p";
 }
 
-function slateVideoFilter(title, lines = []) {
+function manualBumpVideoFilter(lines = [], bump = {}) {
   const font = drawTextEscape(fontFilePath());
+  const wallpaper = bump.wallpaper || {};
+  const palette = bumpPalette(wallpaper.scheme);
+  const placement = ["top", "middle", "bottom"].includes(bump.placement) ? bump.placement : "middle";
+  const alignment = ["left", "center", "right"].includes(bump.alignment) ? bump.alignment : "left";
+  const tone = ["classic", "caption", "washed"].includes(bump.tone) ? bump.tone : "classic";
+  const fontSize = Math.max(18, Math.min(120, Number(bump.fontSize) || 58));
+  const lineHeight = Math.round(fontSize * 1.28);
+  const pad = Math.round(720 * 0.075);
+  const textWidth = Math.min(1280 - pad * 2, Math.round(1280 * 0.62), fontSize * 16);
+  const textX = alignment === "right" ? 1280 - pad : alignment === "center" ? 640 : pad;
+  const textXExpr = textXExpression(textX, alignment);
+  const cardX = alignment === "right" ? 1280 - pad - textWidth : alignment === "center" ? 640 - textWidth / 2 : pad;
+  const secondsPerLine = Math.max(0.5, Number(bump.secondsPerLine) || 2.5);
+  const safeLines = lines.map((line) => String(line || " ")).filter((line) => line.trim()).length ? lines : [" "];
+  const maxWrapped = 4;
+  const creditLines = String(bump.creditText || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean).slice(0, 4);
   const filters = [
     "format=yuv420p",
-    "drawbox=x=34:y=34:w=1212:h=652:color=0x37d5ff@0.18:t=4",
-    `drawtext=fontfile='${font}':text='${drawTextEscape(title)}':fontcolor=0xffe066:fontsize=54:x=72:y=110`
+    `drawbox=x=0:y=0:w=1280:h=720:color=${palette.bg[0]}@1:t=fill`,
+    `drawbox=x=0:y=0:w=1280:h=720:color=${palette.bg[1]}@0.36:t=fill`,
+    ...wallpaperFilters(wallpaper, palette)
   ];
-  lines.forEach((line, index) => {
-    filters.push(`drawtext=fontfile='${font}':text='${drawTextEscape(line)}':fontcolor=white:fontsize=34:x=76:y=${220 + index * 58}`);
+
+  if (tone === "classic") filters.push(`drawbox=x=0:y=0:w=1280:h=720:color=black@${Math.max(0, Math.min(1, Number(bump.tintStrength || 0) / 100))}:t=fill`);
+  if (tone === "washed") filters.push("drawbox=x=0:y=0:w=1280:h=720:color=white@0.08:t=fill");
+
+  safeLines.forEach((rawLine, index) => {
+    const sourceLine = typeof rawLine === "string" ? rawLine : rawLine?.title || " ";
+    const enable = `between(mod(t\\,${secondsPerLine * safeLines.length})\\,${index * secondsPerLine}\\,${(index + 1) * secondsPerLine})`;
+    const wrapped = wrapDrawTextLine(sourceLine, Math.max(8, Math.floor(textWidth / (fontSize * 0.56)))).slice(0, maxWrapped);
+    const blockHeight = wrapped.length * lineHeight;
+    const y = placement === "top" ? pad : placement === "bottom" ? 720 - pad - blockHeight : Math.round(360 - blockHeight / 2);
+    if (tone === "caption") {
+      const cardPad = Math.round(fontSize * 0.72);
+      filters.push(`drawbox=x=${Math.round(cardX - cardPad)}:y=${Math.round(y - cardPad * 0.7)}:w=${Math.round(textWidth + cardPad * 2)}:h=${Math.round(blockHeight + cardPad * 1.25)}:color=black@0.68:t=fill:enable='${enable}'`);
+    }
+    wrapped.forEach((line, lineIndex) => {
+      filters.push(`drawtext=fontfile='${font}':text='${drawTextEscape(line)}':fontcolor=0xf4f0e8:fontsize=${fontSize}:x=${textXExpr}:y=${Math.round(y + lineIndex * lineHeight)}+sin(t*0.9)*3:shadowcolor=black@0.75:shadowx=0:shadowy=3:enable='${enable}'`);
+    });
   });
+
+  if (creditLines.length) {
+    const size = Math.max(10, Math.min(72, Number(bump.creditSize) || 24));
+    const lineHeightCredit = Math.round(size * 1.26);
+    const position = String(bump.creditPosition || "bottom-right");
+    const [, horizontal = "right"] = position.split("-");
+    const vertical = position.split("-")[0] || "bottom";
+    const align = horizontal === "left" ? "left" : horizontal === "center" ? "center" : "right";
+    const x = align === "left" ? 29 : align === "center" ? 640 : 1251;
+    const y = vertical === "top" ? 29 : vertical === "center" ? Math.round(360 - (creditLines.length * lineHeightCredit) / 2) : Math.round(720 - 29 - creditLines.length * lineHeightCredit);
+    creditLines.forEach((line, index) => {
+      filters.push(`drawtext=fontfile='${font}':text='${drawTextEscape(line)}':fontcolor=0xf4f0e8@0.88:fontsize=${size}:x=${textXExpression(x, align)}:y=${y + index * lineHeightCredit}:shadowcolor=black@0.85:shadowx=0:shadowy=2`);
+    });
+  }
+
+  filters.push(...effectFilters(bump.effects, Math.max(0, Math.min(1, Number(bump.effectIntensity || 0) / 100))));
   return filters.join(",");
+}
+
+function wrapDrawTextLine(text, maxChars) {
+  const words = String(text || " ").trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return [" "];
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (test.length <= maxChars || !line) {
+      line = test;
+    } else {
+      lines.push(line);
+      line = word;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function slateVideoFilter(title, lines = [], bump = {}) {
+  const font = drawTextEscape(fontFilePath());
+  const wallpaper = bump.wallpaper || {};
+  const palette = bumpPalette(wallpaper.scheme);
+  const placement = ["top", "middle", "bottom"].includes(bump.placement) ? bump.placement : "middle";
+  const alignment = ["left", "center", "right"].includes(bump.alignment) ? bump.alignment : "left";
+  const tone = ["classic", "caption", "washed"].includes(bump.tone) ? bump.tone : "classic";
+  const intensity = Math.max(0, Math.min(1, Number(bump.effectIntensity || 45) / 100));
+  const textLines = [title, ...lines].filter(Boolean).slice(0, 6);
+  const fontSize = textLines.length > 4 ? 34 : 42;
+  const lineHeight = Math.round(fontSize * 1.35);
+  const blockHeight = textLines.length * lineHeight;
+  const y = placement === "top" ? 90 : placement === "bottom" ? Math.max(90, 630 - blockHeight) : Math.round((720 - blockHeight) / 2);
+  const x = alignment === "right" ? 1188 : alignment === "center" ? 640 : 78;
+  const align = alignment;
+  const filters = [
+    "format=yuv420p",
+    `colorchannelmixer=rr=0.4:gg=0.4:bb=0.4`,
+    `drawbox=x=0:y=0:w=1280:h=720:color=${palette.bg[0]}@1:t=fill`,
+    `drawbox=x=0:y=0:w=1280:h=720:color=${palette.bg[1]}@0.42:t=fill`
+  ];
+
+  filters.push(...wallpaperFilters(wallpaper, palette));
+  if (tone === "classic") filters.push("drawbox=x=0:y=0:w=1280:h=720:color=black@0.24:t=fill");
+  if (tone === "caption") filters.push(`drawbox=x=${alignment === "right" ? 622 : alignment === "center" ? 290 : 48}:y=${Math.max(54, y - 22)}:w=610:h=${blockHeight + 42}:color=black@0.62:t=fill`);
+  if (tone === "washed") filters.push("drawbox=x=0:y=0:w=1280:h=720:color=white@0.08:t=fill");
+
+  textLines.forEach((line, index) => {
+    const color = index === 0 ? "0xffe066" : "white";
+    const size = index === 0 ? fontSize + 8 : fontSize;
+    filters.push(`drawtext=fontfile='${font}':text='${drawTextEscape(line)}':fontcolor=${color}:fontsize=${size}:x=${textXExpression(x, align)}:y=${y + index * lineHeight}:shadowcolor=black@0.75:shadowx=2:shadowy=2`);
+  });
+
+  filters.push(...effectFilters(bump.effects, intensity));
+  return filters.join(",");
+}
+
+function bumpPalette(name) {
+  const palettes = {
+    midnight: { bg: ["0x02030a", "0x07111f", "0x220b33"], shape: ["0xfff8d7", "0xffe15a", "0x36c8ff", "0xff4f7b"] },
+    pool: { bg: ["0x00150f", "0x013f35", "0x06294f"], shape: ["0xeafff8", "0x42ffb0", "0xffdd4a", "0xff6f59"] },
+    candy: { bg: ["0x19001f", "0x3a0066", "0x001b54"], shape: ["0xff4fd8", "0x00e5ff", "0xfff35c", "0x6dff8b"] },
+    paper: { bg: ["0x241a09", "0x7a5b21", "0xf2d778"], shape: ["0x17100a", "0xfff7d6", "0x0f6f78", "0xd12626"] },
+    mono: { bg: ["0x000000", "0x121212", "0x303030"], shape: ["0xffffff", "0xd0d0d0", "0x8c8c8c", "0xf2f2f2"] },
+    arcade: { bg: ["0x090018", "0x1b0045", "0x00143f"], shape: ["0xff2bd6", "0x00ffea", "0xfaff00", "0xff6b00"] },
+    warning: { bg: ["0x080600", "0x1f1600", "0x453000"], shape: ["0xffd400", "0x111111", "0xff5a00", "0xfff5b5"] },
+    citrus: { bg: ["0x102000", "0x2f7d00", "0xf7db00"], shape: ["0xffffff", "0xff4d00", "0x00e676", "0x111111"] },
+    broadcast: { bg: ["0x050505", "0x1c1c1c", "0x050505"], shape: ["0xffffff", "0xff003c", "0x00f0ff", "0xffe600"] },
+    miami: { bg: ["0x090022", "0x24115e", "0xff3f81"], shape: ["0x00f5ff", "0xffef5a", "0xff7ad9", "0xffffff"] },
+    mint: { bg: ["0x001f24", "0x005d55", "0xd8ff4f"], shape: ["0xf8fff2", "0x00ff94", "0xff2e63", "0x173bff"] },
+    ruby: { bg: ["0x100006", "0x3a0014", "0x7f001f"], shape: ["0xffccd5", "0xff1744", "0xffb000", "0xffffff"] },
+    blueprint: { bg: ["0x00152e", "0x003e7a", "0x006dc1"], shape: ["0xffffff", "0x7bd8ff", "0xffec8b", "0x00152e"] }
+  };
+  return palettes[name] || palettes.midnight;
+}
+
+function wallpaperFilters(wallpaper, palette) {
+  const novelty = ["novelty", "potleaf", "cats", "birds", "penguins", "dinosaurs"];
+  const shape = novelty.includes(wallpaper.shapes) ? "novelty" : wallpaper.shapes || "mixed";
+  const spacing = Math.max(42, Math.min(190, Number(wallpaper.spacing) || 86));
+  const filters = [];
+  for (let y = -spacing; y < 820; y += spacing) {
+    for (let x = -spacing; x < 1380; x += spacing) {
+      const index = Math.abs(Math.floor((x * 13 + y * 7 + Number(wallpaper.seed || 1)) % palette.shape.length));
+      const color = palette.shape[index];
+      const alpha = 0.12 + (index * 0.035);
+      if (shape === "novelty") {
+        filters.push(...noveltyShapeFilters(x, y, spacing, color, alpha, index));
+      } else if (shape === "lines" || shape === "stripes") {
+        filters.push(`drawbox=x=${Math.round(x)}:y=${Math.round(y)}:w=${Math.round(spacing * 0.72)}:h=5:color=${color}@${alpha}:t=fill`);
+      } else if (shape === "diamonds" || shape === "triangles" || shape === "argyle") {
+        filters.push(`drawbox=x=${Math.round(x)}:y=${Math.round(y)}:w=${Math.round(spacing * 0.45)}:h=${Math.round(spacing * 0.45)}:color=${color}@${alpha}:t=4`);
+      } else {
+        filters.push(`drawbox=x=${Math.round(x)}:y=${Math.round(y)}:w=${Math.round(spacing * 0.42)}:h=${Math.round(spacing * 0.42)}:color=${color}@${alpha}:t=fill`);
+      }
+    }
+  }
+  return filters.slice(0, 90);
+}
+
+function noveltyShapeFilters(x, y, spacing, color, alpha, index) {
+  const px = Math.round(x);
+  const py = Math.round(y);
+  const unit = Math.round(spacing * 0.16);
+  const mode = index % 5;
+  if (mode === 0) {
+    return [
+      `drawbox=x=${px}:y=${py + unit}:w=${unit * 3}:h=${unit * 2}:color=${color}@${alpha}:t=fill`,
+      `drawbox=x=${px + unit}:y=${py}:w=${unit}:h=${unit * 4}:color=${color}@${alpha}:t=fill`
+    ];
+  }
+  if (mode === 1) {
+    return [
+      `drawbox=x=${px}:y=${py + unit}:w=${unit * 4}:h=${unit * 3}:color=${color}@${alpha}:t=4`,
+      `drawbox=x=${px}:y=${py}:w=${unit}:h=${unit}:color=${color}@${alpha}:t=fill`,
+      `drawbox=x=${px + unit * 3}:y=${py}:w=${unit}:h=${unit}:color=${color}@${alpha}:t=fill`
+    ];
+  }
+  if (mode === 2) {
+    return [
+      `drawbox=x=${px}:y=${py + unit}:w=${unit * 5}:h=${unit * 2}:color=${color}@${alpha}:t=fill`,
+      `drawbox=x=${px + unit * 4}:y=${py}:w=${unit * 2}:h=${unit}:color=${color}@${alpha}:t=fill`
+    ];
+  }
+  if (mode === 3) {
+    return [
+      `drawbox=x=${px + unit}:y=${py}:w=${unit * 2}:h=${unit * 5}:color=${color}@${alpha}:t=fill`,
+      `drawbox=x=${px}:y=${py + unit * 4}:w=${unit}:h=${unit}:color=${color}@${alpha}:t=fill`,
+      `drawbox=x=${px + unit * 3}:y=${py + unit * 4}:w=${unit}:h=${unit}:color=${color}@${alpha}:t=fill`
+    ];
+  }
+  return [
+    `drawbox=x=${px}:y=${py + unit}:w=${unit * 5}:h=${unit * 3}:color=${color}@${alpha}:t=fill`,
+    `drawbox=x=${px + unit * 4}:y=${py}:w=${unit * 2}:h=${unit * 2}:color=${color}@${alpha}:t=fill`,
+    `drawbox=x=${px + unit}:y=${py + unit * 3}:w=${unit}:h=${unit * 2}:color=${color}@${alpha}:t=fill`
+  ];
+}
+
+function effectFilters(effects = [], intensity = 0.45) {
+  const selected = Array.isArray(effects) ? effects : [];
+  const filters = [];
+  if (selected.includes("scanlines") || selected.includes("vhs")) {
+    filters.push(`drawbox=x=0:y=0:w=1280:h=720:color=black@${0.08 + intensity * 0.12}:t=2`);
+  }
+  if (selected.includes("letterbox")) {
+    filters.push(`drawbox=x=0:y=0:w=1280:h=${Math.round(38 + intensity * 36)}:color=black@0.82:t=fill`);
+    filters.push(`drawbox=x=0:y=${Math.round(682 - intensity * 36)}:w=1280:h=${Math.round(38 + intensity * 36)}:color=black@0.82:t=fill`);
+  }
+  if (selected.includes("noise") || selected.includes("flicker")) {
+    filters.push(`noise=alls=${Math.round(5 + intensity * 18)}:allf=t`);
+  }
+  if (selected.includes("chromatic")) {
+    filters.push("eq=saturation=1.25:contrast=1.08");
+  }
+  return filters;
+}
+
+function textXExpression(x, align) {
+  if (align === "center") return `(w-text_w)/2`;
+  if (align === "right") return `${x}-text_w`;
+  return String(x);
 }
 
 function fontFilePath() {
@@ -1088,7 +1804,7 @@ function cleanSchedule() {
 }
 
 async function createSource(body) {
-  const type = body.type === "local" ? "local" : "youtube";
+  const type = ["local", "internet-archive"].includes(body.type) ? body.type : "youtube";
   const title = String(body.title || "").trim() || "Untitled source";
   const duration = Number(body.duration);
   if (!Number.isFinite(duration) || duration < 5) {
@@ -1100,7 +1816,8 @@ async function createSource(body) {
     type,
     title,
     folderId: normalizeFolderId(body.folderId),
-    duration: Math.round(duration)
+    duration: Math.round(duration),
+    randomEligible: type !== "youtube"
   };
 
   if (type === "youtube") {
@@ -1108,6 +1825,14 @@ async function createSource(body) {
     if (!youtubeId) throw new Error("Enter a valid YouTube URL or video ID.");
     source.youtubeId = youtubeId;
     source.url = `https://www.youtube.com/watch?v=${youtubeId}`;
+  } else if (type === "internet-archive") {
+    const info = await getInternetArchiveInfo(body.archive || body.url || body.archiveId, body.archiveFile);
+    source.archiveId = info.archiveId;
+    source.archiveFile = info.archiveFile;
+    source.fileUrl = info.fileUrl;
+    source.url = info.url;
+    if (!String(body.title || "").trim()) source.title = info.title;
+    if (!Number.isFinite(duration) || !body.duration) source.duration = info.duration;
   } else {
     const rawPath = String(body.path || "").trim().replaceAll("\\", "/");
     if (!rawPath) throw new Error("Enter a server media path.");
@@ -1143,7 +1868,8 @@ async function createSourceFolder(body) {
   const folder = {
     id: crypto.randomUUID(),
     name,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    randomEligible: true
   };
   state.sourceFolders.push(folder);
   state.sourceFolders.sort((a, b) => a.name.localeCompare(b.name));
@@ -1164,7 +1890,8 @@ async function createUniqueSourceFolder(baseName) {
   const folder = {
     id: crypto.randomUUID(),
     name,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    randomEligible: true
   };
   state.sourceFolders.push(folder);
   state.sourceFolders.sort((a, b) => a.name.localeCompare(b.name));
@@ -1188,10 +1915,33 @@ async function updateSource(id, body) {
   if ("folderId" in body) {
     source.folderId = normalizeFolderId(body.folderId);
   }
+  if ("randomEligible" in body) {
+    source.randomEligible = Boolean(body.randomEligible);
+  }
 
   await saveState();
   broadcastProgram();
   return source;
+}
+
+async function updateSourceFolder(id, body) {
+  const folder = state.sourceFolders.find((item) => item.id === id);
+  if (!folder) throw new Error("Unknown source folder.");
+  if ("name" in body) {
+    const name = String(body.name || "").replace(/\s+/g, " ").trim();
+    if (name.length < 2) throw new Error("Folder names must be at least 2 characters.");
+    if (name.length > 48) throw new Error("Folder names must be 48 characters or less.");
+    if (state.sourceFolders.some((item) => item.id !== id && item.name.toLowerCase() === name.toLowerCase())) {
+      throw new Error("A source folder with that name already exists.");
+    }
+    folder.name = name;
+  }
+  if ("randomEligible" in body) {
+    folder.randomEligible = Boolean(body.randomEligible);
+  }
+  await saveState();
+  broadcastProgram();
+  return folder;
 }
 
 async function createScheduleEntry(body, immediate = false) {
@@ -1275,6 +2025,15 @@ async function ingestSource(source) {
     };
     return { id: source.id, title: source.title, type: source.type, ...source.ingest };
   }
+  if (source.type === "internet-archive") {
+    source.ingest = {
+      status: source.fileUrl ? "ready" : "missing",
+      message: source.fileUrl ? "Internet Archive media URL is ready for shared HLS playout." : "No playable Internet Archive file URL is attached.",
+      path: source.fileUrl || "",
+      updatedAt
+    };
+    return { id: source.id, title: source.title, type: source.type, ...source.ingest };
+  }
 
   const candidates = await discoverAuthorizedMediaCandidates(source);
   source.ingest = {
@@ -1287,6 +2046,114 @@ async function ingestSource(source) {
     updatedAt
   };
   return { id: source.id, title: source.title, type: source.type, ...source.ingest };
+}
+
+function shouldAutoIngestSource(source, options = {}) {
+  if (!source || source.type === "bump") return false;
+  const status = source.ingest?.status || "";
+  if (status === "ready") return false;
+  const updatedAt = Number(source.ingest?.updatedAt || 0);
+  if (options.force && status !== "queued" && status !== "checking") return true;
+  if (status === "queued" || status === "checking") {
+    return !updatedAt || Date.now() - updatedAt > 30000;
+  }
+  let retryAfter = 0;
+  if (status === "missing" || status === "needs_media" || status === "candidates_found") retryAfter = 1000 * 60 * 20;
+  if (status === "error") retryAfter = 1000 * 60 * 5;
+  return !updatedAt || Date.now() - updatedAt > retryAfter;
+}
+
+function queueAutoIngestSourceIds(sourceIds = [], reason = "live queue", options = {}) {
+  const now = Date.now();
+  let queued = 0;
+  for (const sourceId of sourceIds) {
+    const source = state.sources.find((item) => item.id === sourceId);
+    if (!shouldAutoIngestSource(source, options)) continue;
+    if (autoIngestQueued.has(source.id) || autoIngestInFlight.has(source.id)) continue;
+    source.ingest = {
+      ...(source.ingest || {}),
+      status: "queued",
+      message: `Queued for automatic ingest from ${reason}.`,
+      updatedAt: now
+    };
+    autoIngestQueued.add(source.id);
+    autoIngestQueue.push(source.id);
+    queued += 1;
+  }
+  if (queued) {
+    saveState().then(broadcastProgram).catch((error) => console.error("Auto-ingest save failed:", error));
+    pumpAutoIngestQueue().catch((error) => console.error("Auto-ingest pump failed:", error));
+  }
+  return queued;
+}
+
+function queueAutoIngestForLiveQueue(reason = "live queue") {
+  const now = Date.now();
+  const sourceIds = state.liveQueue
+    .filter((entry) => entry.startAt + entry.duration * 1000 > now)
+    .sort((a, b) => a.startAt - b.startAt)
+    .map((entry) => entry.sourceId);
+  return queueAutoIngestSourceIds(sourceIds, reason);
+}
+
+function pruneAutoIngestQueueToLiveQueue() {
+  const now = Date.now();
+  const liveSourceIds = new Set(
+    state.liveQueue
+      .filter((entry) => entry.startAt + entry.duration * 1000 > now)
+      .map((entry) => entry.sourceId)
+  );
+  for (let index = autoIngestQueue.length - 1; index >= 0; index -= 1) {
+    if (!liveSourceIds.has(autoIngestQueue[index])) {
+      autoIngestQueued.delete(autoIngestQueue[index]);
+      autoIngestQueue.splice(index, 1);
+    }
+  }
+}
+
+async function pumpAutoIngestQueue() {
+  if (autoIngestPumpActive) return;
+  autoIngestPumpActive = true;
+  try {
+    while (autoIngestInFlight.size < 2 && autoIngestQueue.length) {
+      const sourceId = autoIngestQueue.shift();
+      autoIngestQueued.delete(sourceId);
+      const source = state.sources.find((item) => item.id === sourceId);
+      if (!source || source.type === "bump" || source.ingest?.status === "ready") continue;
+      autoIngestInFlight.add(sourceId);
+      runAutoIngest(sourceId).finally(() => {
+        autoIngestInFlight.delete(sourceId);
+        pumpAutoIngestQueue().catch((error) => console.error("Auto-ingest pump failed:", error));
+      });
+    }
+  } finally {
+    autoIngestPumpActive = false;
+  }
+}
+
+async function runAutoIngest(sourceId) {
+  const source = state.sources.find((item) => item.id === sourceId);
+  if (!source || source.type === "bump") return;
+  source.ingest = {
+    ...(source.ingest || {}),
+    status: "checking",
+    message: "Automatic ingest is checking this queued source.",
+    updatedAt: Date.now()
+  };
+  await saveState();
+  broadcastProgram();
+  try {
+    await ingestSource(source);
+  } catch (error) {
+    source.ingest = {
+      ...(source.ingest || {}),
+      status: "error",
+      message: `Automatic ingest failed: ${error.message || "Unknown error."}`,
+      updatedAt: Date.now()
+    };
+  }
+  await saveState();
+  broadcastProgram();
 }
 
 async function ingestSourceById(sourceId) {
@@ -1444,6 +2311,7 @@ async function createQueueEntry(body, immediate = false) {
   rebuildLiveQueueTimings();
   await saveState();
   broadcastProgram();
+  queueAutoIngestSourceIds([source.id], immediate ? "play immediately" : "live queue", { force: true });
   return entry;
 }
 
@@ -1451,11 +2319,37 @@ async function createQueueLibrary(body) {
   const sources = librarySources(body.folderId);
   if (!sources.length) throw new Error("That source library is empty.");
 
-  if (body.immediate) state.liveQueue = [];
+  const now = Date.now();
+  const activeOrFuture = body.immediate
+    ? []
+    : state.liveQueue
+      .filter((item) => item.startAt + item.duration * 1000 > now)
+      .sort((a, b) => a.startAt - b.startAt);
+  let cursor = activeOrFuture.reduce((latest, item) => {
+    return Math.max(latest, item.startAt + item.duration * 1000);
+  }, now);
   const entries = [];
   for (const source of sources) {
-    entries.push(await createQueueEntry({ sourceId: source.id, duration: source.duration }, false));
+    const duration = Number(source.duration);
+    if (!Number.isFinite(duration) || duration < 5) continue;
+    const entry = {
+      id: crypto.randomUUID(),
+      sourceId: source.id,
+      title: "",
+      startAt: cursor,
+      duration: Math.round(duration),
+      queuedAt: now
+    };
+    entries.push(entry);
+    cursor += entry.duration * 1000;
   }
+  if (!entries.length) throw new Error("That source library has no playable sources.");
+
+  state.liveQueue = [...activeOrFuture, ...entries].sort((a, b) => a.startAt - b.startAt);
+  rebuildLiveQueueTimings();
+  await saveState();
+  broadcastProgram();
+  queueAutoIngestSourceIds(entries.map((entry) => entry.sourceId), body.immediate ? "play-now library" : "queued library", { force: true });
   return { entries };
 }
 
@@ -1501,7 +2395,12 @@ async function queueManualBump(body = {}) {
 
 async function clearLiveQueue() {
   state.liveQueue = [];
+  state.broadcastMode = "queue";
+  pruneAutoIngestQueueToLiveQueue();
   pruneUnusedBumpSources();
+  if (!backfillLiveQueue(MIN_QUEUE_VIDEO_ITEMS, { leadingAutoBump: true })) {
+    queueStandaloneScheduleBump();
+  }
   await saveState();
   broadcastProgram();
   return { ok: true };
@@ -1548,6 +2447,7 @@ async function moveQueueEntry(id, direction) {
   rebuildLiveQueueTimings();
   await saveState();
   broadcastProgram();
+  queueAutoIngestForLiveQueue("queue reorder");
   return { ok: true, moved: true };
 }
 
@@ -1588,6 +2488,7 @@ async function reorderLiveQueue(body) {
   rebuildLiveQueueTimings();
   await saveState();
   broadcastProgram();
+  queueAutoIngestForLiveQueue("queue reorder");
   return { ok: true };
 }
 
@@ -1596,7 +2497,113 @@ async function setBroadcastMode(body) {
   state.broadcastMode = mode;
   await saveState();
   broadcastProgram();
+  if (mode === "queue") queueAutoIngestForLiveQueue("broadcast mode switch");
   return { mode };
+}
+
+async function triggerBroadcastFx(body = {}) {
+  const id = String(body.id || "").trim();
+  const preset = FX_PRESETS[id];
+  if (!preset) throw new Error("Unknown FX button.");
+  const maxDuration = ["av-warp", "delay", "source-overlay", "playlist-audio", "visual-adjust", "theme-cycle"].includes(id) ? 180 : 30;
+  const duration = Math.max(2, Math.min(maxDuration, Number(body.duration || preset.duration)));
+  const now = Date.now();
+  const commandFx = new Set([
+    "looper-capture",
+    "looper-layer-1",
+    "looper-layer-2",
+    "looper-layer-3",
+    "looper-bpm-down",
+    "looper-bpm-up",
+    "looper-config",
+    "looper-clear",
+    "seed-skip",
+    "delay",
+    "source-overlay",
+    "playlist-audio",
+    "visual-adjust",
+    "theme-random"
+  ]);
+  const active = activeBroadcastFx();
+  let params = typeof body.params === "object" && body.params ? body.params : {};
+  if (id === "source-overlay") {
+    const source = state.sources.find((item) => item.id === params.sourceId);
+    if (!source || source.type === "bump") throw new Error("Choose a valid source to overlay.");
+    params = {
+      ...params,
+      source: {
+        id: source.id,
+        title: source.title,
+        type: source.type,
+        url: source.url,
+        youtubeId: source.youtubeId,
+        archiveId: source.archiveId,
+        archiveFile: source.archiveFile,
+        fileUrl: source.fileUrl,
+        path: source.path,
+        duration: source.duration
+      }
+    };
+  }
+  if (id === "playlist-audio") {
+    const playlist = await loadYouTubePlaylist(CHAOS_AUDIO_PLAYLIST_ID);
+    if (!playlist.videos.length) throw new Error("No public videos were found in that audio playlist.");
+    const video = playlist.videos[Math.floor(Math.random() * playlist.videos.length)];
+    params = {
+      playlistId: CHAOS_AUDIO_PLAYLIST_ID,
+      youtubeId: video.youtubeId,
+      title: video.title,
+      url: `https://www.youtube.com/watch?v=${video.youtubeId}`,
+      duration: video.duration
+    };
+  }
+  if (id === "theme-random") {
+    const themes = ["woodsy", "mountain", "deep-ocean", "rainforest", "frutiger-aero", "aero-lime", "aero-sunset", "candy-static", "terminal-green", "hotdog-stand", "midnight-laundromat", "mall-kiosk"];
+    params = { ...params, theme: themes[Math.floor(Math.random() * themes.length)] };
+  }
+  if (id === "theme-aero-blast") {
+    params = { ...params, theme: "frutiger-aero" };
+  }
+  if (id === "delay" && params.enabled === false) {
+    state.activeFx = active.filter((item) => item.id !== "delay");
+    await saveState();
+    broadcastProgram();
+    return { ok: true, fx: state.activeFx };
+  }
+  const existing = commandFx.has(id) ? null : active.find((item) => item.id === id);
+  if (existing) {
+    const continuousFx = new Set(["av-warp", "delay", "visual-adjust"]);
+    existing.level = continuousFx.has(id) ? Math.max(1, Number(preset.level || 1)) : Math.min(8, Number(existing.level || preset.level || 1) + 1);
+    existing.hits = Number(existing.hits || 1) + 1;
+    existing.startedAt = now;
+    existing.expiresAt = Math.min(now + 120000, Math.max(existing.expiresAt, now) + duration * 1000);
+    existing.seed = crypto.randomUUID();
+    existing.params = params ? { ...existing.params, ...params } : existing.params || {};
+    await saveState();
+    broadcastProgram();
+    return { ok: true, fx: state.activeFx };
+  }
+  const fx = {
+    id,
+    label: preset.label,
+    startedAt: now,
+    expiresAt: id === "delay" && params.enabled === true ? null : now + duration * 1000,
+    seed: crypto.randomUUID(),
+    level: Math.max(1, Number(preset.level || 1)),
+    hits: 1,
+    params
+  };
+  state.activeFx = [...active.filter((item) => item.id !== id), fx].slice(-8);
+  await saveState();
+  broadcastProgram();
+  return { ok: true, fx: state.activeFx };
+}
+
+async function clearBroadcastFx() {
+  state.activeFx = [];
+  await saveState();
+  broadcastProgram();
+  return { ok: true };
 }
 
 async function removeItem(collection, id) {
@@ -1607,6 +2614,7 @@ async function removeItem(collection, id) {
   }
   if (collection === "liveQueue") {
     rebuildLiveQueueTimings();
+    pruneAutoIngestQueueToLiveQueue();
   }
   await saveState();
   broadcastProgram();
@@ -1630,7 +2638,9 @@ async function serveFile(req, res, baseDir, urlPrefix = "") {
     const ext = path.extname(filePath).toLowerCase();
     res.writeHead(200, {
       "content-type": mimeTypes[ext] || "application/octet-stream",
-      ...(baseDir === HLS_DIR ? { "cache-control": "no-cache, no-store, must-revalidate" } : {})
+      ...(baseDir === HLS_DIR || [".html", ".js", ".css"].includes(ext)
+        ? { "cache-control": "no-cache, no-store, must-revalidate" }
+        : {})
     });
     createReadStream(filePath).pipe(res);
   } catch {
@@ -1676,6 +2686,21 @@ async function handleApi(req, res, pathname) {
     if (req.method === "GET" && pathname === "/api/youtube-info") {
       const url = new URL(req.url, `http://${req.headers.host}`);
       sendJson(res, 200, await getYouTubeInfo(url.searchParams.get("url")));
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/internet-archive-info") {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      sendJson(res, 200, await getInternetArchiveInfo(url.searchParams.get("url"), url.searchParams.get("file")));
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/internet-archive-search") {
+      if (!requireAdmin(req, res)) return;
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      sendJson(res, 200, {
+        results: await searchInternetArchiveSources(url.searchParams.get("q"), url.searchParams.get("rows"))
+      });
       return;
     }
 
@@ -1787,6 +2812,12 @@ async function handleApi(req, res, pathname) {
       return;
     }
 
+    if (req.method === "POST" && pathname === "/api/import-internet-archive-collection") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 201, await importInternetArchiveCollection(await readJson(req)));
+      return;
+    }
+
     if (req.method === "POST" && pathname === "/api/sources") {
       if (!requireAdmin(req, res)) return;
       const source = await createSource(await readJson(req));
@@ -1824,6 +2855,13 @@ async function handleApi(req, res, pathname) {
     if (req.method === "PATCH" && updateSourceMatch) {
       if (!requireAdmin(req, res)) return;
       sendJson(res, 200, await updateSource(updateSourceMatch[1], await readJson(req)));
+      return;
+    }
+
+    const updateSourceFolderMatch = pathname.match(/^\/api\/source-folders\/([^/]+)$/);
+    if (req.method === "PATCH" && updateSourceFolderMatch) {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await updateSourceFolder(updateSourceFolderMatch[1], await readJson(req)));
       return;
     }
 
@@ -1900,6 +2938,18 @@ async function handleApi(req, res, pathname) {
       return;
     }
 
+    if (req.method === "POST" && pathname === "/api/fx") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await triggerBroadcastFx(await readJson(req)));
+      return;
+    }
+
+    if (req.method === "DELETE" && pathname === "/api/fx") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await clearBroadcastFx());
+      return;
+    }
+
     const deleteMatch = pathname.match(/^\/api\/(sources|schedule|queue|source-folders)\/([^/]+)$/);
     if (req.method === "DELETE" && deleteMatch) {
       if (!requireAdmin(req, res)) return;
@@ -1919,6 +2969,7 @@ async function handleApi(req, res, pathname) {
 await ensureState();
 await refreshBumpMusic();
 if (ensureAutoBumpAudioStarts()) await saveState();
+queueAutoIngestForLiveQueue("server startup");
 syncHlsPlayout().catch((error) => {
   hlsPlayout.status = "error";
   hlsPlayout.error = error.message;
@@ -1929,9 +2980,14 @@ setInterval(() => syncHlsPlayout().catch((error) => {
   hlsPlayout.error = error.message;
 }), 1000);
 setInterval(flushTimelineSave, 1000);
+setInterval(() => {
+  queueAutoIngestForLiveQueue("live queue maintenance");
+}, 15000);
 setInterval(async () => {
   cleanSchedule();
   maintainBroadcastTimeline();
+  queueAutoIngestForLiveQueue("live queue maintenance");
+  await pruneHlsDirectory();
   await flushTimelineSave();
   await saveState();
 }, 1000 * 60 * 5);
