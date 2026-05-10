@@ -199,6 +199,7 @@
                 <div class="title-marquee">
                   <strong id="nowTitle">No active program</strong>
                 </div>
+                <small id="nowReason" class="program-reason"></small>
               </div>
             </div>
             <div>
@@ -208,6 +209,7 @@
                 <div class="title-marquee">
                   <strong id="nextTitle">Unscheduled</strong>
                 </div>
+                <small id="nextReason" class="program-reason"></small>
               </div>
             </div>
             <div>
@@ -500,6 +502,12 @@
               <button id="performanceSceneButton" type="button">Launch scene</button>
               <button id="performancePanicButton" class="secondary" type="button">Clean signal</button>
             </div>
+            <form id="fxSnapshotForm" class="fx-snapshot-form fx-wide">
+              <input name="name" maxlength="80" placeholder="Snapshot name">
+              <button type="submit" class="secondary">Save snapshot</button>
+              <p id="fxSnapshotMessage" class="message"></p>
+            </form>
+            <div id="fxSnapshotList" class="fx-snapshot-list fx-wide"></div>
             <div id="performanceActiveFx" class="performance-active-fx fx-wide"></div>
             <div id="performanceCueGrid" class="performance-cue-grid fx-wide"></div>
           </section>

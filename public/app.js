@@ -14,10 +14,12 @@ const onlineBadge = document.querySelector("#onlineBadge");
 const peaceModeToggle = document.querySelector("#peaceModeToggle");
 const nowTitle = document.querySelector("#nowTitle");
 const nowBlock = document.querySelector("#nowBlock");
+const nowReason = document.querySelector("#nowReason");
 const viewerNowTitle = document.querySelector("#viewerNowTitle");
 const viewerNowBlock = document.querySelector("#viewerNowBlock");
 const nextTitle = document.querySelector("#nextTitle");
 const nextBlock = document.querySelector("#nextBlock");
+const nextReason = document.querySelector("#nextReason");
 const progressText = document.querySelector("#progressText");
 const viewerNowProgress = document.querySelector("#viewerNowProgress");
 const youtubeLink = document.querySelector("#youtubeLink");
@@ -180,6 +182,9 @@ const performanceBumpToggle = document.querySelector("#performanceBumpToggle");
 const performanceSceneSelect = document.querySelector("#performanceSceneSelect");
 const performanceSceneButton = document.querySelector("#performanceSceneButton");
 const performancePanicButton = document.querySelector("#performancePanicButton");
+const fxSnapshotForm = document.querySelector("#fxSnapshotForm");
+const fxSnapshotMessage = document.querySelector("#fxSnapshotMessage");
+const fxSnapshotList = document.querySelector("#fxSnapshotList");
 const performanceCueGrid = document.querySelector("#performanceCueGrid");
 const looperBpmValue = document.querySelector("#looperBpmValue");
 const looperBeatLight = document.querySelector("#looperBeatLight");
@@ -315,7 +320,7 @@ let schedulePickMode = "source";
 let draggedQueueId = "";
 let draggedSourceId = "";
 let adminDataCache = { sourceFolders: [], sources: [] };
-let showControlCache = { scenes: [], cues: [], macros: {} };
+let showControlCache = { scenes: [], cues: [], macros: {}, snapshots: [] };
 let programVotePoll = null;
 let railResizeDrag = null;
 const scheduleZoomLevels = [
@@ -981,6 +986,7 @@ function renderSourceSearchResults(results = []) {
             <strong>${escapeHtml(result.title || result.fileTitle || "Archive result")}</strong>
             <small>${escapeHtml(result.fileTitle || result.archiveFile || "")}</small>
             <small>${formatDuration(result.duration)}${result.year ? ` &middot; ${escapeHtml(result.year)}` : ""}${result.creator ? ` &middot; ${escapeHtml(result.creator)}` : ""}</small>
+            ${result.quality ? `<small class="archive-quality" data-quality="${escapeHtml(result.quality.label || "usable")}">Quality: ${escapeHtml(result.quality.label || "usable")} / ${Number(result.quality.score || 0)}${result.quality.flags?.length ? ` &middot; ${escapeHtml(result.quality.flags.join(", "))}` : ""}</small>` : ""}
             ${result.description ? `<p>${escapeHtml(result.description)}</p>` : ""}
           </div>
           <div class="edit-actions">
@@ -3531,6 +3537,7 @@ function syncProgram(program) {
 
   setProgramBlock(nextBlock, next?.weeklyBlockName);
   setProgramTitle(nextTitle, next ? `${programDisplayTitle(next)} at ${new Date(next.startAt).toLocaleTimeString()}` : "Unscheduled");
+  if (nextReason) nextReason.textContent = next?.reason || "";
 
   if (!live) {
     currentProgramId = "";
@@ -3539,6 +3546,7 @@ function syncProgram(program) {
     setProgramBlock(viewerNowBlock, "");
     setProgramTitle(nowTitle, "No active program");
     setProgramTitle(viewerNowTitle, "No active program");
+    if (nowReason) nowReason.textContent = "";
     progressText.textContent = "00:00 / 00:00";
     viewerNowProgress.textContent = "00:00 / 00:00";
     liveBadge.textContent = "Waiting";
@@ -3555,6 +3563,7 @@ function syncProgram(program) {
   setProgramBlock(viewerNowBlock, live.weeklyBlockName);
   setProgramTitle(nowTitle, programDisplayTitle(live));
   setProgramTitle(viewerNowTitle, programDisplayTitle(live));
+  if (nowReason) nowReason.textContent = live.reason || "";
   if (live.source.type === "youtube") {
     enterYouTubeMode(live);
     if (!youtubeSyncTimer) youtubeSyncTimer = setInterval(() => {
@@ -3658,7 +3667,8 @@ function renderPerformanceControl(control = {}) {
   showControlCache = {
     scenes: Array.isArray(control.scenes) ? control.scenes : [],
     cues: Array.isArray(control.cues) ? control.cues : [],
-    macros: control.macros || {}
+    macros: control.macros || {},
+    snapshots: Array.isArray(control.snapshots) ? control.snapshots : []
   };
   if (performanceSceneSelect) {
     performanceSceneSelect.innerHTML = showControlCache.scenes.length
@@ -3681,7 +3691,21 @@ function renderPerformanceControl(control = {}) {
           .join("")
       : `<p class="message">No performance cues loaded.</p>`;
   }
+  renderFxSnapshots(showControlCache.snapshots || []);
   updatePerformanceUi(currentProgram?.performance);
+}
+
+function renderFxSnapshots(snapshots = []) {
+  if (!fxSnapshotList) return;
+  fxSnapshotList.innerHTML = snapshots.length
+    ? `
+      <span>Snapshots</span>
+      ${snapshots.slice(0, 8).map((snapshot) => `
+        <button class="fx-snapshot-chip" data-launch-fx-snapshot="${escapeHtml(snapshot.id)}" type="button">
+          <strong>${escapeHtml(snapshot.name)}</strong>
+          <small>${Number(snapshot.fxCount || 0)} FX</small>
+        </button>`).join("")}`
+    : `<span>Snapshots</span><p class="message">No saved rack states yet.</p>`;
 }
 
 function updatePerformanceUi(performance = {}) {
@@ -5052,6 +5076,38 @@ performancePanicButton?.addEventListener("click", async () => {
   await launchPerformanceCue("panic-reset");
   disableDelay(true);
   disableReverb(true);
+});
+fxSnapshotForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const form = new FormData(fxSnapshotForm);
+    const result = await api("/api/admin/fx-snapshots", {
+      method: "POST",
+      body: JSON.stringify({ name: form.get("name") })
+    });
+    renderFxSnapshots(result.snapshots || []);
+    fxSnapshotForm.reset();
+    setMessage(fxSnapshotMessage, "Rack snapshot saved.");
+    await loadAdmin();
+  } catch (error) {
+    setMessage(fxSnapshotMessage, error.message, true);
+  }
+});
+fxSnapshotList?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-launch-fx-snapshot]");
+  if (!button) return;
+  try {
+    const result = await api("/api/admin/fx-snapshots/launch", {
+      method: "POST",
+      body: JSON.stringify({ id: button.dataset.launchFxSnapshot })
+    });
+    if (result.fx) applyBroadcastFx(result.fx);
+    renderFxSnapshots(result.snapshots || []);
+    setMessage(fxSnapshotMessage, `Snapshot launched: ${button.textContent.trim()}.`);
+    await loadAdmin();
+  } catch (error) {
+    setMessage(fxSnapshotMessage, error.message, true);
+  }
 });
 performanceCueGrid?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-performance-cue]");

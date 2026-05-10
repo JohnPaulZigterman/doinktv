@@ -4182,6 +4182,18 @@ body.peace-mode .fx-audio-layer {
   line-height: 1.15;
 }
 
+.program-reason {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--faint);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .bump-frame {
   width: 100%;
   min-height: calc(100vh - 68px - clamp(24px, 4.8vw, 52px) - 98px);
@@ -4596,6 +4608,65 @@ body.peace-mode .fx-audio-layer {
 .performance-action-row button {
   min-height: 34px;
   border-radius: 2px;
+}
+
+.fx-snapshot-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.fx-snapshot-form .message {
+  grid-column: 1 / -1;
+}
+
+.fx-snapshot-list {
+  display: grid;
+  grid-template-columns: 76px repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  align-items: stretch;
+}
+
+.fx-snapshot-list > span {
+  align-self: center;
+  color: var(--faint);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.fx-snapshot-chip {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  min-height: 38px;
+  padding: 6px;
+  border-radius: 2px;
+  text-align: left;
+}
+
+.fx-snapshot-chip strong,
+.fx-snapshot-chip small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fx-snapshot-chip small,
+.archive-quality {
+  color: var(--accent-2);
+}
+
+.archive-quality[data-quality="strong"] {
+  color: var(--success);
+}
+
+.archive-quality[data-quality="iffy"],
+.archive-quality[data-quality="reject"] {
+  color: var(--danger);
 }
 
 .performance-cue-grid {

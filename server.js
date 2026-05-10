@@ -822,6 +822,7 @@ let state = {
   community: { ...COMMUNITY_DEFAULTS },
   nowPlaying: null,
   activeFx: [],
+  fxSnapshots: [],
   fadeBreaks: {},
   continuityLog: []
 };
@@ -862,6 +863,7 @@ async function ensureState() {
     state.community = normalizeCommunityState(state.community);
     state.nowPlaying ||= null;
     state.activeFx ||= [];
+    state.fxSnapshots = normalizeFxSnapshots(state.fxSnapshots);
     state.fadeBreaks ||= {};
     state.continuityLog = normalizeContinuityLog(state.continuityLog);
     state.sourceFolders = state.sourceFolders.map((folder) => ({
@@ -875,6 +877,7 @@ async function ensureState() {
   }
   state.community = normalizeCommunityState(state.community);
   state.continuityLog = normalizeContinuityLog(state.continuityLog);
+  state.fxSnapshots = normalizeFxSnapshots(state.fxSnapshots);
   const normalizedBumps = normalizeGeneratedBumpsInState();
   const syncedBlocks = syncWeeklyBlockTemplates();
   if (normalizedBumps || syncedBlocks) await saveState();
@@ -884,8 +887,35 @@ function publicShowControl() {
   return {
     scenes: PERFORMANCE_SCENES,
     cues: PERFORMANCE_CUES.map(({ id, sceneId, label, clip, macro, bumpClass, fx }) => ({ id, sceneId, label, clip, macro, bumpClass, fxCount: Array.isArray(fx) ? fx.length : 0 })),
-    macros: Object.fromEntries(Object.entries(PERFORMANCE_MACROS).map(([id, macro]) => [id, { ...macro }]))
+    macros: Object.fromEntries(Object.entries(PERFORMANCE_MACROS).map(([id, macro]) => [id, { ...macro }])),
+    snapshots: publicFxSnapshots()
   };
+}
+
+function normalizeFxSnapshots(snapshots = []) {
+  return (Array.isArray(snapshots) ? snapshots : [])
+    .map((snapshot) => ({
+      id: String(snapshot.id || crypto.randomUUID()),
+      name: String(snapshot.name || "FX snapshot").slice(0, 80),
+      note: String(snapshot.note || "").slice(0, 180),
+      fx: Array.isArray(snapshot.fx) ? snapshot.fx.slice(0, 8) : [],
+      createdAt: Number(snapshot.createdAt || Date.now()),
+      updatedAt: Number(snapshot.updatedAt || snapshot.createdAt || Date.now())
+    }))
+    .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0))
+    .slice(0, 24);
+}
+
+function publicFxSnapshots() {
+  state.fxSnapshots = normalizeFxSnapshots(state.fxSnapshots);
+  return state.fxSnapshots.map((snapshot) => ({
+    id: snapshot.id,
+    name: snapshot.name,
+    note: snapshot.note,
+    fxCount: snapshot.fx.length,
+    createdAt: snapshot.createdAt,
+    updatedAt: snapshot.updatedAt
+  }));
 }
 
 function normalizeContinuityLog(log = []) {
@@ -1299,9 +1329,10 @@ async function projectAuditSummary() {
       weeklyBlocks: (state.weeklyBlocks || []).length,
       activeFx: activeBroadcastFx().length,
       users: (state.users || []).length,
-      communitySuggestions: state.community?.suggestions?.length || 0,
-      continuityEvents: (state.continuityLog || []).length,
-      bumpClasses: BUMP_CLASSES.length,
+        communitySuggestions: state.community?.suggestions?.length || 0,
+        continuityEvents: (state.continuityLog || []).length,
+        fxSnapshots: (state.fxSnapshots || []).length,
+        bumpClasses: BUMP_CLASSES.length,
       bumpClassCounts,
       largeFiles,
       defaultAdminCredentialsActive: ADMIN_USER === "DoinkWizard" || ADMIN_PASSWORD === "ChipTanaka12!@"
@@ -1620,7 +1651,7 @@ async function internetArchiveSearchResultForDoc(doc = {}) {
   const title = String(doc.title || metadata.metadata?.title || archiveId).trim();
   const description = Array.isArray(doc.description) ? doc.description.join(" ") : String(doc.description || "");
   const subject = Array.isArray(doc.subject) ? doc.subject.join(", ") : String(doc.subject || "");
-  return {
+  const result = {
     archiveId,
     archiveFile: file.name,
     fileUrl: archiveDownloadUrl(archiveId, file.name),
@@ -1635,6 +1666,52 @@ async function internetArchiveSearchResultForDoc(doc = {}) {
     downloads: Number(doc.downloads || 0),
     subject,
     description: description.replace(/\s+/g, " ").trim().slice(0, 220)
+  };
+  return {
+    ...result,
+    quality: archiveQualitySignals(result)
+  };
+}
+
+function archiveQualitySignals(candidate = {}) {
+  const haystack = [
+    candidate.title,
+    candidate.fileTitle,
+    candidate.creator,
+    candidate.subject,
+    candidate.description,
+    candidate.archiveId,
+    candidate.archiveFile
+  ].join(" ").toLowerCase();
+  let score = 50;
+  const flags = [];
+  const duration = Number(candidate.duration || 0);
+  const size = Number(candidate.size || 0);
+  if (duration >= 60 && duration <= 60 * 60 * 4) score += 12;
+  if (duration < 30) {
+    score -= 22;
+    flags.push("very short");
+  }
+  if (/h\.?264|mpeg4|mp4|512kb|ia\.mp4/i.test(`${candidate.format || ""} ${candidate.archiveFile || ""}`)) score += 14;
+  if (size > 25_000_000) score += 8;
+  if (Number(candidate.downloads || 0) > 1000) score += 8;
+  if (/(english|eng|dubbed|subtitled|closed caption|caption)/i.test(haystack)) {
+    score += 8;
+    flags.push("english/captions hint");
+  }
+  if (/(trailer|sample|preview|conference|gameplay|walkthrough)/i.test(haystack)) {
+    score -= 14;
+    flags.push("low programming fit");
+  }
+  if (isClearlyPornographicArchiveCandidate(candidate)) {
+    score = 0;
+    flags.push("explicit filter");
+  }
+  const normalizedScore = Math.max(0, Math.min(100, Math.round(score)));
+  return {
+    score: normalizedScore,
+    label: normalizedScore >= 78 ? "strong" : normalizedScore >= 58 ? "usable" : normalizedScore >= 35 ? "iffy" : "reject",
+    flags: flags.slice(0, 3)
   };
 }
 
@@ -2173,6 +2250,7 @@ function programSnapshot() {
         weeklyBlockId: live.weeklyBlockId || "",
         weeklyBlockName: live.weeklyBlockName || "",
         gapFiller: Boolean(live.gapFiller),
+        reason: programEntryReason(live),
         source: live.source
         }
       : null,
@@ -2187,10 +2265,19 @@ function programSnapshot() {
           weeklyBlockId: next.weeklyBlockId || "",
           weeklyBlockName: next.weeklyBlockName || "",
           gapFiller: Boolean(next.gapFiller),
+          reason: programEntryReason(next),
           source: next.source
         }
       : null
   };
+}
+
+function programEntryReason(entry = {}) {
+  if (entry.gapFiller) return "Standby filler until scheduled programming resumes.";
+  if (entry.autoBump || entry.source?.type === "bump") return "Station continuity bump.";
+  if (entry.broadcastLane === "queue") return "Live queue item selected by admin.";
+  if (entry.weeklyBlockName) return `Scheduled block: ${entry.weeklyBlockName}.`;
+  return "Scheduled programming.";
 }
 
 function isAudienceScheduleEntry(entry) {
@@ -5468,6 +5555,62 @@ async function clearBroadcastFx() {
   return { ok: true };
 }
 
+async function saveFxSnapshot(body = {}) {
+  const name = String(body.name || "").replace(/\s+/g, " ").trim().slice(0, 80) || `Snapshot ${new Date().toLocaleTimeString()}`;
+  const note = String(body.note || "").replace(/\s+/g, " ").trim().slice(0, 180);
+  const active = activeBroadcastFx().map((fx) => ({
+    ...fx,
+    snapshotSavedAt: Date.now()
+  }));
+  if (!active.length) throw new Error("There are no active FX to save.");
+  const existing = state.fxSnapshots.find((snapshot) => snapshot.name.toLowerCase() === name.toLowerCase());
+  const snapshot = {
+    id: existing?.id || crypto.randomUUID(),
+    name,
+    note,
+    fx: active,
+    createdAt: existing?.createdAt || Date.now(),
+    updatedAt: Date.now()
+  };
+  state.fxSnapshots = normalizeFxSnapshots([
+    snapshot,
+    ...state.fxSnapshots.filter((item) => item.id !== snapshot.id)
+  ]);
+  recordContinuityEvent({
+    type: "fx",
+    title: "FX snapshot saved",
+    detail: `${name} captured ${active.length} active FX ${active.length === 1 ? "entry" : "entries"}.`,
+    severity: "success"
+  });
+  await saveState();
+  return { ok: true, snapshot, snapshots: publicFxSnapshots() };
+}
+
+async function launchFxSnapshot(body = {}) {
+  const id = String(body.id || "");
+  const snapshot = state.fxSnapshots.find((item) => item.id === id);
+  if (!snapshot) throw new Error("FX snapshot not found.");
+  const now = Date.now();
+  state.activeFx = snapshot.fx.map((fx) => {
+    const originalDuration = fx.expiresAt == null ? null : Math.max(8, Math.round((Number(fx.expiresAt) - Number(fx.startedAt || now)) / 1000));
+    return {
+      ...fx,
+      startedAt: now,
+      expiresAt: originalDuration == null ? null : now + originalDuration * 1000,
+      seed: crypto.randomUUID()
+    };
+  }).slice(-8);
+  recordContinuityEvent({
+    type: "fx",
+    title: "FX snapshot launched",
+    detail: `${snapshot.name} recalled ${state.activeFx.length} FX ${state.activeFx.length === 1 ? "entry" : "entries"}.`,
+    severity: "success"
+  });
+  await saveState();
+  broadcastProgram();
+  return { ok: true, snapshot: { ...snapshot, fx: undefined }, fx: activeBroadcastFx(), snapshots: publicFxSnapshots() };
+}
+
 async function removeItem(collection, id) {
   const before = state[collection].length;
   state[collection] = state[collection].filter((item) => item.id !== id);
@@ -5916,6 +6059,18 @@ async function handleApi(req, res, pathname) {
     if (req.method === "POST" && pathname === "/api/performance-cue") {
       if (!requireAdmin(req, res)) return;
       sendJson(res, 200, await triggerPerformanceCue(await readJson(req)));
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/admin/fx-snapshots") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 201, await saveFxSnapshot(await readJson(req)));
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/admin/fx-snapshots/launch") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await launchFxSnapshot(await readJson(req)));
       return;
     }
 
