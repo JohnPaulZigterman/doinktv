@@ -162,6 +162,27 @@
             <button type="button" data-chat-emoji="🛸" title="Strange" disabled>🛸</button>
           </div>
           <p id="chatMessage" class="message"></p>
+          <section id="communityPanel" class="community-panel" aria-live="polite">
+            <div class="community-card">
+              <span id="communityMode">Open Signal</span>
+              <strong>Join the station crew</strong>
+              <p id="communitySpotlight">Supporter picks help steer future programming.</p>
+              <p id="communityGoal" class="community-goal">Funding stranger blocks and cleaner continuity.</p>
+              <div class="community-stats">
+                <small><b id="communityCrewCount">0</b> crew</small>
+                <small id="communityPendingCount">0 picks pending</small>
+              </div>
+              <div id="communityActiveCrew" class="community-active-crew"></div>
+              <div id="communityApprovedPicks" class="community-approved-picks"></div>
+              <a href="https://www.patreon.com/c/DoinkWizard" target="_blank" rel="noopener noreferrer">Support on Patreon</a>
+            </div>
+            <form id="supporterSuggestionForm" class="supporter-suggestion-form">
+              <input name="title" maxlength="120" placeholder="Suggest a show, block, or chaos idea">
+              <input name="note" maxlength="320" placeholder="Optional note">
+              <button type="submit">Send pick</button>
+              <p id="supporterSuggestionMessage" class="message"></p>
+            </form>
+          </section>
           <section id="programVotePanel" class="program-vote-panel hidden" aria-live="polite">
             <div class="program-vote-heading">
               <span>This slot next week</span>
@@ -215,6 +236,46 @@
         </div>
 
         <div id="adminTools" class="admin-tools hidden">
+          <section id="stationHealthPanel" class="stack compact-stack station-health-panel">
+            <div class="station-health-top">
+              <h3>Station health</h3>
+              <span id="stationHealthStatus" class="station-health-status" data-status="checking">Checking</span>
+            </div>
+            <div id="stationHealthChecks" class="station-health-checks"></div>
+            <ul id="stationHealthWarnings" class="station-health-warnings"></ul>
+          </section>
+
+          <section id="projectAuditPanel" class="stack compact-stack project-audit-panel">
+            <div class="project-audit-top">
+              <h3>Mission control</h3>
+              <span id="projectAuditStamp">Audit pending</span>
+            </div>
+            <strong id="projectMissionHeadline">Underground TV, performed live</strong>
+            <p id="projectMissionStatement" class="project-mission-statement"></p>
+            <div id="projectMissionPrinciples" class="project-mission-principles"></div>
+            <div id="projectAuditMetrics" class="project-audit-metrics"></div>
+            <div id="projectNextSteps" class="project-next-steps"></div>
+            <div id="continuityLogPanel" class="continuity-log-panel"></div>
+            <div id="projectAuditFindings" class="project-audit-findings"></div>
+          </section>
+
+          <form id="communityAdminForm" class="stack compact-stack community-admin">
+            <h3>Station community</h3>
+            <select name="stationMode">
+              <option value="open-signal">Open signal</option>
+              <option value="crew-week">Crew week</option>
+              <option value="takeover-night">Takeover night</option>
+            </select>
+            <input name="spotlight" maxlength="160" placeholder="Crew spotlight copy">
+            <input name="supporterGoal" maxlength="180" placeholder="Supporter goal">
+            <input name="takeoverPolicy" maxlength="180" placeholder="Live takeover policy">
+            <button type="submit">Save community signal</button>
+            <p id="communityAdminMessage" class="message"></p>
+            <div id="communityAdminSummary" class="community-admin-summary"></div>
+            <div id="communityMemberList" class="community-member-list"></div>
+            <div id="communitySuggestionList" class="community-suggestion-list"></div>
+          </form>
+
           <form id="sourceSearchForm" class="stack compact-stack source-search">
             <h3>Find Internet Archive media</h3>
             <div class="inline-form">
@@ -418,6 +479,8 @@
               <strong id="performanceBlockPack">Station Default</strong>
               <small id="performanceActiveCue">Ready</small>
             </div>
+            <div id="performanceSceneDetail" class="performance-scene-detail fx-wide"></div>
+            <div id="performanceBumpPackage" class="performance-bump-package fx-wide"></div>
             <label class="fx-slider">
               <span>Macro <output id="performanceIntensityValue">62%</output></span>
               <input id="performanceIntensitySlider" type="range" min="0" max="100" step="1" value="62">
@@ -433,7 +496,11 @@
             <select id="performanceSceneSelect" class="fx-wide">
               <option value="">Scene...</option>
             </select>
-            <button id="performanceSceneButton" class="fx-wide" type="button">Launch scene</button>
+            <div class="performance-action-row fx-wide">
+              <button id="performanceSceneButton" type="button">Launch scene</button>
+              <button id="performancePanicButton" class="secondary" type="button">Clean signal</button>
+            </div>
+            <div id="performanceActiveFx" class="performance-active-fx fx-wide"></div>
             <div id="performanceCueGrid" class="performance-cue-grid fx-wide"></div>
           </section>
           <section class="fx-device fx-device-looper" data-fx-section="signal-looper">

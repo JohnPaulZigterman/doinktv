@@ -408,6 +408,18 @@ const BUMP_CLASSES = [
     description: "Future break built around viewer/chat/caller material."
   },
   {
+    id: "supporter-shoutout-bump",
+    label: "Supporter Shoutout Bump",
+    status: "active",
+    description: "Short credit bumper for Patreon crew influence, accepted picks, and live supporter moments."
+  },
+  {
+    id: "crew-pick-bump",
+    label: "Crew Pick Handoff",
+    status: "active",
+    description: "Interstitial that turns an accepted viewer or supporter pick into on-air station punctuation."
+  },
+  {
     id: "weather-bump",
     label: "Weather Bump",
     status: "placeholder",
@@ -423,6 +435,118 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ChipTanaka12!@";
 const ADMIN_ACCOUNTS = [
   { username: ADMIN_USER, password: ADMIN_PASSWORD },
   { username: "ChillNeil", password: "ChillyBilly12!@" }
+];
+const SUPPORTER_TIERS = [
+  { id: "viewer", label: "Viewer", badge: "VIEWER", weight: 1, description: "Watching the free signal." },
+  { id: "crew", label: "Station Crew", badge: "CREW", weight: 2, description: "Patreon supporter with programming influence and chat recognition." },
+  { id: "operator", label: "Signal Operator", badge: "OP", weight: 3, description: "Higher-support crew with deeper station influence hooks." }
+];
+const COMMUNITY_MODES = new Set(["open-signal", "crew-week", "takeover-night"]);
+const COMMUNITY_DEFAULTS = {
+  stationMode: "open-signal",
+  supporterGoal: "Fund stranger blocks, cleaner continuity, and bigger live takeover nights.",
+  spotlight: "Supporter picks help steer future programming.",
+  takeoverPolicy: "Supporters can suggest chaos; admins still perform the takeover live.",
+  suggestions: []
+};
+const PROJECT_MISSION = {
+  headline: "A Patreon-backed underground TV station performed like a live instrument.",
+  statement: "DoinkTV should feel like a real community channel that admins can play in real time: scheduled programming, supporter influence, block identity, generated bumps, and Ableton-style live FX all feeding one coherent broadcast experience.",
+  principles: [
+    "The admin performs the channel, not just the controls.",
+    "Community input should visibly change what airs.",
+    "Every block should feel like a distinct channel inside the channel.",
+    "Chaos should be smooth, intentional, reversible, and worth watching.",
+    "Continuity should make the station feel alive even when nobody is touching it."
+  ]
+};
+const DEVELOPMENT_SPINE = [
+  {
+    id: "performance-rack-core",
+    label: "Performance rack core",
+    status: "active",
+    whyNow: "The FX system is the project’s differentiator, but it needs macros, scenes, confidence tools, and block-aware limits to feel playable instead of button-heavy.",
+    nextAction: "Keep turning FX into rack units with macro mappings, active/decay state, undo, and scene snapshots."
+  },
+  {
+    id: "continuity-engine",
+    label: "Continuity engine",
+    status: "next",
+    whyNow: "The schedule, queue, fade breaks, and standby filler already exist; a continuity log and clearer rules would make the station trustworthy.",
+    nextAction: "Add an admin continuity log that explains why each item played and what will play next."
+  },
+  {
+    id: "block-identity-system",
+    label: "Block identity system",
+    status: "next",
+    whyNow: "Weekly blocks are now performance presets, so block bump packages, colors, FX ceilings, and recurring rituals can compound quickly.",
+    nextAction: "Give each weekly block editable identity presets and generated bump packages."
+  },
+  {
+    id: "community-programming-loop",
+    label: "Community programming loop",
+    status: "next",
+    whyNow: "Patreon/crew picks, voting, and admin curation are present but need outcome history so participation feels consequential.",
+    nextAction: "Track pick outcomes: accepted, queued, aired, credited, and revisited next week."
+  },
+  {
+    id: "media-quality-safety",
+    label: "Media quality and safety",
+    status: "foundation",
+    whyNow: "Internet Archive discovery powers the station, but low-quality, broken, or inappropriate candidates can poison automation.",
+    nextAction: "Centralize Archive scoring, content filters, language/caption signals, duration rules, and rejection memory."
+  },
+  {
+    id: "codebase-operability",
+    label: "Codebase operability",
+    status: "foundation",
+    whyNow: "The feature set is outgrowing two monolithic files and syntax-only checks; future speed depends on cleaner boundaries.",
+    nextAction: "Split server/client domains into modules and add behavioral smoke tests around scheduling, FX, chat, and Archive search."
+  }
+];
+const MAINTENANCE_FINDINGS = [
+  {
+    severity: "high",
+    area: "Code organization",
+    finding: "server.js and public/app.js are large all-in-one files containing routing, state mutation, media discovery, scheduling, FX, chat, and admin UI glue.",
+    impact: "Feature work is still possible, but coupling is rising and regressions will get harder to predict.",
+    refactor: "Split by domain: schedule/queue, FX/performance, community, media/Archive, bumps, and HTTP routes."
+  },
+  {
+    severity: "high",
+    area: "Operational data",
+    finding: "data/state.json is both starter state and runtime state, while logs are local runtime artifacts.",
+    impact: "Commits can accidentally capture generated schedule/filler churn, and deployments need a persistence story.",
+    refactor: "Keep runtime logs ignored, document starter-state intent, and move production state to a persistent disk or external store."
+  },
+  {
+    severity: "high",
+    area: "Security",
+    finding: "Fallback admin credentials exist in code for local convenience.",
+    impact: "Fine for a private local prototype, dangerous if deployed without env overrides.",
+    refactor: "Require ADMIN_USER and ADMIN_PASSWORD outside development and surface a health warning when defaults are active."
+  },
+  {
+    severity: "medium",
+    area: "Tests",
+    finding: "npm run check currently verifies syntax only.",
+    impact: "Scheduling priority, vote weighting, Archive filters, FX decay, and queue protection can regress silently.",
+    refactor: "Add node:test coverage for pure server helpers and a lightweight browser smoke script for critical UI flows."
+  },
+  {
+    severity: "medium",
+    area: "Feature ownership",
+    finding: "Bumps, block identity, performance cues, and community moments now overlap by design but still live as separate implementation islands.",
+    impact: "The product vision is converging faster than the architecture.",
+    refactor: "Create a single station identity/continuity layer that owns block packs, bump packages, supporter moments, and cue suggestions."
+  },
+  {
+    severity: "medium",
+    area: "Admin confidence",
+    finding: "Powerful live controls exist, but undo, audit trails, and explanations are still thin.",
+    impact: "Admins can wow people, but may hesitate to push the rig hard during a live show.",
+    refactor: "Add continuity/performance logs, undo for destructive admin actions, and clear active/decaying state for all live systems."
+  }
 ];
 const SESSION_TTL_MS = 1000 * 60 * 60 * 12;
 const ADMIN_FX_GRACE_MS = 30000;
@@ -532,12 +656,13 @@ const CART_WALL_PRESETS = [
 ];
 
 const PERFORMANCE_SCENES = [
-  { id: "pirate", label: "Pirate Takeover", color: "#ff715f", cueId: "pirate-takeover" },
-  { id: "party", label: "Basement Party", color: "#f2b84a", cueId: "basement-party" },
-  { id: "uhf", label: "Haunted UHF", color: "#68c3b7", cueId: "haunted-uhf" },
-  { id: "anime", label: "Anime Drift", color: "#7db7ff", cueId: "anime-drift" },
-  { id: "training", label: "Training Tape", color: "#8fd06d", cueId: "training-tape" },
-  { id: "panic", label: "Public Access Panic", color: "#c968ff", cueId: "public-access-panic" }
+  { id: "pirate", label: "Pirate Takeover", color: "#ff715f", cueId: "pirate-takeover", macroLabel: "Hijack", chaosCeiling: 0.96, description: "Borrowed transmitter energy, IDs, drift, and dub siren damage." },
+  { id: "party", label: "Basement Party", color: "#f2b84a", cueId: "basement-party", macroLabel: "Rhythm", chaosCeiling: 0.9, description: "Cart wall, scratches, room slap, and sticky-floor motion." },
+  { id: "uhf", label: "Haunted UHF", color: "#68c3b7", cueId: "haunted-uhf", macroLabel: "Ghost", chaosCeiling: 0.78, description: "Signal loss, tape curl, hum, and cold channel ghosts." },
+  { id: "anime", label: "Anime Drift", color: "#7db7ff", cueId: "anime-drift", macroLabel: "Drift", chaosCeiling: 0.68, description: "Late-night cel smear, ice color, delay trails, and soft tape instability." },
+  { id: "training", label: "Training Tape", color: "#8fd06d", cueId: "training-tape", macroLabel: "AV Room", chaosCeiling: 0.62, description: "VHS, color bars, corporate AV prompts, and instructional unease." },
+  { id: "panic", label: "Public Access Panic", color: "#c968ff", cueId: "public-access-panic", macroLabel: "Damage", chaosCeiling: 1, description: "Switcher meltdown, UI distress, popups, and visible live trouble." },
+  { id: "community", label: "Crew Signal", color: "#ffd166", cueId: "crew-pick-handoff", macroLabel: "Community", chaosCeiling: 0.72, description: "Supporter credits, accepted picks, and station-audience handoffs." }
 ];
 
 const PERFORMANCE_CUES = [
@@ -602,6 +727,26 @@ const PERFORMANCE_CUES = [
     fx: ["show-cue", "os-popups", "ui-css-panic", "fill-popups", "visual-adjust", "cart-wall"]
   },
   {
+    id: "crew-pick-handoff",
+    sceneId: "community",
+    label: "Crew Pick Handoff",
+    clip: "supporter pick enters the signal",
+    macro: "community",
+    bumpClass: "crew-pick-bump",
+    bumpLines: ["crew pick accepted", "audience fingerprints on the schedule", "next program came through the side door"],
+    fx: ["show-cue", "radio-sting", "visual-adjust", "record-scratch"]
+  },
+  {
+    id: "supporter-shoutout",
+    sceneId: "community",
+    label: "Supporter Shoutout",
+    clip: "Patreon crew credit sting",
+    macro: "community",
+    bumpClass: "supporter-shoutout-bump",
+    bumpLines: ["station crew kept the lights wrong", "Patreon signal boost", "thanks for funding the weird part"],
+    fx: ["show-cue", "radio-sting", "cart-wall", "reverb"]
+  },
+  {
     id: "identity-hit",
     sceneId: "pirate",
     label: "Identity Hit",
@@ -630,16 +775,17 @@ const PERFORMANCE_MACROS = {
   drift: { damage: 0.34, drift: 0.74, space: 0.58, rhythm: 0.36, page: 0.08 },
   training: { damage: 0.5, drift: 0.18, space: 0.12, rhythm: 0.16, page: 0.32 },
   panic: { damage: 0.82, drift: 0.28, space: 0.18, rhythm: 0.5, page: 0.78 },
+  community: { damage: 0.38, drift: 0.16, space: 0.24, rhythm: 0.52, page: 0.1 },
   identity: { damage: 0.22, drift: 0.1, space: 0.08, rhythm: 0.36, page: 0.04 },
   reset: { damage: 0, drift: 0, space: 0, rhythm: 0, page: 0 }
 };
 
 const BLOCK_IDENTITY_PACKS = [
-  { match: /anime|ova|cel|toonami|midnight/i, sceneId: "anime", cueId: "anime-drift", label: "Cel Drift" },
-  { match: /fridge|sketch|cartoon|sunday|saturday/i, sceneId: "party", cueId: "basement-party", label: "Cartoon Party" },
-  { match: /retro|uhf|fish|lexx|robot|popeye|looney/i, sceneId: "uhf", cueId: "haunted-uhf", label: "UHF Ghost" },
-  { match: /coffee|music|mtv|bump|song/i, sceneId: "party", cueId: "identity-hit", label: "Music ID" },
-  { match: /talk|space ghost|chill|hank/i, sceneId: "training", cueId: "training-tape", label: "Talk Show Tape" }
+  { match: /anime|ova|cel|toonami|midnight/i, sceneId: "anime", cueId: "anime-drift", label: "Cel Drift", chaosCeiling: 0.68, bumpPackage: ["block-bump", "fade-break-bump", "supporter-shoutout-bump"] },
+  { match: /fridge|sketch|cartoon|sunday|saturday/i, sceneId: "party", cueId: "basement-party", label: "Cartoon Party", chaosCeiling: 0.88, bumpPackage: ["block-bump", "crew-pick-bump", "call-in-bump"] },
+  { match: /retro|uhf|fish|lexx|robot|popeye|looney/i, sceneId: "uhf", cueId: "haunted-uhf", label: "UHF Ghost", chaosCeiling: 0.78, bumpPackage: ["legal-id-bump", "block-bump", "fade-break-bump"] },
+  { match: /coffee|music|mtv|bump|song/i, sceneId: "party", cueId: "identity-hit", label: "Music ID", chaosCeiling: 0.82, bumpPackage: ["full-song-bump", "legal-id-bump", "supporter-shoutout-bump"] },
+  { match: /talk|space ghost|chill|hank/i, sceneId: "training", cueId: "training-tape", label: "Talk Show Tape", chaosCeiling: 0.62, bumpPackage: ["call-in-bump", "legal-id-bump", "supporter-shoutout-bump"] }
 ];
 
 const sessions = new Map();
@@ -673,9 +819,11 @@ let state = {
   users: [],
   chat: [],
   programVotes: [],
+  community: { ...COMMUNITY_DEFAULTS },
   nowPlaying: null,
   activeFx: [],
-  fadeBreaks: {}
+  fadeBreaks: {},
+  continuityLog: []
 };
 
 const mimeTypes = {
@@ -711,9 +859,11 @@ async function ensureState() {
     state.users ||= [];
     state.chat ||= [];
     state.programVotes ||= [];
+    state.community = normalizeCommunityState(state.community);
     state.nowPlaying ||= null;
     state.activeFx ||= [];
     state.fadeBreaks ||= {};
+    state.continuityLog = normalizeContinuityLog(state.continuityLog);
     state.sourceFolders = state.sourceFolders.map((folder) => ({
       ...folder,
       randomEligible: folder.randomEligible !== false
@@ -723,6 +873,8 @@ async function ensureState() {
       randomEligible: source.randomEligible ?? source.type !== "youtube"
     }));
   }
+  state.community = normalizeCommunityState(state.community);
+  state.continuityLog = normalizeContinuityLog(state.continuityLog);
   const normalizedBumps = normalizeGeneratedBumpsInState();
   const syncedBlocks = syncWeeklyBlockTemplates();
   if (normalizedBumps || syncedBlocks) await saveState();
@@ -731,16 +883,77 @@ async function ensureState() {
 function publicShowControl() {
   return {
     scenes: PERFORMANCE_SCENES,
-    cues: PERFORMANCE_CUES.map(({ id, sceneId, label, clip, macro, bumpClass }) => ({ id, sceneId, label, clip, macro, bumpClass })),
+    cues: PERFORMANCE_CUES.map(({ id, sceneId, label, clip, macro, bumpClass, fx }) => ({ id, sceneId, label, clip, macro, bumpClass, fxCount: Array.isArray(fx) ? fx.length : 0 })),
     macros: Object.fromEntries(Object.entries(PERFORMANCE_MACROS).map(([id, macro]) => [id, { ...macro }]))
   };
+}
+
+function normalizeContinuityLog(log = []) {
+  return (Array.isArray(log) ? log : [])
+    .map((entry) => ({
+      id: String(entry.id || crypto.randomUUID()),
+      type: String(entry.type || "station").slice(0, 40),
+      title: String(entry.title || "Station event").slice(0, 140),
+      detail: String(entry.detail || "").slice(0, 360),
+      severity: ["info", "success", "warning", "danger"].includes(entry.severity) ? entry.severity : "info",
+      sourceId: String(entry.sourceId || ""),
+      entryId: String(entry.entryId || ""),
+      suggestionId: String(entry.suggestionId || ""),
+      createdAt: Number(entry.createdAt || Date.now())
+    }))
+    .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
+    .slice(0, 160);
+}
+
+function recordContinuityEvent(event = {}) {
+  state.continuityLog = normalizeContinuityLog([
+    {
+      id: crypto.randomUUID(),
+      type: event.type || "station",
+      title: event.title || "Station event",
+      detail: event.detail || "",
+      severity: event.severity || "info",
+      sourceId: event.sourceId || "",
+      entryId: event.entryId || "",
+      suggestionId: event.suggestionId || "",
+      createdAt: Date.now()
+    },
+    ...(state.continuityLog || [])
+  ]);
+  return state.continuityLog[0];
+}
+
+function publicContinuityLog(limit = 24) {
+  state.continuityLog = normalizeContinuityLog(state.continuityLog);
+  return state.continuityLog.slice(0, Math.max(1, Math.min(80, Number(limit || 24))));
 }
 
 function blockIdentityPackFor(live = null) {
   const blockText = `${live?.weeklyBlockId || ""} ${live?.weeklyBlockName || ""} ${live?.title || ""}`.trim();
   const pack = BLOCK_IDENTITY_PACKS.find((item) => item.match.test(blockText)) || null;
-  if (pack) return { label: pack.label, sceneId: pack.sceneId, cueId: pack.cueId };
-  return { label: "Station Default", sceneId: "pirate", cueId: "identity-hit" };
+  const scene = performanceSceneById(pack?.sceneId || "pirate");
+  if (pack) {
+    return {
+      label: pack.label,
+      sceneId: pack.sceneId,
+      sceneLabel: scene.label,
+      sceneColor: scene.color,
+      cueId: pack.cueId,
+      chaosCeiling: pack.chaosCeiling,
+      bumpPackage: pack.bumpPackage || ["block-bump", "legal-id-bump", "supporter-shoutout-bump"],
+      note: scene.description
+    };
+  }
+  return {
+    label: "Station Default",
+    sceneId: "pirate",
+    sceneLabel: scene.label,
+    sceneColor: scene.color,
+    cueId: "identity-hit",
+    chaosCeiling: 0.84,
+    bumpPackage: ["legal-id-bump", "manual-bump", "supporter-shoutout-bump"],
+    note: "General station identity, legal-ID flavor, and controlled chaos."
+  };
 }
 
 async function saveState() {
@@ -863,9 +1076,14 @@ function verifyPassword(password, passwordHash) {
 
 function publicUser(session) {
   if (!session) return null;
+  const tier = sessionSupporterTier(session);
   return {
     username: session.username,
-    role: session.role
+    role: session.role,
+    supporterTier: tier.id,
+    supporterLabel: tier.label,
+    supporterBadge: tier.badge,
+    voteWeight: tier.weight
   };
 }
 
@@ -874,6 +1092,230 @@ function requireSession(req, res) {
   if (session) return session;
   sendJson(res, 401, { error: "Log in to chat." });
   return null;
+}
+
+function supporterTierById(id = "viewer") {
+  return SUPPORTER_TIERS.find((tier) => tier.id === id) || SUPPORTER_TIERS[0];
+}
+
+function sessionSupporterTier(session = null) {
+  if (!session) return supporterTierById("viewer");
+  if (session.role === "admin") return { id: "host", label: "Station Host", badge: "HOST", weight: 4 };
+  const user = state.users.find((item) => item.id === session.userId || item.username === session.username);
+  return supporterTierById(user?.supporterTier || "viewer");
+}
+
+function normalizeCommunityState(community = {}) {
+  const suggestions = Array.isArray(community.suggestions) ? community.suggestions : [];
+  return {
+    ...COMMUNITY_DEFAULTS,
+    ...community,
+    stationMode: COMMUNITY_MODES.has(community.stationMode) ? community.stationMode : COMMUNITY_DEFAULTS.stationMode,
+    supporterGoal: String(community.supporterGoal || COMMUNITY_DEFAULTS.supporterGoal).slice(0, 180),
+    spotlight: String(community.spotlight || COMMUNITY_DEFAULTS.spotlight).slice(0, 160),
+    takeoverPolicy: String(community.takeoverPolicy || COMMUNITY_DEFAULTS.takeoverPolicy).slice(0, 180),
+    suggestions: suggestions
+      .map((suggestion) => ({
+        id: String(suggestion.id || crypto.randomUUID()),
+        title: String(suggestion.title || "").trim().slice(0, 120),
+        note: String(suggestion.note || "").trim().slice(0, 320),
+        username: String(suggestion.username || "viewer").slice(0, 32),
+        supporterTier: String(suggestion.supporterTier || "viewer"),
+        status: ["pending", "approved", "archived"].includes(suggestion.status) ? suggestion.status : "pending",
+        createdAt: Number(suggestion.createdAt || Date.now()),
+        reviewedAt: suggestion.reviewedAt ? Number(suggestion.reviewedAt) : 0,
+        outcome: suggestion.outcome && typeof suggestion.outcome === "object"
+          ? {
+            type: String(suggestion.outcome.type || "").slice(0, 40),
+            label: String(suggestion.outcome.label || "").slice(0, 140),
+            sourceId: String(suggestion.outcome.sourceId || ""),
+            queueEntryId: String(suggestion.outcome.queueEntryId || ""),
+            scheduleEntryId: String(suggestion.outcome.scheduleEntryId || ""),
+            at: Number(suggestion.outcome.at || Date.now())
+          }
+          : null
+      }))
+      .filter((suggestion) => suggestion.title)
+      .slice(-120)
+  };
+}
+
+function publicCommunity({ admin = false } = {}) {
+  state.community = normalizeCommunityState(state.community);
+  const crewCount = state.users.filter((user) => ["crew", "operator"].includes(user.supporterTier)).length;
+  const pendingSuggestions = state.community.suggestions.filter((suggestion) => suggestion.status === "pending");
+  const approvedSuggestions = state.community.suggestions.filter((suggestion) => suggestion.status === "approved").slice(-6).reverse();
+  const suggestionCounts = state.community.suggestions.reduce((counts, suggestion) => {
+    counts[suggestion.status] = (counts[suggestion.status] || 0) + 1;
+    return counts;
+  }, { pending: 0, approved: 0, archived: 0 });
+  const members = admin
+    ? state.users
+        .map((user) => {
+          const tier = supporterTierById(user.supporterTier || "viewer");
+          return {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            supporterTier: tier.id,
+            supporterLabel: tier.label,
+            supporterBadge: tier.badge,
+            createdAt: user.createdAt || 0
+          };
+        })
+        .sort((a, b) => String(a.username).localeCompare(String(b.username)))
+    : [];
+  return {
+    stationMode: state.community.stationMode,
+    supporterGoal: state.community.supporterGoal,
+    spotlight: state.community.spotlight,
+    takeoverPolicy: state.community.takeoverPolicy,
+    tiers: SUPPORTER_TIERS,
+    crewCount,
+    pendingSuggestionCount: pendingSuggestions.length,
+    suggestionCounts,
+    activeCrew: activeCommunityCrew(),
+    suggestions: admin ? [...state.community.suggestions].reverse() : approvedSuggestions,
+    recentOutcomes: state.community.suggestions
+      .filter((suggestion) => suggestion.outcome)
+      .sort((a, b) => Number(b.outcome?.at || b.reviewedAt || b.createdAt || 0) - Number(a.outcome?.at || a.reviewedAt || a.createdAt || 0))
+      .slice(0, admin ? 12 : 4),
+    members
+  };
+}
+
+function activeCommunityCrew() {
+  const byName = new Map();
+  const remember = ({ username, supporterTier, activity, createdAt }) => {
+    if (!username) return;
+    const tier = supporterTier === "host"
+      ? { id: "host", label: "Station Host", badge: "HOST", weight: 4 }
+      : supporterTierById(supporterTier || "viewer");
+    if (tier.id === "viewer" && supporterTier !== "host") return;
+    const key = username.toLowerCase();
+    const current = byName.get(key);
+    if (current && Number(current.createdAt || 0) >= Number(createdAt || 0)) return;
+    byName.set(key, {
+      username,
+      supporterTier: tier.id,
+      supporterLabel: tier.label,
+      supporterBadge: tier.badge,
+      activity,
+      createdAt: Number(createdAt || 0)
+    });
+  };
+
+  for (const message of state.chat || []) {
+    remember({
+      username: message.username,
+      supporterTier: message.role === "admin" ? "host" : message.supporterTier,
+      activity: "chat",
+      createdAt: message.createdAt
+    });
+  }
+  for (const suggestion of state.community.suggestions || []) {
+    remember({
+      username: suggestion.username,
+      supporterTier: suggestion.supporterTier,
+      activity: suggestion.status === "approved" ? "pick approved" : "pick sent",
+      createdAt: suggestion.reviewedAt || suggestion.createdAt
+    });
+  }
+
+  return [...byName.values()]
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(0, 5);
+}
+
+function stationHealthSummary() {
+  const now = Date.now();
+  const horizon = now + 1000 * 60 * 60 * 24;
+  const sourceIds = new Set((state.sources || []).map((source) => source.id));
+  const missingRefs = [...(state.schedule || []), ...(state.liveQueue || [])]
+    .filter((entry) => entry.sourceId && !sourceIds.has(entry.sourceId));
+  const scheduledNextDay = (state.schedule || [])
+    .filter((entry) => Number(entry.startAt || 0) < horizon && entryEnd(entry) > now)
+    .sort((a, b) => a.startAt - b.startAt);
+  const broadcastNextDay = activeBroadcastEntries()
+    .filter((entry) => Number(entry.startAt || 0) < horizon && entryEnd(entry) > now)
+    .sort((a, b) => a.startAt - b.startAt);
+  const autoBumps = broadcastNextDay.filter((entry) => entry.autoBump || isBumpSource(state.sources.find((source) => source.id === entry.sourceId)));
+  const ingestIssues = (state.sources || []).filter((source) => ["error", "failed"].includes(source.ingest?.status));
+  const gaps = [];
+  for (let index = 0; index < scheduledNextDay.length - 1; index += 1) {
+    const gapSeconds = Math.round((Number(scheduledNextDay[index + 1].startAt || 0) - entryEnd(scheduledNextDay[index])) / 1000);
+    if (gapSeconds > 60 * 10) {
+      gaps.push({
+        after: scheduledNextDay[index].title,
+        before: scheduledNextDay[index + 1].title,
+        seconds: gapSeconds
+      });
+    }
+  }
+  const warnings = [];
+  if (!scheduledNextDay.length) warnings.push("No scheduled programming in the next 24 hours.");
+  if (missingRefs.length) warnings.push(`${missingRefs.length} queue or schedule item${missingRefs.length === 1 ? "" : "s"} reference missing sources.`);
+  if (ingestIssues.length) warnings.push(`${ingestIssues.length} source${ingestIssues.length === 1 ? "" : "s"} need ingest attention.`);
+  if (scheduledNextDay.length > 2 && !autoBumps.length) warnings.push("No automatic bumps found around upcoming programming.");
+  if (gaps.length) warnings.push(`${gaps.length} schedule gap${gaps.length === 1 ? "" : "s"} over 10 minutes in the next 24 hours.`);
+  if (hlsPlayout.status === "error") warnings.push(`HLS playout error: ${hlsPlayout.error || "unknown"}.`);
+  if (ADMIN_USER === "DoinkWizard" || ADMIN_PASSWORD === "ChipTanaka12!@") warnings.push("Default admin credentials are active; set ADMIN_USER and ADMIN_PASSWORD before public deployment.");
+  return {
+    status: warnings.length ? (missingRefs.length || hlsPlayout.status === "error" ? "critical" : "attention") : "good",
+    generatedAt: now,
+    warnings,
+    checks: {
+      scheduledNext24h: scheduledNextDay.length,
+      broadcastItemsNext24h: broadcastNextDay.length,
+      autoBumpsNext24h: autoBumps.length,
+      longGapsNext24h: gaps.length,
+      missingSourceRefs: missingRefs.length,
+      ingestIssues: ingestIssues.length,
+      hlsStatus: hlsPlayout.status
+    },
+    gaps: gaps.slice(0, 5)
+  };
+}
+
+async function projectAuditSummary() {
+  const bumpClassCounts = (BUMP_CLASSES || []).reduce((counts, item) => {
+    counts[item.status || "unknown"] = (counts[item.status || "unknown"] || 0) + 1;
+    return counts;
+  }, {});
+  const largeFiles = await Promise.all([
+    codebaseFileMetric("server.js", "high"),
+    codebaseFileMetric("public/app.js", "high"),
+    codebaseFileMetric("public/styles.css", "medium")
+  ]);
+  return {
+    generatedAt: Date.now(),
+    mission: PROJECT_MISSION,
+    nextSteps: DEVELOPMENT_SPINE,
+    findings: MAINTENANCE_FINDINGS,
+    metrics: {
+      sources: (state.sources || []).length,
+      scheduledItems: (state.schedule || []).length,
+      queueItems: (state.liveQueue || []).length,
+      weeklyBlocks: (state.weeklyBlocks || []).length,
+      activeFx: activeBroadcastFx().length,
+      users: (state.users || []).length,
+      communitySuggestions: state.community?.suggestions?.length || 0,
+      continuityEvents: (state.continuityLog || []).length,
+      bumpClasses: BUMP_CLASSES.length,
+      bumpClassCounts,
+      largeFiles,
+      defaultAdminCredentialsActive: ADMIN_USER === "DoinkWizard" || ADMIN_PASSWORD === "ChipTanaka12!@"
+    }
+  };
+}
+
+async function codebaseFileMetric(relativePath, risk) {
+  const text = await readFile(path.join(__dirname, relativePath), "utf8").catch(() => "");
+  return {
+    path: relativePath,
+    lineCount: text ? text.split(/\r?\n/).length : 0,
+    risk
+  };
 }
 
 function createSession(res, { username, role, userId = null }) {
@@ -918,6 +1360,7 @@ async function registerUser(body) {
     username,
     passwordHash: hashPassword(password),
     role: "user",
+    supporterTier: "viewer",
     createdAt: Date.now()
   };
   state.users.push(user);
@@ -1490,7 +1933,7 @@ function publicVotePoll(poll = {}) {
   const options = votePollOptions(poll);
   const counts = Object.fromEntries(options.map((option) => [option.id, 0]));
   for (const vote of poll.votes || []) {
-    if (vote?.optionId in counts) counts[vote.optionId] += 1;
+    if (vote?.optionId in counts) counts[vote.optionId] += Math.max(1, Math.min(4, Number(vote.weight || 1)));
   }
   const totalVotes = Object.values(counts).reduce((sum, count) => sum + count, 0);
   return {
@@ -1504,7 +1947,8 @@ function publicVotePoll(poll = {}) {
       ...option,
       votes: counts[option.id] || 0
     })),
-    totalVotes
+    totalVotes,
+    totalBallots: (poll.votes || []).length
   };
 }
 
@@ -1638,7 +2082,7 @@ function isClearlyPornographicArchiveCandidate(candidate = {}) {
   return EXPLICIT_ARCHIVE_PATTERN.test(haystack);
 }
 
-async function castProgramVote(body = {}) {
+async function castProgramVote(req, body = {}) {
   const live = programSnapshot().live;
   if (!live) throw new Error("There is no live program to vote on.");
   if (isClearlyPornographicArchiveCandidate({ ...live.source, title: live.title || live.source?.title })) {
@@ -1649,8 +2093,18 @@ async function castProgramVote(body = {}) {
   if (!votePollOptions(poll).some((option) => option.id === optionId)) throw new Error("That vote option is not available.");
   const voterId = String(body.voterId || "").replace(/[^a-z0-9-]/gi, "").slice(0, 80);
   if (!voterId) throw new Error("Missing voter id.");
-  poll.votes = (poll.votes || []).filter((vote) => vote.voterId !== voterId);
-  poll.votes.push({ voterId, optionId, createdAt: Date.now() });
+  const session = getSession(req);
+  const tier = sessionSupporterTier(session);
+  const voterKey = session ? `user:${session.userId || session.username}` : `anon:${voterId}`;
+  poll.votes = (poll.votes || []).filter((vote) => vote.voterId !== voterKey);
+  poll.votes.push({
+    voterId: voterKey,
+    optionId,
+    weight: Math.max(1, Math.min(4, Number(tier.weight || 1))),
+    supporterTier: tier.id,
+    username: session?.username || "",
+    createdAt: Date.now()
+  });
   await saveState();
   broadcastProgram();
   return publicVotePoll(poll);
@@ -3415,7 +3869,8 @@ function drawTextEscape(value) {
 function publicChat() {
   return {
     serverTime: Date.now(),
-    messages: state.chat.slice(-80)
+    messages: state.chat.slice(-80),
+    community: publicCommunity()
   };
 }
 
@@ -3462,11 +3917,14 @@ async function createChatMessage(req, body) {
   const text = String(body.text || "").replace(/\s+/g, " ").trim();
   if (!text) throw new Error("Enter a message first.");
   if (text.length > 280) throw new Error("Messages must be 280 characters or less.");
+  const tier = sessionSupporterTier(session);
 
   const message = {
     id: crypto.randomUUID(),
     username: session.username,
     role: session.role,
+    supporterTier: tier.id,
+    supporterBadge: tier.badge,
     text,
     createdAt: Date.now()
   };
@@ -3475,6 +3933,94 @@ async function createChatMessage(req, body) {
   await saveState();
   broadcastChat();
   return message;
+}
+
+async function createCommunitySuggestion(req, body = {}) {
+  const session = getSession(req);
+  if (!session) throw new Error("Log in to suggest programming.");
+  const title = String(body.title || "").replace(/\s+/g, " ").trim().slice(0, 120);
+  const note = String(body.note || "").replace(/\s+/g, " ").trim().slice(0, 320);
+  if (title.length < 3) throw new Error("Give the suggestion a title.");
+  const tier = sessionSupporterTier(session);
+  state.community = normalizeCommunityState(state.community);
+  const suggestion = {
+    id: crypto.randomUUID(),
+    title,
+    note,
+    username: session.username,
+    supporterTier: tier.id,
+    status: "pending",
+    createdAt: Date.now()
+  };
+  state.community.suggestions.push(suggestion);
+  state.community.suggestions = state.community.suggestions.slice(-120);
+  recordContinuityEvent({
+    type: "community",
+    title: "Crew pick submitted",
+    detail: `${session.username} suggested ${title}.`,
+    suggestionId: suggestion.id
+  });
+  await saveState();
+  broadcastChat();
+  return suggestion;
+}
+
+async function updateCommunitySettings(body = {}) {
+  state.community = normalizeCommunityState({
+    ...state.community,
+    stationMode: COMMUNITY_MODES.has(body.stationMode) ? body.stationMode : state.community.stationMode,
+    supporterGoal: body.supporterGoal ?? state.community.supporterGoal,
+    spotlight: body.spotlight ?? state.community.spotlight,
+    takeoverPolicy: body.takeoverPolicy ?? state.community.takeoverPolicy
+  });
+  await saveState();
+  broadcastChat();
+  return publicCommunity({ admin: true });
+}
+
+async function updateCommunitySuggestion(body = {}) {
+  const id = String(body.id || "");
+  const status = ["pending", "approved", "archived"].includes(body.status) ? body.status : "";
+  if (!id || !status) throw new Error("Choose a valid suggestion action.");
+  state.community = normalizeCommunityState(state.community);
+  const suggestion = state.community.suggestions.find((item) => item.id === id);
+  if (!suggestion) throw new Error("Suggestion not found.");
+  suggestion.status = status;
+  suggestion.reviewedAt = Date.now();
+  if (body.outcome && typeof body.outcome === "object") {
+    suggestion.outcome = {
+      type: String(body.outcome.type || status).slice(0, 40),
+      label: String(body.outcome.label || suggestion.title).slice(0, 140),
+      sourceId: String(body.outcome.sourceId || ""),
+      queueEntryId: String(body.outcome.queueEntryId || ""),
+      scheduleEntryId: String(body.outcome.scheduleEntryId || ""),
+      at: Date.now()
+    };
+  }
+  recordContinuityEvent({
+    type: "community",
+    title: `Crew pick ${status}`,
+    detail: `${suggestion.title}${suggestion.outcome?.label ? ` -> ${suggestion.outcome.label}` : ""}`,
+    severity: status === "approved" ? "success" : status === "archived" ? "warning" : "info",
+    suggestionId: suggestion.id,
+    sourceId: suggestion.outcome?.sourceId || "",
+    entryId: suggestion.outcome?.queueEntryId || suggestion.outcome?.scheduleEntryId || ""
+  });
+  await saveState();
+  broadcastChat();
+  return publicCommunity({ admin: true });
+}
+
+async function updateSupporterTier(body = {}) {
+  const userId = String(body.userId || "");
+  const tier = supporterTierById(body.supporterTier || "viewer");
+  const user = state.users.find((item) => item.id === userId);
+  if (!user) throw new Error("User not found.");
+  user.supporterTier = tier.id;
+  user.supporterUpdatedAt = Date.now();
+  await saveState();
+  broadcastChat();
+  return publicCommunity({ admin: true });
 }
 
 function cleanSchedule() {
@@ -3670,6 +4216,14 @@ async function createScheduleEntry(body, immediate = false) {
   state.schedule.push(entry);
   state.schedule.sort((a, b) => a.startAt - b.startAt);
   cleanSchedule();
+  recordContinuityEvent({
+    type: "schedule",
+    title: immediate ? "Immediate schedule override" : "Program scheduled",
+    detail: `${entry.title || source.title} at ${new Date(entry.startAt).toLocaleString()}.`,
+    severity: immediate ? "warning" : "info",
+    sourceId: source.id,
+    entryId: entry.id
+  });
   await saveState();
   broadcastProgram();
   return entry;
@@ -4297,6 +4851,14 @@ async function createQueueEntry(body, immediate = false) {
   state.liveQueue.push(entry);
   state.liveQueue.sort((a, b) => a.startAt - b.startAt);
   rebuildLiveQueueTimings();
+  recordContinuityEvent({
+    type: immediate ? "play-now" : "queue",
+    title: immediate ? "Live queue started" : "Program queued",
+    detail: `${entry.title || source.title} ${immediate ? "started immediately" : "added to the live queue"}.`,
+    severity: immediate ? "success" : "info",
+    sourceId: source.id,
+    entryId: entry.id
+  });
   await saveState();
   broadcastProgram();
   queueAutoIngestSourceIds([source.id], immediate ? "play immediately" : "live queue", { force: true });
@@ -4335,6 +4897,13 @@ async function createQueueLibrary(body) {
 
   state.liveQueue = [...activeOrFuture, ...entries].sort((a, b) => a.startAt - b.startAt);
   rebuildLiveQueueTimings();
+  recordContinuityEvent({
+    type: body.immediate ? "play-now" : "queue",
+    title: body.immediate ? "Library started" : "Library queued",
+    detail: `${entries.length} source${entries.length === 1 ? "" : "s"} from ${sources[0]?.folderId ? state.sourceFolders.find((folder) => folder.id === sources[0].folderId)?.name || "library" : "library"}.`,
+    severity: body.immediate ? "success" : "info",
+    entryId: entries[0]?.id || ""
+  });
   await saveState();
   broadcastProgram();
   queueAutoIngestSourceIds(entries.map((entry) => entry.sourceId), body.immediate ? "play-now library" : "queued library", { force: true });
@@ -4376,6 +4945,14 @@ async function queueManualBump(body = {}) {
 
   state.broadcastMode = "queue";
   rebuildLiveQueueTimings();
+  recordContinuityEvent({
+    type: "bump",
+    title: "Bump queued",
+    detail: `${source.title} queued ${body.position === "next" ? "next" : "at queue tail"}.`,
+    severity: "success",
+    sourceId: source.id,
+    entryId: entry.id
+  });
   await saveState();
   broadcastProgram();
   return { source, entry };
@@ -4389,6 +4966,12 @@ async function clearLiveQueue() {
   state.broadcastMode = "scheduled";
   pruneAutoIngestQueueToLiveQueue();
   pruneUnusedBumpSources();
+  recordContinuityEvent({
+    type: "queue",
+    title: "Live queue cleared",
+    detail: `${removed} queue item${removed === 1 ? "" : "s"} removed; ${protectedScheduleCount} scheduled item${protectedScheduleCount === 1 ? "" : "s"} protected.`,
+    severity: protectedScheduleCount ? "warning" : "info"
+  });
   await saveState();
   broadcastProgram();
   return { ok: true, removed, protectedScheduleCount, mode: state.broadcastMode };
@@ -4469,6 +5052,12 @@ async function reorderLiveQueue(body) {
 async function setBroadcastMode(body) {
   const mode = body.mode === "queue" ? "queue" : "scheduled";
   state.broadcastMode = mode;
+  recordContinuityEvent({
+    type: "mode",
+    title: "Broadcast mode changed",
+    detail: `Station switched to ${mode === "queue" ? "live queue" : "scheduled programming"} priority.`,
+    severity: mode === "queue" ? "warning" : "success"
+  });
   await saveState();
   broadcastProgram();
   if (mode === "queue") queueAutoIngestForLiveQueue("broadcast mode switch");
@@ -4587,18 +5176,21 @@ async function triggerBroadcastFx(body = {}) {
   }
   if (id === "delay" && params.enabled === false) {
     state.activeFx = active.filter((item) => item.id !== "delay");
+    recordContinuityEvent({ type: "fx", title: "Delay rack disabled", detail: "Delay was switched off.", severity: "info" });
     await saveState();
     broadcastProgram();
     return { ok: true, fx: state.activeFx };
   }
   if (id === "reverb" && params.enabled === false) {
     state.activeFx = active.filter((item) => item.id !== "reverb");
+    recordContinuityEvent({ type: "fx", title: "Reverb rack disabled", detail: "Reverb was switched off.", severity: "info" });
     await saveState();
     broadcastProgram();
     return { ok: true, fx: state.activeFx };
   }
   if (isToggle && active.some((item) => item.id === id)) {
     state.activeFx = active.filter((item) => item.id !== id);
+    recordContinuityEvent({ type: "fx", title: `${preset.label} toggled off`, detail: "Rack state changed from admin control.", severity: "info" });
     await saveState();
     broadcastProgram();
     return { ok: true, toggledOff: true, fx: state.activeFx };
@@ -4612,6 +5204,12 @@ async function triggerBroadcastFx(body = {}) {
     existing.expiresAt = Math.min(now + 120000, Math.max(existing.expiresAt, now) + duration * 1000);
     existing.seed = crypto.randomUUID();
     existing.params = params ? { ...existing.params, ...params } : existing.params || {};
+    recordContinuityEvent({
+      type: "fx",
+      title: `${preset.label} intensified`,
+      detail: `Hit ${existing.hits}; expires in about ${Math.ceil((existing.expiresAt - now) / 1000)}s.`,
+      severity: "warning"
+    });
     await saveState();
     broadcastProgram();
     return { ok: true, fx: state.activeFx };
@@ -4627,6 +5225,12 @@ async function triggerBroadcastFx(body = {}) {
     params
   };
   state.activeFx = [...active.filter((item) => item.id !== id), fx].slice(-8);
+  recordContinuityEvent({
+    type: "fx",
+    title: `${preset.label} ${fx.expiresAt == null ? "held" : "active"}`,
+    detail: fx.expiresAt == null ? "Held until cleared or toggled." : `Expires in about ${duration}s.`,
+    severity: isToggle ? "warning" : "info"
+  });
   await saveState();
   broadcastProgram();
   return { ok: true, fx: state.activeFx };
@@ -4746,7 +5350,8 @@ function performanceBumpBody(cue, intensity, options = {}) {
   const blockName = String(options.blockName || options.blockPack?.label || cue.label || "DoinkTV").trim();
   const bumpKind = BUMP_CLASSES.some((item) => item.id === cue.bumpClass) ? cue.bumpClass : "manual-bump";
   const intentionalGlitch = cue.sceneId !== "anime" && cue.sceneId !== "uhf" && intensity > 0.54;
-  const lines = (cue.bumpLines || []).map((title) => ({ time: "", title }));
+  const momentLines = communityMomentLines(cue);
+  const lines = (momentLines.length ? momentLines : cue.bumpLines || []).map((title) => ({ time: "", title }));
   return {
     title: `${cue.label} bump`,
     heading: blockName.toUpperCase(),
@@ -4776,13 +5381,46 @@ function performanceBumpBody(cue, intensity, options = {}) {
   };
 }
 
+function communityMomentLines(cue) {
+  if (!["crew-pick-handoff", "supporter-shoutout"].includes(cue.id)) return [];
+  state.community = normalizeCommunityState(state.community);
+  const approvedPick = [...(state.community.suggestions || [])]
+    .filter((suggestion) => suggestion.status === "approved")
+    .sort((a, b) => Number(b.reviewedAt || b.createdAt || 0) - Number(a.reviewedAt || a.createdAt || 0))[0];
+  const crew = activeCommunityCrew()[0];
+  if (cue.id === "crew-pick-handoff" && approvedPick) {
+    return [
+      `CREW PICK: ${approvedPick.title}`,
+      `suggested by ${approvedPick.username || "the crew"}`,
+      "audience fingerprints on the schedule"
+    ];
+  }
+  if (crew) {
+    return [
+      `${crew.supporterBadge || "CREW"}: ${crew.username}`,
+      crew.activity || "on the signal",
+      "Patreon-backed underground TV"
+    ];
+  }
+  return [];
+}
+
 async function triggerPerformanceCue(body = {}) {
   const cue = performanceCueById(body.cueId || body.id);
-  const intensity = performanceIntensity(body.intensity);
   const blockPack = blockIdentityPackFor(programSnapshot().live);
+  const requestedIntensity = performanceIntensity(body.intensity);
+  const blockCeiling = Number(blockPack.chaosCeiling || 1);
+  const intensity = cue.id === "panic-reset" ? 0 : Math.min(requestedIntensity, Math.max(0.2, Math.min(1, blockCeiling)));
   if (cue.id === "panic-reset") {
     await clearBroadcastFx();
-    return { ok: true, cue, fired: [], queuedBump: null, blockPack };
+    recordContinuityEvent({
+      type: "performance",
+      title: "Panic reset fired",
+      detail: "Admin launched the clean-signal scene.",
+      severity: "success"
+    });
+    await saveState();
+    return { ok: true, cue, intensity, fired: [], queuedBump: null, blockPack, limitedByBlock: false };
   }
   const fired = [];
   for (const stepId of cue.fx || []) {
@@ -4796,7 +5434,7 @@ async function triggerPerformanceCue(body = {}) {
       await triggerBroadcastFx({ id: "caller-line", duration: 12 });
       fired.push("caller-line");
     }
-    if (publicAudience().displayCount >= 9) {
+    if (publicAudience().online >= 9) {
       await triggerBroadcastFx({ id: "party-damage", duration: Math.round(20 + intensity * 36), toggle: false });
       fired.push("party-damage");
     }
@@ -4804,11 +5442,27 @@ async function triggerPerformanceCue(body = {}) {
   const queuedBump = body.queueBump
     ? await queueManualBump(performanceBumpBody(cue, intensity, { blockPack, blockName: body.blockName }))
     : null;
-  return { ok: true, cue, intensity, fired, queuedBump, blockPack, fx: activeBroadcastFx() };
+  recordContinuityEvent({
+    type: "performance",
+    title: `${cue.label} launched`,
+    detail: `${fired.length} FX fired${queuedBump ? "; bump queued" : ""}${intensity < requestedIntensity ? "; capped by block identity" : ""}.`,
+    severity: cue.sceneId === "panic" ? "warning" : "success",
+    entryId: queuedBump?.entry?.id || "",
+    sourceId: queuedBump?.source?.id || ""
+  });
+  await saveState();
+  return { ok: true, cue, intensity, requestedIntensity, limitedByBlock: intensity < requestedIntensity, fired, queuedBump, blockPack, fx: activeBroadcastFx() };
 }
 
 async function clearBroadcastFx() {
+  const removed = (state.activeFx || []).length;
   state.activeFx = [];
+  recordContinuityEvent({
+    type: "fx",
+    title: "Clean signal restored",
+    detail: `${removed} active FX ${removed === 1 ? "entry" : "entries"} cleared.`,
+    severity: "success"
+  });
   await saveState();
   broadcastProgram();
   return { ok: true };
@@ -4967,7 +5621,7 @@ async function handleApi(req, res, pathname) {
     }
 
     if (req.method === "POST" && pathname === "/api/program-vote") {
-      sendJson(res, 200, await castProgramVote(await readJson(req)));
+      sendJson(res, 200, await castProgramVote(req, await readJson(req)));
       return;
     }
 
@@ -4979,6 +5633,13 @@ async function handleApi(req, res, pathname) {
       return;
     }
 
+    if (req.method === "POST" && pathname === "/api/community-suggestions") {
+      const session = requireSession(req, res);
+      if (!session) return;
+      sendJson(res, 201, await createCommunitySuggestion(req, await readJson(req)));
+      return;
+    }
+
     if (req.method === "POST" && pathname === "/api/login") {
       const body = await readJson(req);
       const login = String(body.username || "").trim();
@@ -4987,7 +5648,7 @@ async function handleApi(req, res, pathname) {
       const admin = ADMIN_ACCOUNTS.find((account) => login === account.username && password === account.password);
       if (admin) {
         createSession(res, { username: admin.username, role: "admin" });
-        sendJson(res, 200, { ok: true, user: { username: admin.username, role: "admin" } });
+        sendJson(res, 200, { ok: true, user: publicUser({ username: admin.username, role: "admin" }) });
         return;
       }
 
@@ -4999,14 +5660,14 @@ async function handleApi(req, res, pathname) {
         return;
       }
       createSession(res, { username: user.username, role: user.role, userId: user.id });
-      sendJson(res, 200, { ok: true, user: { username: user.username, role: user.role } });
+      sendJson(res, 200, { ok: true, user: publicUser({ username: user.username, role: user.role, userId: user.id }) });
       return;
     }
 
     if (req.method === "POST" && pathname === "/api/register") {
       const user = await registerUser(await readJson(req));
       createSession(res, { username: user.username, role: user.role, userId: user.id });
-      sendJson(res, 201, { ok: true, user: { username: user.username, role: user.role } });
+      sendJson(res, 201, { ok: true, user: publicUser({ username: user.username, role: user.role, userId: user.id }) });
       return;
     }
 
@@ -5042,11 +5703,45 @@ async function handleApi(req, res, pathname) {
         schedule: state.schedule,
         weeklyBlocks: state.weeklyBlocks,
         bumpClasses: BUMP_CLASSES,
+        community: publicCommunity({ admin: true }),
+        stationHealth: stationHealthSummary(),
+        projectAudit: await projectAuditSummary(),
+        continuityLog: publicContinuityLog(32),
         showControl: publicShowControl(),
         liveQueue: state.liveQueue,
         broadcastMode: state.broadcastMode,
         bumpMusic: state.bumpMusic
       });
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/admin/project-audit") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await projectAuditSummary());
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/admin/continuity-log") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, { events: publicContinuityLog(80) });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/admin/community") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await updateCommunitySettings(await readJson(req)));
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/admin/community-suggestion") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await updateCommunitySuggestion(await readJson(req)));
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/admin/supporter-tier") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await updateSupporterTier(await readJson(req)));
       return;
     }
 

@@ -4,3 +4,4 @@ npm-debug.log*
 .env
 .env.*
 data/hls
+data/server*.log

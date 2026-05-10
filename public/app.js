@@ -102,6 +102,16 @@ const chatInput = document.querySelector("#chatInput");
 const chatSendButton = document.querySelector("#chatSendButton");
 const chatEmojiButtons = document.querySelectorAll("[data-chat-emoji]");
 const chatMessage = document.querySelector("#chatMessage");
+const communityPanel = document.querySelector("#communityPanel");
+const communityMode = document.querySelector("#communityMode");
+const communitySpotlight = document.querySelector("#communitySpotlight");
+const communityGoal = document.querySelector("#communityGoal");
+const communityCrewCount = document.querySelector("#communityCrewCount");
+const communityPendingCount = document.querySelector("#communityPendingCount");
+const communityActiveCrew = document.querySelector("#communityActiveCrew");
+const communityApprovedPicks = document.querySelector("#communityApprovedPicks");
+const supporterSuggestionForm = document.querySelector("#supporterSuggestionForm");
+const supporterSuggestionMessage = document.querySelector("#supporterSuggestionMessage");
 const programVotePanel = document.querySelector("#programVotePanel");
 const programVoteTitle = document.querySelector("#programVoteTitle");
 const programVoteOptions = document.querySelector("#programVoteOptions");
@@ -115,9 +125,25 @@ const registerMessage = document.querySelector("#registerMessage");
 const logoutButton = document.querySelector("#logoutButton");
 const adminIdentity = document.querySelector("#adminIdentity");
 const adminTools = document.querySelector("#adminTools");
+const stationHealthStatus = document.querySelector("#stationHealthStatus");
+const stationHealthChecks = document.querySelector("#stationHealthChecks");
+const stationHealthWarnings = document.querySelector("#stationHealthWarnings");
+const projectAuditStamp = document.querySelector("#projectAuditStamp");
+const projectMissionHeadline = document.querySelector("#projectMissionHeadline");
+const projectMissionStatement = document.querySelector("#projectMissionStatement");
+const projectMissionPrinciples = document.querySelector("#projectMissionPrinciples");
+const projectAuditMetrics = document.querySelector("#projectAuditMetrics");
+const projectNextSteps = document.querySelector("#projectNextSteps");
+const continuityLogPanel = document.querySelector("#continuityLogPanel");
+const projectAuditFindings = document.querySelector("#projectAuditFindings");
 const sourceFolderForm = document.querySelector("#sourceFolderForm");
 const playlistImportForm = document.querySelector("#playlistImportForm");
 const archiveImportForm = document.querySelector("#archiveImportForm");
+const communityAdminForm = document.querySelector("#communityAdminForm");
+const communityAdminMessage = document.querySelector("#communityAdminMessage");
+const communityAdminSummary = document.querySelector("#communityAdminSummary");
+const communityMemberList = document.querySelector("#communityMemberList");
+const communitySuggestionList = document.querySelector("#communitySuggestionList");
 const sourceSearchForm = document.querySelector("#sourceSearchForm");
 const sourceForm = document.querySelector("#sourceForm");
 const scheduleForm = document.querySelector("#scheduleForm");
@@ -144,12 +170,16 @@ const soundboardVolumeSlider = document.querySelector("#soundboardVolumeSlider")
 const soundboardVolumeValue = document.querySelector("#soundboardVolumeValue");
 const performanceBlockPack = document.querySelector("#performanceBlockPack");
 const performanceActiveCue = document.querySelector("#performanceActiveCue");
+const performanceSceneDetail = document.querySelector("#performanceSceneDetail");
+const performanceBumpPackage = document.querySelector("#performanceBumpPackage");
+const performanceActiveFx = document.querySelector("#performanceActiveFx");
 const performanceIntensitySlider = document.querySelector("#performanceIntensitySlider");
 const performanceIntensityValue = document.querySelector("#performanceIntensityValue");
 const performanceReactiveToggle = document.querySelector("#performanceReactiveToggle");
 const performanceBumpToggle = document.querySelector("#performanceBumpToggle");
 const performanceSceneSelect = document.querySelector("#performanceSceneSelect");
 const performanceSceneButton = document.querySelector("#performanceSceneButton");
+const performancePanicButton = document.querySelector("#performancePanicButton");
 const performanceCueGrid = document.querySelector("#performanceCueGrid");
 const looperBpmValue = document.querySelector("#looperBpmValue");
 const looperBeatLight = document.querySelector("#looperBeatLight");
@@ -334,6 +364,7 @@ let currentCaptionInfo = null;
 let sourceSearchTimer = 0;
 let sourceSearchRequestId = 0;
 let sourceSearchCache = [];
+let activeCommunityPick = null;
 let looperBpm = 120;
 let looperBeatTimer = 0;
 let looperReplayTimer = 0;
@@ -709,12 +740,12 @@ function setUserState(user) {
   stageAdminTabs?.classList.toggle("hidden", !adminAuthenticated);
   chatPanel.classList.toggle("admin-rail", adminAuthenticated);
   adminToggle.textContent = adminAuthenticated ? "Controls" : user ? "Log Out" : "Log In";
-  if (user) adminIdentity.textContent = `Signed in as ${user.username}`;
+  if (user) adminIdentity.textContent = `Signed in as ${user.username}${user.supporterBadge ? ` / ${user.supporterBadge}` : ""}`;
   chatInput.disabled = !user;
   chatSendButton.disabled = !user;
   chatEmojiButtons.forEach((button) => { button.disabled = !user; });
   chatInput.placeholder = user ? "Message global chat" : "Log in to chat";
-  chatStatus.textContent = user ? `Chatting as ${user.username}` : "Log in to join";
+  chatStatus.textContent = user ? `Chatting as ${user.username}${user.supporterBadge ? ` / ${user.supporterBadge}` : ""}` : "Log in to join";
   if (adminAuthenticated) {
     setAdminRailView(adminRailView || "broadcast");
     setAdminStageView(adminStageView);
@@ -955,10 +986,22 @@ function renderSourceSearchResults(results = []) {
           <div class="edit-actions">
             <a class="secondary compact button-link" href="${escapeHtml(result.url)}" target="_blank" rel="noopener noreferrer">Open</a>
             <button class="secondary compact" data-use-archive-result="${index}" type="button">Use</button>
+            <button class="secondary compact" data-queue-archive-result="${index}" type="button">Add + Queue</button>
           </div>
         </article>`)
         .join("")
     : "";
+}
+
+function archiveSourceBody(result) {
+  return {
+    type: "internet-archive",
+    archive: result.archiveId,
+    archiveFile: result.archiveFile || "",
+    title: result.fileTitle || result.title || activeCommunityPick?.title || "",
+    duration: String(Math.max(5, Math.round(Number(result.duration) || 300))),
+    folderId: sourceFolderSelect?.value || ""
+  };
 }
 
 function useArchiveSearchResult(result) {
@@ -972,6 +1015,39 @@ function useArchiveSearchResult(result) {
   updateSourceDurationDisplay();
   setMessage(sourceMessage, `Archive source loaded: ${result.archiveFile || result.title}.`);
   sourceForm.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+async function addArchiveResultToQueue(result) {
+  if (!result) return;
+  const source = await api("/api/sources", {
+    method: "POST",
+    body: JSON.stringify(archiveSourceBody(result))
+  });
+  const queueEntry = await api("/api/queue", {
+    method: "POST",
+    body: JSON.stringify({ sourceId: source.id, duration: source.duration })
+  });
+  if (activeCommunityPick?.id) {
+    await api("/api/admin/community-suggestion", {
+      method: "POST",
+      body: JSON.stringify({
+        id: activeCommunityPick.id,
+        status: "approved",
+        outcome: {
+          type: "queued",
+          label: `Queued: ${source.title}`,
+          sourceId: source.id,
+          queueEntryId: queueEntry.id
+        }
+      })
+    });
+  }
+  setMessage(
+    sourceSearchMessage,
+    `${source.title} added to the live queue${activeCommunityPick?.title ? ` from crew pick: ${activeCommunityPick.title}` : ""}.`
+  );
+  activeCommunityPick = null;
+  await loadAdmin();
 }
 
 async function api(path, options = {}) {
@@ -1486,6 +1562,7 @@ function fxIsActive(fx) {
 
 function applyBroadcastFx(effects = []) {
   const active = effects.filter(fxIsActive);
+  renderActiveFxRack(active);
   if (peaceMode) {
     updateFxButtonStates(active);
     resetChaosForPeace();
@@ -3616,15 +3693,235 @@ function updatePerformanceUi(performance = {}) {
       ? `${activeCue.label}${activeCue.intensity ? ` / ${activeCue.intensity}%` : ""}`
       : pack.cueId ? `Suggested: ${cueLabel(pack.cueId)}` : "Ready";
   }
+  if (performanceSceneSelect && pack.cueId && !performanceSceneSelect.value) performanceSceneSelect.value = pack.cueId;
+  renderPerformanceSceneDetail();
+  renderPerformanceBumpPackage(pack);
 }
 
 function cueLabel(cueId) {
   return showControlCache.cues.find((cue) => cue.id === cueId)?.label || cueId || "";
 }
 
+function selectedPerformanceCue() {
+  const cueId = performanceSceneSelect?.value || currentProgram?.performance?.blockPack?.cueId || "identity-hit";
+  return showControlCache.cues.find((cue) => cue.id === cueId) || showControlCache.cues.find((cue) => cue.id === "identity-hit") || {};
+}
+
+function renderPerformanceSceneDetail() {
+  if (!performanceSceneDetail) return;
+  const cue = selectedPerformanceCue();
+  const scene = showControlCache.scenes.find((item) => item.id === cue.sceneId) || {};
+  const pack = currentProgram?.performance?.blockPack || {};
+  const ceiling = Math.round(Number(pack.chaosCeiling || scene.chaosCeiling || 1) * 100);
+  performanceSceneDetail.innerHTML = `
+    <span style="--scene-color:${escapeHtml(scene.color || pack.sceneColor || "#68c3b7")}"></span>
+    <div>
+      <strong>${escapeHtml(scene.label || pack.sceneLabel || "Scene")}: ${escapeHtml(cue.label || "Identity Hit")}</strong>
+      <small>${escapeHtml(cue.clip || scene.description || pack.note || "")}</small>
+    </div>
+    <em>${ceiling}% ceiling</em>`;
+}
+
+function renderPerformanceBumpPackage(pack = {}) {
+  if (!performanceBumpPackage) return;
+  const packageIds = Array.isArray(pack.bumpPackage) ? pack.bumpPackage : [];
+  performanceBumpPackage.innerHTML = packageIds.length
+    ? `
+      <span>Bump package</span>
+      <div>${packageIds.slice(0, 4).map((id) => `<small>${escapeHtml(id.replace(/-/g, " "))}</small>`).join("")}</div>`
+    : "";
+}
+
+function renderActiveFxRack(active = lastBroadcastFx) {
+  if (!performanceActiveFx) return;
+  const items = (active || []).filter(fxIsActive);
+  performanceActiveFx.innerHTML = items.length
+    ? `
+      <span>Active rack</span>
+      <div>
+        ${items.slice(-8).map((fx) => {
+          const remaining = fx.expiresAt == null ? "hold" : `${Math.max(0, Math.ceil((Number(fx.expiresAt) - (Date.now() + clockDelta)) / 1000))}s`;
+          return `<small><b>${escapeHtml(fx.label || fx.id)}</b><em>${escapeHtml(remaining)}</em></small>`;
+        }).join("")}
+      </div>`
+    : `<span>Active rack</span><div><small><b>Clean signal</b><em>ready</em></small></div>`;
+}
+
+function renderStationHealth(health = {}) {
+  if (!stationHealthStatus || !stationHealthChecks || !stationHealthWarnings) return;
+  const status = health.status || "checking";
+  const label = {
+    good: "On air",
+    attention: "Needs eyes",
+    critical: "Critical",
+    checking: "Checking"
+  }[status] || "Needs eyes";
+  stationHealthStatus.dataset.status = status;
+  stationHealthStatus.textContent = label;
+
+  const checks = health.checks || {};
+  const checkItems = [
+    ["Scheduled 24h", checks.scheduledNext24h],
+    ["Broadcast 24h", checks.broadcastItemsNext24h],
+    ["Auto bumps", checks.autoBumpsNext24h],
+    ["Long gaps", checks.longGapsNext24h],
+    ["Missing refs", checks.missingSourceRefs],
+    ["Ingest issues", checks.ingestIssues],
+    ["HLS", checks.hlsStatus || "idle"]
+  ];
+  stationHealthChecks.innerHTML = checkItems
+    .map(([name, value]) => `
+      <span>
+        <strong>${escapeHtml(String(value ?? 0))}</strong>
+        <small>${escapeHtml(name)}</small>
+      </span>`)
+    .join("");
+
+  const warnings = Array.isArray(health.warnings) ? health.warnings : [];
+  stationHealthWarnings.innerHTML = warnings.length
+    ? warnings.slice(0, 4).map((warning) => `<li>${escapeHtml(warning)}</li>`).join("")
+    : `<li>Schedule, stream, sources, and bump coverage look ready.</li>`;
+}
+
+function renderProjectAudit(audit = {}) {
+  if (!projectMissionHeadline || !projectMissionStatement) return;
+  const mission = audit.mission || {};
+  const metrics = audit.metrics || {};
+  const findings = Array.isArray(audit.findings) ? audit.findings : [];
+  const nextSteps = Array.isArray(audit.nextSteps) ? audit.nextSteps : [];
+  if (projectAuditStamp) {
+    projectAuditStamp.textContent = audit.generatedAt
+      ? `Audited ${new Date(audit.generatedAt).toLocaleTimeString()}`
+      : "Audit pending";
+  }
+  projectMissionHeadline.textContent = mission.headline || "A live underground station with a playable signal.";
+  projectMissionStatement.textContent = mission.statement || "";
+  if (projectMissionPrinciples) {
+    projectMissionPrinciples.innerHTML = (mission.principles || [])
+      .slice(0, 5)
+      .map((principle) => `<span>${escapeHtml(principle)}</span>`)
+      .join("");
+  }
+  if (projectAuditMetrics) {
+    const lineTotal = (metrics.largeFiles || []).reduce((sum, file) => sum + Number(file.lineCount || 0), 0);
+    const metricItems = [
+      ["Sources", metrics.sources],
+      ["Schedule", metrics.scheduledItems],
+      ["Queue", metrics.queueItems],
+      ["Blocks", metrics.weeklyBlocks],
+      ["Bump classes", metrics.bumpClasses],
+      ["Core lines", lineTotal]
+    ];
+    projectAuditMetrics.innerHTML = metricItems
+      .map(([label, value]) => `
+        <span>
+          <strong>${escapeHtml(String(value ?? 0))}</strong>
+          <small>${escapeHtml(label)}</small>
+        </span>`)
+      .join("");
+  }
+  if (projectNextSteps) {
+    projectNextSteps.innerHTML = `
+      <span>Next six</span>
+      ${nextSteps.slice(0, 6).map((step, index) => `
+        <article>
+          <b>${index + 1}</b>
+          <div>
+            <strong>${escapeHtml(step.label || step.id || "Step")}</strong>
+            <small>${escapeHtml(step.whyNow || "")}</small>
+          </div>
+          <em>${escapeHtml(step.status || "next")}</em>
+        </article>`).join("")}`;
+  }
+  if (projectAuditFindings) {
+    projectAuditFindings.innerHTML = `
+      <span>Refactor flags</span>
+      ${findings.slice(0, 6).map((finding) => `
+        <article data-severity="${escapeHtml(finding.severity || "medium")}">
+          <strong>${escapeHtml(finding.area || "Maintenance")}</strong>
+          <p>${escapeHtml(finding.finding || "")}</p>
+          <small>${escapeHtml(finding.refactor || "")}</small>
+        </article>`).join("")}`;
+  }
+}
+
+function renderContinuityLog(events = []) {
+  if (!continuityLogPanel) return;
+  const list = Array.isArray(events) ? events : [];
+  continuityLogPanel.innerHTML = `
+    <span>Continuity log</span>
+    ${list.length
+      ? list.slice(0, 10).map((event) => `
+        <article data-severity="${escapeHtml(event.severity || "info")}">
+          <time>${escapeHtml(event.createdAt ? new Date(event.createdAt).toLocaleTimeString() : "--")}</time>
+          <div>
+            <strong>${escapeHtml(event.title || "Station event")}</strong>
+            <small>${escapeHtml(event.detail || event.type || "")}</small>
+          </div>
+          <em>${escapeHtml(event.type || "station")}</em>
+        </article>`).join("")
+      : `<p class="message">No continuity events yet.</p>`}`;
+}
+
 function updatePerformanceIntensityUi() {
   const value = Math.round(Number(performanceIntensitySlider?.value || 0));
   if (performanceIntensityValue) performanceIntensityValue.textContent = `${value}%`;
+}
+
+function renderCommunityAdmin(community = {}) {
+  if (!communityAdminForm) return;
+  communityAdminForm.elements.stationMode.value = community.stationMode || "open-signal";
+  communityAdminForm.elements.spotlight.value = community.spotlight || "";
+  communityAdminForm.elements.supporterGoal.value = community.supporterGoal || "";
+  communityAdminForm.elements.takeoverPolicy.value = community.takeoverPolicy || "";
+  const tiers = Array.isArray(community.tiers) ? community.tiers : [];
+  const members = Array.isArray(community.members) ? community.members : [];
+  const counts = community.suggestionCounts || {};
+  if (communityAdminSummary) {
+    communityAdminSummary.innerHTML = [
+      ["Pending", counts.pending || 0],
+      ["Approved", counts.approved || 0],
+      ["Archived", counts.archived || 0],
+      ["Crew", community.crewCount || 0]
+    ].map(([label, value]) => `
+      <span>
+        <strong>${escapeHtml(String(value))}</strong>
+        <small>${escapeHtml(label)}</small>
+      </span>`)
+      .join("");
+  }
+  if (communityMemberList) {
+    communityMemberList.innerHTML = members.length
+      ? members.map((member) => `
+          <article class="community-member">
+            <div>
+              <strong>${escapeHtml(member.username)}</strong>
+              <small>${escapeHtml(member.supporterLabel || member.supporterTier || "Viewer")}</small>
+            </div>
+            <select data-supporter-tier-user="${escapeHtml(member.id)}" aria-label="Supporter tier for ${escapeHtml(member.username)}">
+              ${tiers.map((tier) => `<option value="${escapeHtml(tier.id)}"${tier.id === member.supporterTier ? " selected" : ""}>${escapeHtml(tier.label)}</option>`).join("")}
+            </select>
+          </article>`)
+          .join("")
+      : `<p class="message">No registered viewers yet.</p>`;
+  }
+  if (!communitySuggestionList) return;
+  const suggestions = Array.isArray(community.suggestions) ? community.suggestions : [];
+  communitySuggestionList.innerHTML = suggestions.length
+    ? suggestions.slice(0, 12).map((suggestion) => `
+        <article class="community-suggestion ${suggestion.status}">
+          <strong>${escapeHtml(suggestion.title)}</strong>
+          <small>${escapeHtml(suggestion.username)} / ${escapeHtml(suggestion.supporterTier || "viewer")} / ${escapeHtml(suggestion.status)}</small>
+          ${suggestion.outcome?.label ? `<small>Outcome / ${escapeHtml(suggestion.outcome.label)}</small>` : ""}
+          ${suggestion.note ? `<p>${escapeHtml(suggestion.note)}</p>` : ""}
+          <div>
+            <button class="secondary compact" data-community-search="${escapeHtml(suggestion.title)}" data-community-pick-id="${escapeHtml(suggestion.id)}" type="button">Search IA</button>
+            <button class="secondary compact" data-community-suggestion="${escapeHtml(suggestion.id)}" data-community-status="approved" type="button">Approve</button>
+            <button class="secondary compact" data-community-suggestion="${escapeHtml(suggestion.id)}" data-community-status="archived" type="button">Archive</button>
+          </div>
+        </article>`)
+        .join("")
+    : `<p class="message">No crew picks yet.</p>`;
 }
 
 async function launchPerformanceCue(cueId) {
@@ -3642,7 +3939,8 @@ async function launchPerformanceCue(cueId) {
       })
     });
     const fired = Array.isArray(result.fired) ? result.fired.length : 0;
-    setMessage(fxMessage, `${cue?.label || result.cue?.label || "Cue"} launched${fired ? ` / ${fired} clips` : ""}${result.queuedBump ? " / bump queued" : ""}.`);
+    const limited = result.limitedByBlock ? ` / capped at ${Math.round(Number(result.intensity || 0) * 100)}% by block` : "";
+    setMessage(fxMessage, `${cue?.label || result.cue?.label || "Cue"} launched${fired ? ` / ${fired} clips` : ""}${result.queuedBump ? " / bump queued" : ""}${limited}.`);
     if (result.fx) applyBroadcastFx(result.fx);
     await loadAdmin();
   } catch (error) {
@@ -3653,6 +3951,10 @@ async function launchPerformanceCue(cueId) {
 function renderAdmin(data) {
   adminDataCache = data;
   renderPerformanceControl(data.showControl || {});
+  renderStationHealth(data.stationHealth || {});
+  renderProjectAudit(data.projectAudit || {});
+  renderContinuityLog(data.continuityLog || []);
+  renderCommunityAdmin(data.community || {});
   const folders = data.sourceFolders || [];
   setBroadcastModeUI(data.broadcastMode);
   const librarySources = data.sources.filter((source) => source.type !== "bump");
@@ -4098,13 +4400,15 @@ function renderSourceEditor(sourceId) {
 
 function renderChat(data) {
   const wasNearBottom = chatMessages.scrollTop + chatMessages.clientHeight >= chatMessages.scrollHeight - 24;
+  renderCommunity(data.community);
   chatMessages.innerHTML = data.messages.length
     ? data.messages
         .map((message) => {
           const nameClass = message.role === "admin" ? "admin-name" : "";
+          const badge = message.supporterBadge ? `<span class="chat-badge">${escapeHtml(message.supporterBadge)}</span>` : "";
           return `
             <article class="chat-entry">
-              <strong class="${nameClass}">${escapeHtml(message.username)}</strong>
+              <strong class="${nameClass}">${escapeHtml(message.username)}${badge}</strong>
               <p>${escapeHtml(message.text)}</p>
               <time datetime="${new Date(message.createdAt).toISOString()}">${new Date(message.createdAt).toLocaleTimeString()}</time>
             </article>`;
@@ -4113,6 +4417,47 @@ function renderChat(data) {
     : `<p class="message">No messages yet.</p>`;
   if (wasNearBottom) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+}
+
+function communityModeLabel(mode = "open-signal") {
+  return {
+    "open-signal": "Open Signal",
+    "crew-week": "Crew Week",
+    "takeover-night": "Takeover Night"
+  }[mode] || "Open Signal";
+}
+
+function renderCommunity(community = {}) {
+  if (!communityPanel) return;
+  if (communityMode) communityMode.textContent = communityModeLabel(community.stationMode);
+  if (communitySpotlight) communitySpotlight.textContent = community.spotlight || "Supporter picks help steer future programming.";
+  if (communityGoal) communityGoal.textContent = community.supporterGoal || "";
+  if (communityCrewCount) communityCrewCount.textContent = String(community.crewCount || 0);
+  if (communityPendingCount) communityPendingCount.textContent = `${community.pendingSuggestionCount || 0} pick${community.pendingSuggestionCount === 1 ? "" : "s"} pending`;
+  if (communityActiveCrew) {
+    const crew = Array.isArray(community.activeCrew) ? community.activeCrew : [];
+    communityActiveCrew.innerHTML = crew.length
+      ? `
+        <span>On deck</span>
+        ${crew.slice(0, 4).map((member) => `
+          <small title="${escapeHtml(member.supporterLabel || "")}">
+            <b>${escapeHtml(member.supporterBadge || "CREW")}</b>
+            ${escapeHtml(member.username)}
+          </small>`).join("")}`
+      : "";
+  }
+  if (communityApprovedPicks) {
+    const picks = Array.isArray(community.suggestions) ? community.suggestions : [];
+    communityApprovedPicks.innerHTML = picks.length
+      ? `
+        <span>Crew picks</span>
+        ${picks.slice(0, 3).map((pick) => `
+          <article>
+            <strong>${escapeHtml(pick.title)}</strong>
+            <small>${escapeHtml(pick.outcome?.label || pick.username || "crew")}</small>
+          </article>`).join("")}`
+      : "";
   }
 }
 
@@ -4253,6 +4598,87 @@ chatForm.addEventListener("submit", async (event) => {
   }
 });
 
+supporterSuggestionForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const form = new FormData(supporterSuggestionForm);
+    const title = String(form.get("title") || "").trim();
+    const note = String(form.get("note") || "").trim();
+    await api("/api/community-suggestions", { method: "POST", body: JSON.stringify({ title, note }) });
+    supporterSuggestionForm.reset();
+    setMessage(supporterSuggestionMessage, "Crew pick sent for admin review.");
+  } catch (error) {
+    setMessage(supporterSuggestionMessage, error.message, true);
+  }
+});
+
+communityAdminForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const form = new FormData(communityAdminForm);
+    const community = await api("/api/admin/community", {
+      method: "POST",
+      body: JSON.stringify({
+        stationMode: form.get("stationMode"),
+        spotlight: form.get("spotlight"),
+        supporterGoal: form.get("supporterGoal"),
+        takeoverPolicy: form.get("takeoverPolicy")
+      })
+    });
+    renderCommunityAdmin(community);
+    setMessage(communityAdminMessage, "Community signal saved.");
+  } catch (error) {
+    setMessage(communityAdminMessage, error.message, true);
+  }
+});
+
+communitySuggestionList?.addEventListener("click", async (event) => {
+  const searchButton = event.target.closest("[data-community-search]");
+  if (searchButton) {
+    const query = searchButton.dataset.communitySearch || "";
+    activeCommunityPick = {
+      id: searchButton.dataset.communityPickId || "",
+      title: query
+    };
+    setAdminRailView("broadcast");
+    if (sourceSearchForm?.elements?.query) {
+      sourceSearchForm.elements.query.value = query;
+      sourceSearchForm.scrollIntoView({ block: "start", behavior: "smooth" });
+      setMessage(sourceSearchMessage, `Searching Archive for crew pick: ${query}`);
+      await searchInternetArchiveSources({ immediate: true });
+    }
+    return;
+  }
+  const button = event.target.closest("[data-community-suggestion]");
+  if (!button) return;
+  try {
+    const community = await api("/api/admin/community-suggestion", {
+      method: "POST",
+      body: JSON.stringify({ id: button.dataset.communitySuggestion, status: button.dataset.communityStatus })
+    });
+    renderCommunityAdmin(community);
+    setMessage(communityAdminMessage, "Crew pick updated.");
+  } catch (error) {
+    setMessage(communityAdminMessage, error.message, true);
+  }
+});
+
+communityMemberList?.addEventListener("change", async (event) => {
+  const select = event.target.closest("[data-supporter-tier-user]");
+  if (!select) return;
+  try {
+    const community = await api("/api/admin/supporter-tier", {
+      method: "POST",
+      body: JSON.stringify({ userId: select.dataset.supporterTierUser, supporterTier: select.value })
+    });
+    renderCommunityAdmin(community);
+    setMessage(communityAdminMessage, "Supporter tier updated.");
+  } catch (error) {
+    setMessage(communityAdminMessage, error.message, true);
+    await loadAdmin().catch(() => {});
+  }
+});
+
 document.addEventListener("click", (event) => {
   if (
     adminAuthenticated ||
@@ -4373,9 +4799,15 @@ sourceSearchForm.elements.query.addEventListener("input", () => {
 });
 
 sourceSearchResults.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-use-archive-result]");
-  if (!button) return;
-  useArchiveSearchResult(sourceSearchCache[Number(button.dataset.useArchiveResult)]);
+  const useButton = event.target.closest("[data-use-archive-result]");
+  if (useButton) {
+    useArchiveSearchResult(sourceSearchCache[Number(useButton.dataset.useArchiveResult)]);
+    return;
+  }
+  const queueButton = event.target.closest("[data-queue-archive-result]");
+  if (!queueButton) return;
+  addArchiveResultToQueue(sourceSearchCache[Number(queueButton.dataset.queueArchiveResult)])
+    .catch((error) => setMessage(sourceSearchMessage, error.message, true));
 });
 
 sourceForm.addEventListener("submit", async (event) => {
@@ -4614,7 +5046,13 @@ clearQueueButton?.addEventListener("click", async () => {
 });
 
 performanceIntensitySlider?.addEventListener("input", updatePerformanceIntensityUi);
+performanceSceneSelect?.addEventListener("change", renderPerformanceSceneDetail);
 performanceSceneButton?.addEventListener("click", () => launchPerformanceCue(performanceSceneSelect?.value || currentProgram?.performance?.blockPack?.cueId || "identity-hit"));
+performancePanicButton?.addEventListener("click", async () => {
+  await launchPerformanceCue("panic-reset");
+  disableDelay(true);
+  disableReverb(true);
+});
 performanceCueGrid?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-performance-cue]");
   if (!button) return;
