@@ -5413,7 +5413,8 @@ djSoundboardGrid?.addEventListener("click", async (event) => {
 
 clearFxButton?.addEventListener("click", async () => {
   try {
-    await adminCockpitApi.fx.clear();
+    const result = await adminCockpitApi.fx.clear();
+    if (Array.isArray(result.fx)) applyBroadcastFx(result.fx);
     disableDelay(true);
     disableReverb(true);
     setMessage(fxMessage, "FX cleared.");

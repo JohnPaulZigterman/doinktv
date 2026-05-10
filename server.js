@@ -60,7 +60,9 @@ import {
 } from "./lib/programming-engine.js";
 import {
   activeBroadcastFx as domainActiveBroadcastFx,
+  beginAllFxDecay,
   beginFxDecay,
+  clampFxParams,
   createFxEntry,
   fxInstrument,
   fxMaxDuration,
@@ -68,7 +70,9 @@ import {
   isFxCommand,
   isFxToggle,
   normalizeFxSnapshots,
-  publicFxInstruments
+  normalizeFxDuration,
+  publicFxInstruments,
+  registerFxPresetInstruments
 } from "./lib/live-fx.js";
 import {
   scheduleSourcesIntoWeeklyBlock,
@@ -811,6 +815,7 @@ const FX_PRESETS = {
   beer: { label: "Beer button", duration: 10 },
   lsd: { label: "LSD button", duration: 12 }
 };
+registerFxPresetInstruments(FX_PRESETS);
 const LEGAL_ID_CARTS = [
   { call: "KDKA", city: "Pittsburgh", note: "historic AM pioneer" },
   { call: "WBCN", city: "Boston", note: "former Boston rock call sign" },
@@ -4709,7 +4714,7 @@ async function reorderLibrarySources(body) {
 
   await saveState();
   broadcastProgram();
-  return { ok: true };
+  return { ok: true, fx: state.activeFx };
 }
 
 async function ingestSource(source) {
@@ -5190,14 +5195,13 @@ async function triggerBroadcastFx(body = {}) {
   if (!preset) throw new Error("Unknown FX button.");
   const instrument = fxInstrument(id);
   const isToggle = isFxToggle(id, body);
-  const maxDuration = fxMaxDuration(id);
-  let duration = Math.max(2, Math.min(maxDuration, Number(body.duration || preset.duration)));
+  let duration = normalizeFxDuration(id, body.duration || preset.duration);
   const now = Date.now();
   const active = activeBroadcastFx();
   let params = typeof body.params === "object" && body.params ? body.params : {};
   if (id === "soundboard-sample") {
     params = await djSoundboardSample(String(params.soundId || params.id || ""));
-    duration = Math.max(2, Math.min(maxDuration, params.duration || duration));
+    duration = normalizeFxDuration(id, params.duration || duration);
   }
   if (id === "source-overlay") {
     const source = state.sources.find((item) => item.id === params.sourceId);
@@ -5256,6 +5260,7 @@ async function triggerBroadcastFx(body = {}) {
       createdAt: message.createdAt
     };
   }
+  params = clampFxParams(id, params);
   if (id === "delay" && params.enabled === false) {
     beginFxDecay(state, "delay", now);
     recordContinuityEvent({ type: "fx", title: "Delay rack decaying", detail: "Delay was switched off and is winding down.", severity: "info" });
@@ -5544,11 +5549,11 @@ async function triggerPerformanceCue(body = {}) {
 
 async function clearBroadcastFx() {
   const removed = (state.activeFx || []).length;
-  state.activeFx = [];
+  beginAllFxDecay(state);
   recordContinuityEvent({
     type: "fx",
     title: "Clean signal restored",
-    detail: `${removed} active FX ${removed === 1 ? "entry" : "entries"} cleared.`,
+    detail: `${removed} active FX ${removed === 1 ? "entry is" : "entries are"} winding down through their clean return envelopes.`,
     severity: "success"
   });
   await saveState();

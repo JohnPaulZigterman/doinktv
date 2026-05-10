@@ -11,6 +11,14 @@ import {
   isClearlyPornographicArchiveCandidate,
   weeklyArchiveCandidateFitsBlock
 } from "../lib/media-discovery.js";
+import {
+  activeBroadcastFx,
+  beginAllFxDecay,
+  clampFxParams,
+  createFxEntry,
+  normalizeFxDuration,
+  registerFxPresetInstruments
+} from "../lib/live-fx.js";
 import { scheduleSourcesIntoWeeklyBlock } from "../lib/weekly-scheduler.js";
 
 test("scheduled programming protects the live queue override lane", () => {
@@ -120,4 +128,42 @@ test("weekly block scheduler does not repeat the same episode key inside one blo
   assert.equal(keys.length, new Set(keys).size);
   assert.equal(keys.includes("show:episode-01.mp4"), true);
   assert.equal(keys.includes("show:episode-02.mp4"), true);
+});
+
+test("FX policy clamps dangerous rack params and durations", () => {
+  registerFxPresetInstruments({ "ui-css-panic": { label: "CSS panic", duration: 120 } });
+  assert.equal(normalizeFxDuration("ui-css-panic", 120), 24);
+  assert.deepEqual(clampFxParams("av-warp", { speed: 99, pitch: -4, desync: 80 }), {
+    speed: 2,
+    pitch: 0.5,
+    desync: 4
+  });
+  assert.equal(clampFxParams("delay", { feedback: 50 }).feedback, 0.88);
+  assert.equal(clampFxParams("reverb", { mix: 12 }).mix, 1);
+});
+
+test("FX clean return decays held instruments instead of leaving them stuck", () => {
+  const now = 100000;
+  const state = {
+    activeFx: [
+      createFxEntry({ id: "delay", params: { enabled: true, feedback: 0.5 }, now }),
+      createFxEntry({ id: "signal-loss", isToggle: true, now })
+    ]
+  };
+  assert.equal(state.activeFx.every((fx) => fx.expiresAt == null), true);
+  beginAllFxDecay(state, now + 1000);
+  assert.equal(state.activeFx.length, 2);
+  assert.equal(state.activeFx.every((fx) => fx.state === "decaying"), true);
+  assert.equal(state.activeFx.every((fx) => Number.isFinite(fx.expiresAt)), true);
+});
+
+test("FX wind down automatically when no admin remains online", () => {
+  const now = 100000;
+  const state = {
+    activeFx: [createFxEntry({ id: "reverb", params: { enabled: true, mix: 0.5 }, now })]
+  };
+  const result = activeBroadcastFx(state, { adminOnline: false, graceMs: 0, now: now + 1000 });
+  assert.equal(result.fx.length, 1);
+  assert.equal(result.fx[0].state, "decaying");
+  assert.ok(result.fx[0].expiresAt > now + 1000);
 });
