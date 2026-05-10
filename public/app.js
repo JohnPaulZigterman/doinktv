@@ -3811,6 +3811,17 @@ function renderPerformanceSceneDetail() {
     <em title="${escapeHtml(transition.reason || "")}">${escapeHtml(transitionLabel)}</em>`;
 }
 
+function bumpClassTitle(item = {}) {
+  const parts = [
+    item.status ? `Status: ${item.status}` : "",
+    item.visualStyle ? `Style: ${item.visualStyle}` : "",
+    item.generator ? `Generator: ${item.generator}` : "",
+    Array.isArray(item.usedBy) && item.usedBy.length ? `Used by: ${item.usedBy.join(", ")}` : "",
+    item.canInterruptProgramming ? "Can interrupt programming" : "Does not interrupt programming"
+  ].filter(Boolean);
+  return parts.join(" / ");
+}
+
 function renderPerformanceBumpPackage(pack = {}) {
   if (!performanceBumpPackage) return;
   const continuity = currentProgram?.performance?.continuity || currentProgram?.continuity || {};
@@ -3827,7 +3838,7 @@ function renderPerformanceBumpPackage(pack = {}) {
   performanceBumpPackage.innerHTML = chips.length
     ? `
       <span>Continuity</span>
-      <div>${chips.slice(0, 5).map((item) => `<small data-bump-class="${escapeHtml(item.id || "")}">${escapeHtml(item.label || item.id || "")}</small>`).join("")}</div>`
+      <div>${chips.slice(0, 5).map((item) => `<small data-bump-class="${escapeHtml(item.id || "")}" title="${escapeHtml(bumpClassTitle(item))}">${escapeHtml(item.label || item.id || "")}</small>`).join("")}</div>`
     : "";
 }
 

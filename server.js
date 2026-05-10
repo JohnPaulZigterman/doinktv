@@ -462,67 +462,122 @@ const BUMP_CLASSES = [
     id: "auto-bump",
     label: "Auto Schedule Bump",
     status: "active",
+    usedBy: ["standby filler", "schedule gap coverage", "next-up continuity"],
+    generator: "createGapFillerBumpSource / createAutomaticBumpSource",
+    visualStyle: "quick promo card with upcoming-program language",
+    canInterruptProgramming: false,
     description: "Short generated queue filler that previews upcoming programming."
   },
   {
     id: "manual-bump",
     label: "Manual Bump",
     status: "active",
+    usedBy: ["admin bump generator", "show-control macros"],
+    generator: "createManualBumpSource",
+    visualStyle: "operator-selected bump generator style",
+    canInterruptProgramming: true,
     description: "Operator-built bump from the bump generator."
   },
   {
     id: "block-bump",
     label: "Block Bump",
     status: "active",
+    usedBy: ["weekly blocks", "continuity brain", "block identity packages"],
+    generator: "createBlockBumpSource / bump-factory",
+    visualStyle: "block-specific identity card using the block style pack",
+    canInterruptProgramming: false,
     description: "Short identity bump attached to a weekly programming block."
   },
   {
     id: "block-promo-bump",
     label: "Block Promo Bump",
     status: "active",
+    usedBy: ["standby filler", "schedule promos", "block ad rotation"],
+    generator: "createGapFillerPromoBumpSource",
+    visualStyle: "produced schedule/ad card with multiple upcoming titles when available",
+    canInterruptProgramming: false,
     description: "Generated station-break ad for upcoming blocks and programs, optionally backed by a short preview clip."
   },
   {
     id: "fade-break-bump",
     label: "Fade Break Bump",
     status: "active",
+    aliases: ["fade-break"],
+    usedBy: ["longform continuity planner", "fade-out detector"],
+    generator: "createFadeBreakBumpSource",
+    visualStyle: "short block-aware interruption bumper with clean return language",
+    canInterruptProgramming: true,
     description: "Best-effort TV-style interstitial inserted at detected fade-outs in longer programs."
   },
   {
     id: "full-song-bump",
     label: "Full Song Bump",
     status: "planned",
+    usedBy: ["music blocks"],
+    generator: "planned music bump generator",
+    visualStyle: "full-song branded music break with larger music credits",
+    canInterruptProgramming: false,
     description: "Planned long-form music/video bump class for music-heavy blocks; not inserted automatically yet."
   },
   {
     id: "legal-id-bump",
     label: "Legal ID Bump",
     status: "active",
+    usedBy: ["continuity brain", "station identity macros", "block transition packages"],
+    generator: "createPerformanceCueSource / station identity templates",
+    visualStyle: "call-sign, frequency, and legal-ID flavored station card",
+    canInterruptProgramming: false,
     description: "Station identity break class for call-sign, frequency, and legal-ID flavored continuity."
   },
   {
     id: "call-in-bump",
     label: "Call-In Bump",
     status: "planned",
+    usedBy: ["future call-in ingest", "audience moments"],
+    generator: "planned caller/chat ingest",
+    visualStyle: "caller-card lower third with rough station texture",
+    canInterruptProgramming: true,
     description: "Planned break class for viewer, chat, and caller material once caller ingest is formalized."
   },
   {
     id: "supporter-shoutout-bump",
     label: "Supporter Shoutout Bump",
     status: "active",
+    usedBy: ["Patreon/community layer", "continuity brain", "supporter moments"],
+    generator: "createPerformanceCueSource / community templates",
+    visualStyle: "short community credit bumper with clear supporter attribution",
+    canInterruptProgramming: false,
     description: "Short credit bumper for Patreon crew influence, accepted picks, and live supporter moments."
   },
   {
     id: "crew-pick-bump",
     label: "Crew Pick Handoff",
     status: "active",
+    usedBy: ["accepted community picks", "continuity brain"],
+    generator: "createPerformanceCueSource / community templates",
+    visualStyle: "handoff card that frames the source as a crew selection",
+    canInterruptProgramming: false,
     description: "Interstitial that turns an accepted viewer or supporter pick into on-air station punctuation."
   },
   {
     id: "weather-bump",
     label: "Weather Bump",
     status: "active",
+    usedBy: ["weather bump planner", "schedule continuity"],
+    generator: "createWeatherBumpSource",
+    visualStyle: "world-weather forecast card with city, country, and multi-day outlook",
+    canInterruptProgramming: true,
     description: "One-week forecast card for a random reasonably sized city somewhere around the world."
+  },
+  {
+    id: "station-break",
+    label: "Station Break",
+    status: "active",
+    usedBy: ["standby filler", "gap filler", "continuity brain"],
+    generator: "createGapFillerBumpSource",
+    visualStyle: "DoinkTV brand relay card between scheduled programs",
+    canInterruptProgramming: false,
+    description: "Station-wide identity break used when the channel is between scheduled programs."
   }
 ];
 
@@ -969,6 +1024,14 @@ function safeEqualString(left, right) {
   const leftBuffer = Buffer.from(String(left));
   const rightBuffer = Buffer.from(String(right));
   return leftBuffer.length === rightBuffer.length && crypto.timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+function canonicalBumpClassId(id, fallback = "manual-bump") {
+  const requested = String(id || "").trim();
+  const found = BUMP_CLASSES.find((item) => (
+    item.id === requested || (Array.isArray(item.aliases) && item.aliases.includes(requested))
+  ));
+  return found?.id || fallback;
 }
 
 const mimeTypes = {
@@ -2749,7 +2812,7 @@ function createLongformContinuityBumpSource(source = {}, entry = {}, options = {
     weeklyBlockId: entry.weeklyBlockId || "",
     bump: {
       kind: "fade-break-bump",
-      bumpClass: "fade-break",
+      bumpClass: "fade-break-bump",
       heading: phaseCopy.heading,
       lines: phaseCopy.lines,
       alignment: identity.alignment || sample(["left", "center", "right"]),
@@ -2830,7 +2893,7 @@ function createManualBumpSource(body = {}) {
     ? { path: String(body.audio), start: Math.max(0, Number(body.audioStart) || 0) }
     : randomBumpMusic(Math.round(duration));
   const background = normalizeBumpBackground(body.background);
-  const bumpKind = BUMP_CLASSES.some((item) => item.id === body.bumpClass) ? body.bumpClass : "manual-bump";
+  const bumpKind = canonicalBumpClassId(body.bumpClass, "manual-bump");
   const intentionalGlitch = body.intentionalGlitch === true || body.presentation?.intentionalGlitch === true;
 
   const source = {
@@ -5366,7 +5429,7 @@ function performanceBumpBody(cue, intensity, options = {}) {
   const brain = options.continuity || stationContinuityBrain(programSnapshot().live, programSnapshot().next);
   const transitionClass = brain.transition?.bumpClass || "";
   const requestedBumpClass = cue.bumpClass || transitionClass;
-  const bumpKind = BUMP_CLASSES.some((item) => item.id === requestedBumpClass) ? requestedBumpClass : "manual-bump";
+  const bumpKind = canonicalBumpClassId(requestedBumpClass, "manual-bump");
   const intentionalGlitch = cue.sceneId !== "anime" && cue.sceneId !== "uhf" && intensity > 0.54;
   const momentLines = communityMomentLines(cue);
   const brainLines = Array.isArray(brain.transition?.lines) ? brain.transition.lines : [];
