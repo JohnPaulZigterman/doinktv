@@ -527,13 +527,13 @@ const BUMP_CLASSES = [
 ];
 
 const PROGRAM_VOTE_MAX_OPTIONS = 4;
-
-const ADMIN_USER = process.env.ADMIN_USER || "DoinkWizard";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ChipTanaka12!@";
-const ADMIN_ACCOUNTS = [
-  { username: ADMIN_USER, password: ADMIN_PASSWORD },
-  { username: "ChillNeil", password: "ChillyBilly12!@" }
-];
+const IS_PRODUCTION = ["production", "prod"].includes(String(process.env.NODE_ENV || "").toLowerCase());
+const DEFAULT_ADMIN_USER = "DoinkWizard";
+const DEFAULT_ADMIN_PASSWORD = "ChipTanaka12!@";
+const LOCAL_GUEST_ADMIN = { username: "ChillNeil", password: "ChillyBilly12!@" };
+const ADMIN_USER = String(process.env.ADMIN_USER || "").trim();
+const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || "");
+const ADMIN_ACCOUNTS = buildAdminAccounts();
 const WEATHER_CITIES = [
   { name: "Accra", country: "Ghana", latitude: 5.56, longitude: -0.2 },
   { name: "Amsterdam", country: "Netherlands", latitude: 52.37, longitude: 4.9 },
@@ -641,9 +641,9 @@ const MAINTENANCE_FINDINGS = [
   {
     severity: "high",
     area: "Security",
-    finding: "Fallback admin credentials exist in code for local convenience.",
-    impact: "Fine for a private local prototype, dangerous if deployed without env overrides.",
-    refactor: "Require ADMIN_USER and ADMIN_PASSWORD outside development and surface a health warning when defaults are active."
+    finding: "Local fallback admin credentials are development-only; production now requires ADMIN_USER and ADMIN_PASSWORD.",
+    impact: "Public deployment has a fail-fast guard against accidentally shipping prototype credentials.",
+    refactor: "Move toward durable admin account management, password reset, account disabling, and audit logging before wider public onboarding."
   },
   {
     severity: "medium",
@@ -939,6 +939,38 @@ const hlsController = createHlsPlayoutController({
 });
 const hlsPlayout = hlsController.playout;
 
+function buildAdminAccounts() {
+  const accounts = [];
+  if (ADMIN_USER && ADMIN_PASSWORD) accounts.push({ username: ADMIN_USER, password: ADMIN_PASSWORD, source: "env" });
+  if (!IS_PRODUCTION) {
+    accounts.push({ username: DEFAULT_ADMIN_USER, password: DEFAULT_ADMIN_PASSWORD, source: "local" });
+    accounts.push({ ...LOCAL_GUEST_ADMIN, source: "local" });
+  }
+  return accounts;
+}
+
+function defaultAdminCredentialsActive() {
+  return ADMIN_ACCOUNTS.some(
+    (account) => account.source === "local" || account.username === DEFAULT_ADMIN_USER || account.password === DEFAULT_ADMIN_PASSWORD
+  );
+}
+
+function assertPublicAuthReadiness() {
+  if (!IS_PRODUCTION) return;
+  if (!ADMIN_ACCOUNTS.length) {
+    throw new Error("Production admin credentials are required. Set ADMIN_USER and ADMIN_PASSWORD before starting DoinkTV.");
+  }
+  if (defaultAdminCredentialsActive()) {
+    throw new Error("Default local admin credentials cannot be used in production.");
+  }
+}
+
+function safeEqualString(left, right) {
+  const leftBuffer = Buffer.from(String(left));
+  const rightBuffer = Buffer.from(String(right));
+  return leftBuffer.length === rightBuffer.length && crypto.timingSafeEqual(leftBuffer, rightBuffer);
+}
+
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -1093,6 +1125,23 @@ function sendJson(res, status, body) {
   res.end(json);
 }
 
+function requestIsSecure(req) {
+  const forwardedProto = String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim().toLowerCase();
+  return Boolean(req.socket?.encrypted) || forwardedProto === "https";
+}
+
+function sessionCookie(req, value, maxAgeSeconds) {
+  const secure = IS_PRODUCTION || requestIsSecure(req);
+  return [
+    `doink_session=${value}`,
+    "HttpOnly",
+    "SameSite=Lax",
+    "Path=/",
+    `Max-Age=${maxAgeSeconds}`,
+    secure ? "Secure" : ""
+  ].filter(Boolean).join("; ");
+}
+
 function parseCookies(req) {
   return Object.fromEntries(
     (req.headers.cookie || "")
@@ -1136,7 +1185,12 @@ function requireAdmin(req, res) {
 
 async function readJson(req) {
   const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
+  let size = 0;
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > 1024 * 1024) throw new Error("Request body is too large.");
+    chunks.push(chunk);
+  }
   const raw = Buffer.concat(chunks).toString("utf8");
   if (!raw) return {};
   return JSON.parse(raw);
@@ -1228,7 +1282,7 @@ function stationHealthSummary() {
   if (scheduledNextDay.length > 2 && !autoBumps.length) warnings.push("No automatic bumps found around upcoming programming.");
   if (gaps.length) warnings.push(`${gaps.length} schedule gap${gaps.length === 1 ? "" : "s"} over 10 minutes in the next 24 hours.`);
   if (hlsPlayout.status === "error") warnings.push(`HLS playout error: ${hlsPlayout.error || "unknown"}.`);
-  if (ADMIN_USER === "DoinkWizard" || ADMIN_PASSWORD === "ChipTanaka12!@") warnings.push("Default admin credentials are active; set ADMIN_USER and ADMIN_PASSWORD before public deployment.");
+  if (defaultAdminCredentialsActive()) warnings.push("Default local admin credentials are active; set ADMIN_USER and ADMIN_PASSWORD before public deployment.");
   return {
     status: warnings.length ? (missingRefs.length || hlsPlayout.status === "error" ? "critical" : "attention") : "good",
     generatedAt: now,
@@ -1275,7 +1329,7 @@ async function projectAuditSummary() {
       bumpClasses: BUMP_CLASSES.length,
       bumpClassCounts,
       largeFiles,
-      defaultAdminCredentialsActive: ADMIN_USER === "DoinkWizard" || ADMIN_PASSWORD === "ChipTanaka12!@"
+      defaultAdminCredentialsActive: defaultAdminCredentialsActive()
     }
   };
 }
@@ -1289,7 +1343,7 @@ async function codebaseFileMetric(relativePath, risk) {
   };
 }
 
-function createSession(res, { username, role, userId = null }) {
+function createSession(req, res, { username, role, userId = null }) {
   const token = crypto.randomBytes(32).toString("hex");
   sessions.set(token, {
     userId,
@@ -1297,7 +1351,7 @@ function createSession(res, { username, role, userId = null }) {
     role,
     expiresAt: Date.now() + SESSION_TTL_MS
   });
-  res.setHeader("set-cookie", `doink_session=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=43200`);
+  res.setHeader("set-cookie", sessionCookie(req, encodeURIComponent(token), Math.floor(SESSION_TTL_MS / 1000)));
 }
 
 function validateRegistration(body) {
@@ -5674,9 +5728,12 @@ async function handleApi(req, res, pathname) {
       const login = String(body.username || "").trim();
       const password = String(body.password || "");
 
-      const admin = ADMIN_ACCOUNTS.find((account) => login === account.username && password === account.password);
+      const admin = ADMIN_ACCOUNTS.find((account) => (
+        login === account.username
+        && safeEqualString(password, account.password)
+      ));
       if (admin) {
-        createSession(res, { username: admin.username, role: "admin" });
+        createSession(req, res, { username: admin.username, role: "admin" });
         sendJson(res, 200, { ok: true, user: publicUser({ username: admin.username, role: "admin" }) });
         return;
       }
@@ -5688,14 +5745,14 @@ async function handleApi(req, res, pathname) {
         sendJson(res, 401, { error: "Invalid username, email, or password." });
         return;
       }
-      createSession(res, { username: user.username, role: user.role, userId: user.id });
+      createSession(req, res, { username: user.username, role: user.role, userId: user.id });
       sendJson(res, 200, { ok: true, user: publicUser({ username: user.username, role: user.role, userId: user.id }) });
       return;
     }
 
     if (req.method === "POST" && pathname === "/api/register") {
       const user = await registerUser(await readJson(req));
-      createSession(res, { username: user.username, role: user.role, userId: user.id });
+      createSession(req, res, { username: user.username, role: user.role, userId: user.id });
       sendJson(res, 201, { ok: true, user: publicUser({ username: user.username, role: user.role, userId: user.id }) });
       return;
     }
@@ -5718,7 +5775,7 @@ async function handleApi(req, res, pathname) {
     if (req.method === "POST" && pathname === "/api/logout") {
       const token = parseCookies(req).doink_session;
       if (token) sessions.delete(token);
-      res.setHeader("set-cookie", "doink_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0");
+      res.setHeader("set-cookie", sessionCookie(req, "", 0));
       sendJson(res, 200, { ok: true });
       return;
     }
@@ -6008,6 +6065,7 @@ async function handleApi(req, res, pathname) {
   }
 }
 
+assertPublicAuthReadiness();
 await ensureState();
 await refreshBumpMusic();
 if (ensureAutoBumpAudioStarts()) await saveState();
