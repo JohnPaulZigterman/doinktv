@@ -18,6 +18,7 @@ import {
   updateCommunitySuggestion as domainUpdateCommunitySuggestion,
   updateSupporterTier as domainUpdateSupporterTier
 } from "./lib/community.js";
+import { createWeeklyBlockBumpSource as factoryCreateWeeklyBlockBumpSource } from "./lib/bump-factory.js";
 import {
   blockIdentityPackFor as domainBlockIdentityPackFor,
   continuityBrain as domainContinuityBrain,
@@ -30,7 +31,9 @@ import {
   publicLore as domainPublicLore,
   upsertLoreEntry as domainUpsertLoreEntry
 } from "./lib/lore.js";
+import { createHlsPlayoutController } from "./lib/hls-playout.js";
 import * as mediaDiscovery from "./lib/media-discovery.js";
+import { createProgramVotingController } from "./lib/program-voting.js";
 import {
   loadStationState,
   programmingDomainView,
@@ -67,6 +70,10 @@ import {
   normalizeFxSnapshots,
   publicFxInstruments
 } from "./lib/live-fx.js";
+import {
+  scheduleSourcesIntoWeeklyBlock,
+  weeklyBlockStarts as domainWeeklyBlockStarts
+} from "./lib/weekly-scheduler.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
@@ -903,6 +910,7 @@ const sseClients = new Set();
 const adminSseClients = new Set();
 const chatClients = new Set();
 let timelineSaveNeeded = false;
+let programVoting = null;
 let adminActivityUntil = 0;
 const autoIngestQueue = [];
 const autoIngestQueued = new Set();
@@ -911,15 +919,23 @@ const fadeBreakDetectionInFlight = new Set();
 const weatherForecastCache = new Map();
 let autoIngestPumpActive = false;
 const ffmpegPath = process.env.FFMPEG_PATH || ffmpegInstaller.path || "ffmpeg";
-let hlsPlayout = {
-  id: "",
-  process: null,
-  startedAt: 0,
-  handoffFromId: "",
-  status: "starting",
-  error: ""
-};
 let state = stationStateDefaults({ communityDefaults: COMMUNITY_DEFAULTS });
+const hlsController = createHlsPlayoutController({
+  hlsDir: HLS_DIR,
+  ffmpegPath,
+  spawn,
+  mkdir,
+  readdir,
+  rm,
+  stat,
+  existsSync,
+  argsForProgram: hlsArgsForProgram,
+  publicProgram,
+  standbyProgram,
+  handoffProgram: hlsHandoffProgram,
+  entryEnd
+});
+const hlsPlayout = hlsController.playout;
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -950,6 +966,19 @@ async function ensureState() {
     }
   });
   state = loadedState.state;
+  programVoting = createProgramVotingController({
+    state,
+    mediaDiscovery,
+    maxOptions: PROGRAM_VOTE_MAX_OPTIONS,
+    sessionSupporterTier,
+    getSession,
+    currentProgram: () => programSnapshot(),
+    saveState,
+    broadcastProgram,
+    markDirty: () => {
+      timelineSaveNeeded = true;
+    }
+  });
   const normalizedBumps = normalizeGeneratedBumpsInState();
   const syncedBlocks = syncWeeklyBlockTemplates();
   if (loadedState.created || normalizedBumps || syncedBlocks) await saveState();
@@ -1669,189 +1698,15 @@ function publicProgram() {
 }
 
 function publicProgramVotePoll(live) {
-  if (!live?.id || !live.source) return null;
-  if (live.gapFiller) return null;
-  if (isClearlyPornographicArchiveCandidate({ ...live.source, title: live.title || live.source.title })) return null;
-  const poll = ensureProgramVotePoll(live);
-  maybeQueueComparableFilmSuggestions(poll, live);
-  return publicVotePoll(poll);
-}
-
-function ensureProgramVotePoll(live) {
-  state.programVotes ||= [];
-  const pollId = `program:${live.id}`;
-  let poll = state.programVotes.find((item) => item.id === pollId);
-  if (!poll) {
-    poll = {
-      id: pollId,
-      programId: live.id,
-      sourceId: live.source.id,
-      title: live.title || live.source.title || "Current program",
-      startAt: live.startAt,
-      duration: live.duration,
-      weeklyBlockId: live.weeklyBlockId || "",
-      weeklyBlockName: live.weeklyBlockName || "",
-      isMovie: isMovieLikeProgram(live),
-      isShow: isShowLikeProgram(live),
-      suggestionsStatus: "idle",
-      suggestions: [],
-      votes: [],
-      createdAt: Date.now()
-    };
-    state.programVotes.push(poll);
-    state.programVotes = state.programVotes
-      .filter((item) => Date.now() - Number(item.createdAt || 0) < 1000 * 60 * 60 * 24 * 45)
-      .slice(-200);
-    timelineSaveNeeded = true;
-  }
-  const isMovie = isMovieLikeProgram(live);
-  const isShow = isShowLikeProgram(live);
-  if (poll.isMovie !== isMovie || poll.isShow !== isShow) {
-    poll.isMovie = isMovie;
-    poll.isShow = isShow;
-    timelineSaveNeeded = true;
-  }
-  return poll;
-}
-
-function isMovieLikeProgram(live = {}) {
-  return mediaDiscovery.isMovieLikeProgram(live);
-}
-
-function isShowLikeProgram(live = {}) {
-  return mediaDiscovery.isShowLikeProgram(live);
-}
-
-function publicVotePoll(poll = {}) {
-  const options = votePollOptions(poll);
-  const counts = Object.fromEntries(options.map((option) => [option.id, 0]));
-  for (const vote of poll.votes || []) {
-    if (vote?.optionId in counts) counts[vote.optionId] += Math.max(1, Math.min(4, Number(vote.weight || 1)));
-  }
-  const totalVotes = Object.values(counts).reduce((sum, count) => sum + count, 0);
-  return {
-    id: poll.id,
-    title: poll.title,
-    weeklyBlockName: poll.weeklyBlockName,
-    isMovie: Boolean(poll.isMovie),
-    isShow: Boolean(poll.isShow),
-    suggestionsStatus: poll.suggestionsStatus || "idle",
-    options: options.map((option) => ({
-      ...option,
-      votes: counts[option.id] || 0
-    })),
-    totalVotes,
-    totalBallots: (poll.votes || []).length
-  };
-}
-
-function votePollOptions(poll = {}) {
-  const options = [
-    ...(poll.isShow ? [{
-      id: "next-episode",
-      type: "slot",
-      label: "Next episode",
-      description: "Continue"
-    }] : []),
-    {
-      id: "keep-slot",
-      type: "slot",
-      label: "More like this",
-      description: "Same vibe"
-    },
-    {
-      id: "open-slot",
-      type: "slot",
-      label: "Open slot",
-      description: "Change it up"
-    }
-  ];
-  if (poll.isMovie) {
-    for (const suggestion of cleanVoteSuggestions(poll.suggestions || [])) {
-      options.push({
-        id: `archive:${suggestion.archiveId}:${suggestion.archiveFile}`,
-        type: "archive-film",
-        label: suggestion.title || suggestion.fileTitle || "Comparable film",
-        description: [suggestion.year, suggestion.creator].filter(Boolean).join(" - "),
-        url: suggestion.url,
-        archiveId: suggestion.archiveId,
-        archiveFile: suggestion.archiveFile,
-        duration: suggestion.duration
-      });
-    }
-  }
-  return options.slice(0, PROGRAM_VOTE_MAX_OPTIONS);
-}
-
-function maybeQueueComparableFilmSuggestions(poll, live) {
-  if (!poll?.isMovie || poll.suggestionsStatus !== "idle" || (poll.suggestions || []).length) return;
-  poll.suggestionsStatus = "loading";
-  timelineSaveNeeded = true;
-  comparableFilmSuggestions(live)
-    .then(async (suggestions) => {
-      const current = (state.programVotes || []).find((item) => item.id === poll.id);
-      if (!current) return;
-      current.suggestions = cleanVoteSuggestions(suggestions);
-      current.suggestionsStatus = current.suggestions.length ? "ready" : "empty";
-      await saveState();
-      broadcastProgram();
-    })
-    .catch(async () => {
-      const current = (state.programVotes || []).find((item) => item.id === poll.id);
-      if (!current) return;
-      current.suggestions = [];
-      current.suggestionsStatus = "error";
-      await saveState();
-      broadcastProgram();
-    });
-}
-
-async function comparableFilmSuggestions(live = {}) {
-  return mediaDiscovery.comparableFilmSuggestions(live, { maxOptions: PROGRAM_VOTE_MAX_OPTIONS });
-}
-
-function comparableArchiveQuery(live = {}) {
-  return mediaDiscovery.comparableArchiveQuery(live);
-}
-
-function comparableFilmCandidateFits(live = {}, candidate = {}) {
-  return mediaDiscovery.comparableFilmCandidateFits(live, candidate);
-}
-
-function cleanVoteSuggestions(suggestions = []) {
-  return mediaDiscovery.cleanVoteSuggestions(suggestions);
+  return programVoting.publicProgramVotePoll(live);
 }
 
 function isClearlyPornographicArchiveCandidate(candidate = {}) {
-  return mediaDiscovery.isClearlyPornographicArchiveCandidate(candidate);
+  return programVoting.isClearlyPornographicArchiveCandidate(candidate);
 }
 
 async function castProgramVote(req, body = {}) {
-  const live = programSnapshot().live;
-  if (!live) throw new Error("There is no live program to vote on.");
-  if (isClearlyPornographicArchiveCandidate({ ...live.source, title: live.title || live.source?.title })) {
-    throw new Error("Voting is not available for this program.");
-  }
-  const poll = ensureProgramVotePoll(live);
-  const optionId = String(body.optionId || "").trim();
-  if (!votePollOptions(poll).some((option) => option.id === optionId)) throw new Error("That vote option is not available.");
-  const voterId = String(body.voterId || "").replace(/[^a-z0-9-]/gi, "").slice(0, 80);
-  if (!voterId) throw new Error("Missing voter id.");
-  const session = getSession(req);
-  const tier = sessionSupporterTier(session);
-  const voterKey = session ? `user:${session.userId || session.username}` : `anon:${voterId}`;
-  poll.votes = (poll.votes || []).filter((vote) => vote.voterId !== voterKey);
-  poll.votes.push({
-    voterId: voterKey,
-    optionId,
-    weight: Math.max(1, Math.min(4, Number(tier.weight || 1))),
-    supporterTier: tier.id,
-    username: session?.username || "",
-    createdAt: Date.now()
-  });
-  await saveState();
-  broadcastProgram();
-  return publicVotePoll(poll);
+  return programVoting.castProgramVote(req, body);
 }
 
 function publicAudience() {
@@ -3579,30 +3434,14 @@ async function flushTimelineSave() {
 }
 
 async function syncHlsPlayout() {
-  const program = publicProgram();
-  const live = program.live || standbyProgram(program.serverTime);
-  const handoff = hlsHandoffProgram(program);
-  if (handoff && hlsPlayout.id !== handoff.id && hlsPlayout.handoffFromId !== live.id) {
-    await startHlsPlayout(handoff, { handoffFromId: live.id });
-    return;
-  }
-  if (hlsPlayout.handoffFromId === live.id && hlsPlayout.id !== live.id && Date.now() < entryEnd(live) + 500) {
-    return;
-  }
-  if (hlsPlayout.id === live.id && hlsPlayout.status === "running" && hlsPlayout.process && !hlsPlayout.process.killed) {
-    if (Date.now() - hlsPlayout.startedAt < 12000) return;
-    if (await isHlsPlaylistFresh()) return;
-    hlsPlayout.error = "HLS playlist stopped updating; restarting playout.";
-  }
-
-  await startHlsPlayout(live);
+  return hlsController.sync();
 }
 
-function hlsHandoffProgram(program = {}) {
+function hlsHandoffProgram(program = {}, playout = hlsPlayout) {
   const live = program.live;
   const next = hlsNextPlayoutProgram(live);
   if (!live || !next || !next.source) return null;
-  if (hlsPlayout.id !== live.id) return null;
+  if (playout.id !== live.id) return null;
   const remainingMs = entryEnd(live) - Date.now();
   if (remainingMs < -250 || remainingMs > HLS_HANDOFF_LEAD_MS) return null;
   return {
@@ -3623,12 +3462,7 @@ function hlsNextPlayoutProgram(live = null) {
 }
 
 async function isHlsPlaylistFresh(maxAgeMs = 10000) {
-  try {
-    const playlistStat = await stat(path.join(HLS_DIR, "live.m3u8"));
-    return playlistStat.size > 0 && Date.now() - playlistStat.mtimeMs < maxAgeMs;
-  } catch {
-    return false;
-  }
+  return hlsController.isPlaylistFresh(maxAgeMs);
 }
 
 function standbyProgram(now = Date.now()) {
@@ -3647,55 +3481,15 @@ function standbyProgram(now = Date.now()) {
 }
 
 async function startHlsPlayout(live, options = {}) {
-  stopHlsPlayout();
-  hlsPlayout.id = live.id;
-  hlsPlayout.startedAt = Date.now();
-  hlsPlayout.handoffFromId = options.handoffFromId || live.handoffFromId || "";
-  hlsPlayout.status = "starting";
-  hlsPlayout.error = "";
-  await mkdir(HLS_DIR, { recursive: true });
-  await pruneHlsDirectory();
-
-  const args = hlsArgsForProgram(live);
-  const child = spawn(ffmpegPath, args, { windowsHide: true });
-  hlsPlayout.process = child;
-  hlsPlayout.status = "running";
-  child.stderr.on("data", (chunk) => {
-    const text = chunk.toString().trim();
-    if (text) hlsPlayout.error = text.slice(-800);
-  });
-  child.on("error", (error) => {
-    if (hlsPlayout.process === child) hlsPlayout.process = null;
-    hlsPlayout.status = "error";
-    hlsPlayout.error = `FFmpeg failed: ${error.message}`;
-  });
-  child.on("exit", (code) => {
-    if (hlsPlayout.process === child) {
-      hlsPlayout.process = null;
-      hlsPlayout.status = code === 0 ? "ended" : "error";
-      if (code !== 0 && !hlsPlayout.error) hlsPlayout.error = `FFmpeg exited with code ${code}.`;
-    }
-  });
+  return hlsController.start(live, options);
 }
 
 async function pruneHlsDirectory(maxAgeMs = 1000 * 60 * 5) {
-  if (!existsSync(HLS_DIR)) return;
-  const cutoff = Date.now() - maxAgeMs;
-  const entries = await readdir(HLS_DIR, { withFileTypes: true }).catch(() => []);
-  await Promise.all(entries
-    .filter((entry) => entry.isFile() && entry.name !== "live.m3u8")
-    .map(async (entry) => {
-      const filePath = path.join(HLS_DIR, entry.name);
-      const fileStat = await stat(filePath).catch(() => null);
-      if (fileStat && fileStat.mtimeMs < cutoff) await rm(filePath, { force: true });
-    }));
+  return hlsController.pruneDirectory(maxAgeMs);
 }
 
 function stopHlsPlayout() {
-  if (!hlsPlayout.process) return;
-  const child = hlsPlayout.process;
-  hlsPlayout.process = null;
-  child.kill("SIGTERM");
+  return hlsController.stop();
 }
 
 function hlsArgsForProgram(live) {
@@ -4706,136 +4500,28 @@ function materializeWeeklySchedule({ lookaheadDays = WEEKLY_SCHEDULE_LOOKAHEAD_D
 }
 
 function weeklyBlockStartTimes(block, lookaheadDays) {
-  const [hour, minute] = String(block.time || "20:00").split(":").map((part) => Number(part));
-  const starts = [];
-  const cursor = new Date();
-  cursor.setHours(0, 0, 0, 0);
-  for (let offset = 0; offset < lookaheadDays; offset += 1) {
-    const date = new Date(cursor);
-    date.setDate(cursor.getDate() + offset);
-    if (!(block.days || []).includes(date.getDay())) continue;
-    date.setHours(Number.isFinite(hour) ? hour : 20, Number.isFinite(minute) ? minute : 0, 0, 0);
-    starts.push(date.getTime());
-  }
-  return starts;
+  return domainWeeklyBlockStarts(block, { lookaheadDays });
 }
 
 function scheduleSourcesIntoBlock(block, sources, startAt) {
-  const blockMs = block.durationMinutes * 60 * 1000;
-  const blockEnd = startAt + blockMs;
-  let cursor = startAt;
-  let index = Math.abs(hashString(`${block.id}:${new Date(startAt).toDateString()}`)) % sources.length;
-  const entries = [];
-  let contentCount = 0;
-  const usedEpisodes = new Set();
-
-  const addBlockBump = (kind, nextSource = null) => {
-    const remaining = Math.round((blockEnd - cursor) / 1000);
-    if (remaining < BLOCK_BUMP_DURATION + 5) return false;
-    const bumpSource = createWeeklyBlockBumpSource(block, kind, cursor, nextSource, contentCount);
-    state.sources.push(bumpSource);
-    entries.push({
-      id: crypto.randomUUID(),
-      sourceId: bumpSource.id,
-      title: bumpSource.title,
-      startAt: cursor,
-      duration: bumpSource.duration,
-      weeklyBlockId: block.id,
-      weeklyBlockName: block.name,
-      autoBump: true,
-      blockBump: true
-    });
-    cursor += bumpSource.duration * 1000;
-    return true;
-  };
-
-  addBlockBump("intro", sources[index % sources.length]);
-  while (cursor < blockEnd - 5000 && entries.length < 80) {
-    const source = nextUnusedBlockSource(sources, index, usedEpisodes);
-    if (!source) break;
-    const remaining = Math.round((blockEnd - cursor) / 1000);
-    const duration = Math.max(5, Math.min(Math.round(source.duration), remaining));
-    usedEpisodes.add(sourceEpisodeKey(source));
-    entries.push({
-      id: crypto.randomUUID(),
-      sourceId: source.id,
-      title: `${block.name}: ${source.title}`,
-      startAt: cursor,
-      duration,
-      weeklyBlockId: block.id,
-      weeklyBlockName: block.name
-    });
-    cursor += duration * 1000;
-    index += 1;
-    contentCount += 1;
-    if (contentCount % 2 === 1) addBlockBump("station-id", nextUnusedBlockSource(sources, index, usedEpisodes));
-  }
-  return entries;
-}
-
-function nextUnusedBlockSource(sources = [], startIndex = 0, usedEpisodes = new Set()) {
-  if (!sources.length) return null;
-  for (let offset = 0; offset < sources.length; offset += 1) {
-    const source = sources[(startIndex + offset) % sources.length];
-    if (!source || usedEpisodes.has(sourceEpisodeKey(source))) continue;
-    return source;
-  }
-  return null;
+  return scheduleSourcesIntoWeeklyBlock(block, sources, startAt, {
+    blockBumpDuration: BLOCK_BUMP_DURATION,
+    hashString,
+    sourceEpisodeKey,
+    createId: () => crypto.randomUUID(),
+    createBumpSource: createWeeklyBlockBumpSource,
+    onBumpSource: (bumpSource) => state.sources.push(bumpSource)
+  });
 }
 
 function createWeeklyBlockBumpSource(block, kind, startAt, nextSource = null, bumpIndex = 0) {
-  const identity = weeklyBlockIdentity(block);
-  const tagline = identity.taglines[Math.abs(hashString(`${block.id}:${kind}:${startAt}:${bumpIndex}`)) % identity.taglines.length];
-  const music = randomBumpMusic(BLOCK_BUMP_DURATION);
-  const seed = Math.abs(hashString(`${block.id}:${startAt}:${kind}:${bumpIndex}`)) % 100000;
-  const nextLine = nextSource?.title ? `NEXT: ${nextSource.title}` : "MORE STRANGE PROGRAMMING SHORTLY";
-  return {
-    id: crypto.randomUUID(),
-    type: "bump",
-    title: `${block.name}: ${kind === "intro" ? "block intro" : "block bump"}`,
-    duration: BLOCK_BUMP_DURATION,
-    randomEligible: false,
-    weeklyBlockId: block.id,
-    bump: {
-      kind: "block-bump",
-      blockId: block.id,
-      blockName: block.name,
-      bumpClass: kind,
-      heading: identity.heading,
-      lines: [
-        identity.heading,
-        tagline,
-        nextLine
-      ],
-      placement: identity.placement,
-      alignment: identity.alignment,
-      tone: identity.tone,
-      fontSize: identity.fontSize,
-      secondsPerLine: 1.65,
-      tintStrength: kind === "intro" ? 18 : 28,
-      creditText: music.creditText,
-      creditSize: 19,
-      creditPosition: "bottom-right",
-      effects: identity.effects,
-      effectIntensity: kind === "intro" ? 26 : 20,
-      intentionalGlitch: false,
-      presentation: generatedBumpPresentation(false),
-      productionStyle: kind === "intro" ? "promo-card" : "lower-third",
-      productionAccent: "signal",
-      productionBadge: block.name,
-      productionKicker: kind === "intro" ? "block premiere" : "station identification",
-      format: "landscape",
-      seed,
-      wallpaper: {
-        shapes: identity.shapes,
-        scheme: identity.scheme,
-        spacing: kind === "intro" ? 76 : 108,
-        seed
-      },
-      audio: music.path,
-      audioStart: music.start
-    }
-  };
+  return factoryCreateWeeklyBlockBumpSource(block, kind, startAt, nextSource, bumpIndex, {
+    blockBumpDuration: BLOCK_BUMP_DURATION,
+    weeklyBlockIdentity,
+    randomBumpMusic,
+    hashString,
+    generatedBumpPresentation
+  });
 }
 
 function hashString(value) {
@@ -6294,13 +5980,11 @@ if (ensureAutoBumpAudioStarts()) await saveState();
 if (await ensureWeatherBumps()) await saveState();
 queueAutoIngestForLiveQueue("server startup");
 syncHlsPlayout().catch((error) => {
-  hlsPlayout.status = "error";
-  hlsPlayout.error = error.message;
+  hlsController.setError(error);
 });
 setInterval(broadcastProgram, 1000);
 setInterval(() => syncHlsPlayout().catch((error) => {
-  hlsPlayout.status = "error";
-  hlsPlayout.error = error.message;
+  hlsController.setError(error);
 }), 1000);
 setInterval(() => flushTimelineSave().catch((error) => {
   console.error("Timeline save failed:", error);
