@@ -1,11 +1,72 @@
 import { createServer } from "node:http";
-import { readFile, writeFile, mkdir, stat, readdir, rm } from "node:fs/promises";
+import { readFile, mkdir, stat, readdir, rm } from "node:fs/promises";
 import { createReadStream, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
 import { spawn } from "node:child_process";
 import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
+import {
+  COMMUNITY_DEFAULTS,
+  activeCommunityCrew as domainActiveCommunityCrew,
+  createCommunitySuggestion as domainCreateCommunitySuggestion,
+  normalizeCommunityState,
+  publicCommunity as domainPublicCommunity,
+  sessionSupporterTier as domainSessionSupporterTier,
+  supporterTierById as domainSupporterTierById,
+  updateCommunitySettings as domainUpdateCommunitySettings,
+  updateCommunitySuggestion as domainUpdateCommunitySuggestion,
+  updateSupporterTier as domainUpdateSupporterTier
+} from "./lib/community.js";
+import {
+  blockIdentityPackFor as domainBlockIdentityPackFor,
+  continuityBrain as domainContinuityBrain,
+  normalizeContinuityLog,
+  publicContinuityLog as domainPublicContinuityLog,
+  recordContinuityEvent as domainRecordContinuityEvent
+} from "./lib/continuity.js";
+import {
+  normalizeLoreState,
+  publicLore as domainPublicLore,
+  upsertLoreEntry as domainUpsertLoreEntry
+} from "./lib/lore.js";
+import * as mediaDiscovery from "./lib/media-discovery.js";
+import {
+  loadStationState,
+  programmingDomainView,
+  saveStationState,
+  stationStateDefaults
+} from "./lib/station-state.js";
+import {
+  activeBroadcastEntries as engineActiveBroadcastEntries,
+  entriesOverlap as engineEntriesOverlap,
+  entryEnd as engineEntryEnd,
+  entryReason as engineEntryReason,
+  isAudienceScheduleEntry as engineIsAudienceScheduleEntry,
+  isBumpSource as engineIsBumpSource,
+  nextPlayoutProgram as engineNextPlayoutProgram,
+  plannedGapFillWindow,
+  planLongformContinuityBreaks,
+  planTimedBumpInsertion,
+  planWeatherBumpTargets,
+  protectOverrideEntryAgainstSchedule,
+  queueProtectionSummary,
+  resolveBroadcastTimeline,
+  shouldUseGapFillerBump,
+  weatherBumpEntries as engineWeatherBumpEntries
+} from "./lib/programming-engine.js";
+import {
+  activeBroadcastFx as domainActiveBroadcastFx,
+  beginFxDecay,
+  createFxEntry,
+  fxInstrument,
+  fxMaxDuration,
+  intensifyFxEntry,
+  isFxCommand,
+  isFxToggle,
+  normalizeFxSnapshots,
+  publicFxInstruments
+} from "./lib/live-fx.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
@@ -15,73 +76,55 @@ const BUMP_MUSIC_DIR = path.join(MEDIA_DIR, "bump-music");
 const DJ_SOUNDBOARD_DIR = path.join(MEDIA_DIR, "dj-soundboard");
 const DJ_SOUNDBOARD_MANIFEST = path.join(DJ_SOUNDBOARD_DIR, "manifest.json");
 const BUMP_BACKGROUND_EXTENSIONS = /\.(avif|gif|jpe?g|png|webp|mp4|mov|m4v|webm)$/i;
+const BUMP_PREVIEW_VIDEO_EXTENSIONS = /\.(mp4|mov|m4v|webm|mkv|avi|ogv|ogg)$/i;
 const HLS_DIR = process.env.DOINK_HLS_DIR || path.join(DATA_DIR, "hls");
 const PUBLIC_DIR = path.join(__dirname, "public");
 const VENDORED_BUMP_GENERATOR_DIR = path.join(__dirname, "vendor", "BumpGenerator");
 const BUMP_GENERATOR_DIR = process.env.BUMP_GENERATOR_DIR
   || (existsSync(VENDORED_BUMP_GENERATOR_DIR) ? VENDORED_BUMP_GENERATOR_DIR : path.join(__dirname, "..", "BumpGenerator"));
 const STATE_PATH = path.join(DATA_DIR, "state.json");
+const HLS_HANDOFF_LEAD_MS = 2400;
 const AUTO_BUMP_INTERVAL_MS = 1000 * 60 * 3;
 const AUTO_BUMP_DURATION = 20;
+const WEATHER_BUMP_INTERVAL_MS = 1000 * 60 * 45;
+const WEATHER_BUMP_MIN_GAP_MS = 1000 * 60 * 20;
+const WEATHER_BUMP_LOOKAHEAD_MS = 1000 * 60 * 60 * 5;
+const WEATHER_BUMP_DURATION = 34;
 const BLOCK_BUMP_DURATION = 16;
 const GAP_FILLER_MIN_GAP_SECONDS = 20;
 const GAP_FILLER_LOOKAHEAD_MS = 1000 * 60 * 90;
 const GAP_FILLER_MIN_SOURCE_SECONDS = 8;
 const GAP_FILLER_MAX_SOURCE_SECONDS = 210;
 const GAP_FILLER_BUMP_DURATION = 42;
+const GAP_FILLER_PROMO_DURATION = 30;
+const GAP_FILLER_PROMO_LINEUP_COUNT = 4;
 const GAP_FILLER_MAX_ENTRIES = 48;
 const GAP_FILLER_BLOCK_NAME = "STATION BREAK";
-const GAP_FILLER_VERSION = 6;
+const GAP_FILLER_VERSION = 9;
 const FADE_BREAK_MIN_SECONDS = 60 * 5.5;
 const FADE_BREAK_MIN_SOURCE_DURATION = 60 * 12;
 const FADE_BREAK_MIN_REMAINING_SECONDS = 60 * 4;
-const FADE_BREAK_SCAN_SECONDS = 60 * 24;
+const FADE_BREAK_SCAN_SECONDS = 60 * 58;
 const FADE_BREAK_BUMP_DURATION = 18;
 const FADE_BREAK_MAX_CONCURRENT_PROBES = 2;
+const LONGFORM_BREAK_MIN_PROGRAM_SECONDS = 60 * 24;
+const LONGFORM_BREAK_FIRST_AFTER_SECONDS = 60 * 8;
+const LONGFORM_BREAK_MIN_SPACING_SECONDS = 60 * 17;
+const LONGFORM_BREAK_END_GUARD_SECONDS = 60 * 6;
+const LONGFORM_BREAK_MAX_PER_ENTRY = 3;
+const LONGFORM_BREAK_CLUSTER_MAX_SECONDS = 44;
+const LONGFORM_BREAK_PLAN_VERSION = 2;
 const BUMP_SUPPORTED_EFFECTS = new Set(["noise", "vhs", "scanlines", "chromatic", "flicker", "letterbox"]);
 const BUMP_GLITCH_EFFECTS = new Set(["noise", "flicker"]);
 const BUMP_CLEAN_EFFECTS = ["scanlines", "letterbox", "vhs", "chromatic"];
 const BUMP_INTENTIONAL_GLITCH_EFFECTS = ["noise", "vhs", "scanlines", "chromatic", "flicker", "letterbox"];
+const BUMP_MUSIC_ARTIST = "Doink Wizard";
+const BUMP_PRODUCTION_STYLES = new Set(["standard", "promo-card", "schedule-card", "lower-third", "split-card"]);
+const BUMP_PRODUCTION_ACCENTS = new Set(["auto", "hot", "cool", "signal", "mono"]);
 const MIN_QUEUE_VIDEO_ITEMS = 5;
 const CHAOS_AUDIO_PLAYLIST_ID = "PLWL3FzHaRRMkQqUhks8Y9l35rqY_kKCto";
 const WEEKLY_SCHEDULE_LOOKAHEAD_DAYS = 8;
 const WEEKLY_ARCHIVE_IMPORT_LIMIT = 12;
-const WEEKLY_ARCHIVE_EXCLUDE_TERMS = [
-  "alex jones",
-  "conspiracy",
-  "sermon",
-  "shaykh",
-  "quran",
-  "religion",
-  "isis",
-  "terror",
-  "offensive",
-  "adult",
-  "nsfw",
-  "nfsw",
-  "fetish",
-  "sexy",
-  "sex",
-  "nasty",
-  "barely legal",
-  "slave",
-  "dominatrix",
-  "nude",
-  "porn",
-  "erotic",
-  "hate",
-  "tosec",
-  "dat pack",
-  "iso",
-  "dvd transfer",
-  "deleted videos",
-  "conference",
-  "black hat",
-  "shmoocon",
-  "hope -",
-  "patricia",
-  "kevin annett"
-];
 const WEEKLY_BLOCKS = [
   {
     id: "the-fridge",
@@ -156,6 +199,23 @@ const WEEKLY_BLOCKS = [
       "creative commons music video",
       "live music performance archive",
       "full album video creative commons"
+    ]
+  },
+  {
+    id: "toonski",
+    name: "TOONSKI",
+    folderName: "Weekly - TOONSKI",
+    days: [0],
+    time: "18:00",
+    durationMinutes: 240,
+    minDuration: 600,
+    requireAny: ["anime", "animation", "animated", "action", "sci-fi", "space", "robot", "mecha", "toonami"],
+    queries: [
+      "90s action anime ova",
+      "classic anime action sci fi",
+      "retro mecha anime ova",
+      "space adventure animation anime",
+      "animated action anthology"
     ]
   },
   {
@@ -242,6 +302,18 @@ const WEEKLY_BLOCKS = [
 ];
 
 const WEEKLY_BLOCK_IDENTITIES = {
+  "station-break": {
+    heading: "STATION BREAK",
+    taglines: ["no dead air, only strange air", "the schedule is changing reels", "do not adjust the house"],
+    scheme: "warning",
+    shapes: "stripes",
+    effects: ["scanlines", "letterbox"],
+    alignment: "left",
+    placement: "middle",
+    tone: "caption",
+    fontSize: 50,
+    creditText: "DOINKTV CONTINUITY DEPT."
+  },
   "the-fridge": {
     heading: "THE FRIDGE",
     taglines: ["prime time cartoons, sketches, and questionable leftovers", "open the door, lose the plot", "cold cuts from the animated shelf"],
@@ -301,6 +373,18 @@ const WEEKLY_BLOCK_IDENTITIES = {
     tone: "washed",
     fontSize: 52,
     creditText: "FULL SONG BUMPS EVENTUALLY"
+  },
+  toonski: {
+    heading: "TOONSKI",
+    taglines: ["four hours from the orbiting tape deck", "after-dinner action transmission", "robot sunset, couch locked"],
+    scheme: "blueprint",
+    shapes: "starburst",
+    effects: ["vhs", "scanlines", "chromatic"],
+    alignment: "right",
+    placement: "middle",
+    tone: "caption",
+    fontSize: 60,
+    creditText: "SUNDAY ACTION SIGNAL"
   },
   "music-box": {
     heading: "MUSIC BOX",
@@ -384,6 +468,12 @@ const BUMP_CLASSES = [
     description: "Short identity bump attached to a weekly programming block."
   },
   {
+    id: "block-promo-bump",
+    label: "Block Promo Bump",
+    status: "active",
+    description: "Generated station-break ad for upcoming blocks and programs, optionally backed by a short preview clip."
+  },
+  {
     id: "fade-break-bump",
     label: "Fade Break Bump",
     status: "active",
@@ -392,20 +482,20 @@ const BUMP_CLASSES = [
   {
     id: "full-song-bump",
     label: "Full Song Bump",
-    status: "placeholder",
-    description: "Future long-form music/video bump class for music-heavy blocks."
+    status: "planned",
+    description: "Planned long-form music/video bump class for music-heavy blocks; not inserted automatically yet."
   },
   {
     id: "legal-id-bump",
     label: "Legal ID Bump",
-    status: "placeholder",
-    description: "Future station ID break with call sign/legal-ID flavor."
+    status: "active",
+    description: "Station identity break class for call-sign, frequency, and legal-ID flavored continuity."
   },
   {
     id: "call-in-bump",
     label: "Call-In Bump",
-    status: "placeholder",
-    description: "Future break built around viewer/chat/caller material."
+    status: "planned",
+    description: "Planned break class for viewer, chat, and caller material once caller ingest is formalized."
   },
   {
     id: "supporter-shoutout-bump",
@@ -422,13 +512,12 @@ const BUMP_CLASSES = [
   {
     id: "weather-bump",
     label: "Weather Bump",
-    status: "placeholder",
-    description: "Future fake/local/weather-style interstitial slot."
+    status: "active",
+    description: "One-week forecast card for a random reasonably sized city somewhere around the world."
   }
 ];
 
 const PROGRAM_VOTE_MAX_OPTIONS = 4;
-const EXPLICIT_ARCHIVE_PATTERN = /\b(?:hentai|porn(?:o|ography)?|xxx|x-rated|adult\s+video|sex\s+tape|hardcore|explicit\s+sex|uncensored\s+sex|erotic\s+massage|blowjob|fellatio|cumshot|creampie|bukkake|gangbang|handjob|deepthroat|anal\s+sex|pussy|milf|barely\s+legal|onlyfans)\b/i;
 
 const ADMIN_USER = process.env.ADMIN_USER || "DoinkWizard";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ChipTanaka12!@";
@@ -436,19 +525,40 @@ const ADMIN_ACCOUNTS = [
   { username: ADMIN_USER, password: ADMIN_PASSWORD },
   { username: "ChillNeil", password: "ChillyBilly12!@" }
 ];
-const SUPPORTER_TIERS = [
-  { id: "viewer", label: "Viewer", badge: "VIEWER", weight: 1, description: "Watching the free signal." },
-  { id: "crew", label: "Station Crew", badge: "CREW", weight: 2, description: "Patreon supporter with programming influence and chat recognition." },
-  { id: "operator", label: "Signal Operator", badge: "OP", weight: 3, description: "Higher-support crew with deeper station influence hooks." }
+const WEATHER_CITIES = [
+  { name: "Accra", country: "Ghana", latitude: 5.56, longitude: -0.2 },
+  { name: "Amsterdam", country: "Netherlands", latitude: 52.37, longitude: 4.9 },
+  { name: "Auckland", country: "New Zealand", latitude: -36.85, longitude: 174.76 },
+  { name: "Bangkok", country: "Thailand", latitude: 13.75, longitude: 100.5 },
+  { name: "Barcelona", country: "Spain", latitude: 41.39, longitude: 2.17 },
+  { name: "Bogota", country: "Colombia", latitude: 4.71, longitude: -74.07 },
+  { name: "Buenos Aires", country: "Argentina", latitude: -34.61, longitude: -58.38 },
+  { name: "Cairo", country: "Egypt", latitude: 30.04, longitude: 31.24 },
+  { name: "Cape Town", country: "South Africa", latitude: -33.92, longitude: 18.42 },
+  { name: "Chicago", country: "United States", latitude: 41.88, longitude: -87.63 },
+  { name: "Copenhagen", country: "Denmark", latitude: 55.68, longitude: 12.57 },
+  { name: "Dakar", country: "Senegal", latitude: 14.69, longitude: -17.45 },
+  { name: "Hanoi", country: "Vietnam", latitude: 21.03, longitude: 105.85 },
+  { name: "Helsinki", country: "Finland", latitude: 60.17, longitude: 24.94 },
+  { name: "Istanbul", country: "Turkey", latitude: 41.01, longitude: 28.98 },
+  { name: "Jakarta", country: "Indonesia", latitude: -6.21, longitude: 106.85 },
+  { name: "Lagos", country: "Nigeria", latitude: 6.52, longitude: 3.38 },
+  { name: "Lisbon", country: "Portugal", latitude: 38.72, longitude: -9.14 },
+  { name: "Melbourne", country: "Australia", latitude: -37.81, longitude: 144.96 },
+  { name: "Mexico City", country: "Mexico", latitude: 19.43, longitude: -99.13 },
+  { name: "Montreal", country: "Canada", latitude: 45.5, longitude: -73.57 },
+  { name: "Nairobi", country: "Kenya", latitude: -1.29, longitude: 36.82 },
+  { name: "Osaka", country: "Japan", latitude: 34.69, longitude: 135.5 },
+  { name: "Prague", country: "Czechia", latitude: 50.08, longitude: 14.44 },
+  { name: "Reykjavik", country: "Iceland", latitude: 64.15, longitude: -21.94 },
+  { name: "Santiago", country: "Chile", latitude: -33.45, longitude: -70.66 },
+  { name: "Seoul", country: "South Korea", latitude: 37.57, longitude: 126.98 },
+  { name: "Stockholm", country: "Sweden", latitude: 59.33, longitude: 18.07 },
+  { name: "Taipei", country: "Taiwan", latitude: 25.03, longitude: 121.56 },
+  { name: "Toronto", country: "Canada", latitude: 43.65, longitude: -79.38 },
+  { name: "Valparaiso", country: "Chile", latitude: -33.05, longitude: -71.62 },
+  { name: "Warsaw", country: "Poland", latitude: 52.23, longitude: 21.01 }
 ];
-const COMMUNITY_MODES = new Set(["open-signal", "crew-week", "takeover-night"]);
-const COMMUNITY_DEFAULTS = {
-  stationMode: "open-signal",
-  supporterGoal: "Fund stranger blocks, cleaner continuity, and bigger live takeover nights.",
-  spotlight: "Supporter picks help steer future programming.",
-  takeoverPolicy: "Supporters can suggest chaos; admins still perform the takeover live.",
-  suggestions: []
-};
 const PROJECT_MISSION = {
   headline: "A Patreon-backed underground TV station performed like a live instrument.",
   statement: "DoinkTV should feel like a real community channel that admins can play in real time: scheduled programming, supporter influence, block identity, generated bumps, and Ableton-style live FX all feeding one coherent broadcast experience.",
@@ -798,34 +908,18 @@ const autoIngestQueue = [];
 const autoIngestQueued = new Set();
 const autoIngestInFlight = new Set();
 const fadeBreakDetectionInFlight = new Set();
+const weatherForecastCache = new Map();
 let autoIngestPumpActive = false;
 const ffmpegPath = process.env.FFMPEG_PATH || ffmpegInstaller.path || "ffmpeg";
 let hlsPlayout = {
   id: "",
   process: null,
   startedAt: 0,
+  handoffFromId: "",
   status: "starting",
   error: ""
 };
-let state = {
-  sources: [],
-  sourceFolders: [],
-  schedule: [],
-  weeklyBlocks: [],
-  liveQueue: [],
-  broadcastMode: "scheduled",
-  lastAutoBumpAt: 0,
-  bumpMusic: [],
-  users: [],
-  chat: [],
-  programVotes: [],
-  community: { ...COMMUNITY_DEFAULTS },
-  nowPlaying: null,
-  activeFx: [],
-  fxSnapshots: [],
-  fadeBreaks: {},
-  continuityLog: []
-};
+let state = stationStateDefaults({ communityDefaults: COMMUNITY_DEFAULTS });
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -845,42 +939,20 @@ async function ensureState() {
   await mkdir(DATA_DIR, { recursive: true });
   await mkdir(MEDIA_DIR, { recursive: true });
   await mkdir(HLS_DIR, { recursive: true });
-  if (!existsSync(STATE_PATH)) {
-    await saveState();
-  } else {
-    state = JSON.parse(await readFile(STATE_PATH, "utf8"));
-    state.sources ||= [];
-    state.sourceFolders ||= [];
-    state.schedule ||= [];
-    state.weeklyBlocks ||= [];
-    state.liveQueue ||= [];
-    state.broadcastMode = state.broadcastMode === "queue" ? "queue" : "scheduled";
-    state.lastAutoBumpAt ||= 0;
-    state.bumpMusic ||= [];
-    state.users ||= [];
-    state.chat ||= [];
-    state.programVotes ||= [];
-    state.community = normalizeCommunityState(state.community);
-    state.nowPlaying ||= null;
-    state.activeFx ||= [];
-    state.fxSnapshots = normalizeFxSnapshots(state.fxSnapshots);
-    state.fadeBreaks ||= {};
-    state.continuityLog = normalizeContinuityLog(state.continuityLog);
-    state.sourceFolders = state.sourceFolders.map((folder) => ({
-      ...folder,
-      randomEligible: folder.randomEligible !== false
-    }));
-    state.sources = state.sources.map((source) => ({
-      ...source,
-      randomEligible: source.randomEligible ?? source.type !== "youtube"
-    }));
-  }
-  state.community = normalizeCommunityState(state.community);
-  state.continuityLog = normalizeContinuityLog(state.continuityLog);
-  state.fxSnapshots = normalizeFxSnapshots(state.fxSnapshots);
+  const loadedState = await loadStationState({
+    statePath: STATE_PATH,
+    defaultState: stationStateDefaults({ communityDefaults: COMMUNITY_DEFAULTS }),
+    normalizers: {
+      normalizeCommunityState,
+      normalizeLoreState,
+      normalizeContinuityLog,
+      normalizeFxSnapshots
+    }
+  });
+  state = loadedState.state;
   const normalizedBumps = normalizeGeneratedBumpsInState();
   const syncedBlocks = syncWeeklyBlockTemplates();
-  if (normalizedBumps || syncedBlocks) await saveState();
+  if (loadedState.created || normalizedBumps || syncedBlocks) await saveState();
 }
 
 function publicShowControl() {
@@ -888,22 +960,9 @@ function publicShowControl() {
     scenes: PERFORMANCE_SCENES,
     cues: PERFORMANCE_CUES.map(({ id, sceneId, label, clip, macro, bumpClass, fx }) => ({ id, sceneId, label, clip, macro, bumpClass, fxCount: Array.isArray(fx) ? fx.length : 0 })),
     macros: Object.fromEntries(Object.entries(PERFORMANCE_MACROS).map(([id, macro]) => [id, { ...macro }])),
+    instruments: publicFxInstruments(),
     snapshots: publicFxSnapshots()
   };
-}
-
-function normalizeFxSnapshots(snapshots = []) {
-  return (Array.isArray(snapshots) ? snapshots : [])
-    .map((snapshot) => ({
-      id: String(snapshot.id || crypto.randomUUID()),
-      name: String(snapshot.name || "FX snapshot").slice(0, 80),
-      note: String(snapshot.note || "").slice(0, 180),
-      fx: Array.isArray(snapshot.fx) ? snapshot.fx.slice(0, 8) : [],
-      createdAt: Number(snapshot.createdAt || Date.now()),
-      updatedAt: Number(snapshot.updatedAt || snapshot.createdAt || Date.now())
-    }))
-    .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0))
-    .slice(0, 24);
 }
 
 function publicFxSnapshots() {
@@ -918,92 +977,34 @@ function publicFxSnapshots() {
   }));
 }
 
-function normalizeContinuityLog(log = []) {
-  return (Array.isArray(log) ? log : [])
-    .map((entry) => ({
-      id: String(entry.id || crypto.randomUUID()),
-      type: String(entry.type || "station").slice(0, 40),
-      title: String(entry.title || "Station event").slice(0, 140),
-      detail: String(entry.detail || "").slice(0, 360),
-      severity: ["info", "success", "warning", "danger"].includes(entry.severity) ? entry.severity : "info",
-      sourceId: String(entry.sourceId || ""),
-      entryId: String(entry.entryId || ""),
-      suggestionId: String(entry.suggestionId || ""),
-      createdAt: Number(entry.createdAt || Date.now())
-    }))
-    .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
-    .slice(0, 160);
-}
-
 function recordContinuityEvent(event = {}) {
-  state.continuityLog = normalizeContinuityLog([
-    {
-      id: crypto.randomUUID(),
-      type: event.type || "station",
-      title: event.title || "Station event",
-      detail: event.detail || "",
-      severity: event.severity || "info",
-      sourceId: event.sourceId || "",
-      entryId: event.entryId || "",
-      suggestionId: event.suggestionId || "",
-      createdAt: Date.now()
-    },
-    ...(state.continuityLog || [])
-  ]);
-  return state.continuityLog[0];
+  return domainRecordContinuityEvent(state, event);
 }
 
 function publicContinuityLog(limit = 24) {
-  state.continuityLog = normalizeContinuityLog(state.continuityLog);
-  return state.continuityLog.slice(0, Math.max(1, Math.min(80, Number(limit || 24))));
+  return domainPublicContinuityLog(state, limit);
 }
 
 function blockIdentityPackFor(live = null) {
-  const blockText = `${live?.weeklyBlockId || ""} ${live?.weeklyBlockName || ""} ${live?.title || ""}`.trim();
-  const pack = BLOCK_IDENTITY_PACKS.find((item) => item.match.test(blockText)) || null;
-  const scene = performanceSceneById(pack?.sceneId || "pirate");
-  if (pack) {
-    return {
-      label: pack.label,
-      sceneId: pack.sceneId,
-      sceneLabel: scene.label,
-      sceneColor: scene.color,
-      cueId: pack.cueId,
-      chaosCeiling: pack.chaosCeiling,
-      bumpPackage: pack.bumpPackage || ["block-bump", "legal-id-bump", "supporter-shoutout-bump"],
-      note: scene.description
-    };
-  }
-  return {
-    label: "Station Default",
-    sceneId: "pirate",
-    sceneLabel: scene.label,
-    sceneColor: scene.color,
-    cueId: "identity-hit",
-    chaosCeiling: 0.84,
-    bumpPackage: ["legal-id-bump", "manual-bump", "supporter-shoutout-bump"],
-    note: "General station identity, legal-ID flavor, and controlled chaos."
-  };
+  return domainBlockIdentityPackFor(live, {
+    blockIdentityPacks: BLOCK_IDENTITY_PACKS,
+    performanceScenes: PERFORMANCE_SCENES
+  });
+}
+
+function stationContinuityBrain(live = null, next = null) {
+  return domainContinuityBrain(state, {
+    live,
+    next,
+    blockIdentityPacks: BLOCK_IDENTITY_PACKS,
+    performanceScenes: PERFORMANCE_SCENES,
+    bumpClasses: BUMP_CLASSES,
+    legalIdCarts: LEGAL_ID_CARTS
+  });
 }
 
 async function saveState() {
-  await mkdir(DATA_DIR, { recursive: true });
-  const payload = `${JSON.stringify(state, null, 2)}\n`;
-  let lastError = null;
-  for (let attempt = 1; attempt <= 4; attempt += 1) {
-    try {
-      await writeFile(STATE_PATH, payload);
-      return;
-    } catch (error) {
-      lastError = error;
-      await wait(75 * attempt);
-    }
-  }
-  throw lastError;
-}
-
-function wait(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  await saveStationState({ statePath: STATE_PATH, state });
 }
 
 function syncWeeklyBlockTemplates() {
@@ -1023,6 +1024,9 @@ function syncWeeklyBlockTemplates() {
 function weeklyBlockIdentity(block = {}) {
   const identity = WEEKLY_BLOCK_IDENTITIES[block.id] || {};
   return {
+    id: block.id || "station",
+    label: block.name || identity.heading || "DoinkTV",
+    styleId: block.id || "station",
     heading: identity.heading || block.name || "DOINKTV",
     taglines: Array.isArray(identity.taglines) && identity.taglines.length ? identity.taglines : ["more strange programming shortly"],
     scheme: identity.scheme || "broadcast",
@@ -1034,6 +1038,18 @@ function weeklyBlockIdentity(block = {}) {
     fontSize: identity.fontSize || 52,
     creditText: identity.creditText || "DOINKTV BLOCK BUMP"
   };
+}
+
+function blockIdentityForEntry(entry = {}) {
+  const blockId = entry.gapFiller ? "station-break" : String(entry.weeklyBlockId || "").trim();
+  const blockName = entry.gapFiller ? GAP_FILLER_BLOCK_NAME : String(entry.weeklyBlockName || "").trim();
+  if (blockId || blockName) {
+    return weeklyBlockIdentity({
+      id: blockId || blockName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+      name: blockName || blockId
+    });
+  }
+  return null;
 }
 
 function sendJson(res, status, body) {
@@ -1124,137 +1140,28 @@ function requireSession(req, res) {
   return null;
 }
 
-function supporterTierById(id = "viewer") {
-  return SUPPORTER_TIERS.find((tier) => tier.id === id) || SUPPORTER_TIERS[0];
-}
-
-function sessionSupporterTier(session = null) {
-  if (!session) return supporterTierById("viewer");
-  if (session.role === "admin") return { id: "host", label: "Station Host", badge: "HOST", weight: 4 };
-  const user = state.users.find((item) => item.id === session.userId || item.username === session.username);
-  return supporterTierById(user?.supporterTier || "viewer");
-}
-
-function normalizeCommunityState(community = {}) {
-  const suggestions = Array.isArray(community.suggestions) ? community.suggestions : [];
-  return {
-    ...COMMUNITY_DEFAULTS,
-    ...community,
-    stationMode: COMMUNITY_MODES.has(community.stationMode) ? community.stationMode : COMMUNITY_DEFAULTS.stationMode,
-    supporterGoal: String(community.supporterGoal || COMMUNITY_DEFAULTS.supporterGoal).slice(0, 180),
-    spotlight: String(community.spotlight || COMMUNITY_DEFAULTS.spotlight).slice(0, 160),
-    takeoverPolicy: String(community.takeoverPolicy || COMMUNITY_DEFAULTS.takeoverPolicy).slice(0, 180),
-    suggestions: suggestions
-      .map((suggestion) => ({
-        id: String(suggestion.id || crypto.randomUUID()),
-        title: String(suggestion.title || "").trim().slice(0, 120),
-        note: String(suggestion.note || "").trim().slice(0, 320),
-        username: String(suggestion.username || "viewer").slice(0, 32),
-        supporterTier: String(suggestion.supporterTier || "viewer"),
-        status: ["pending", "approved", "archived"].includes(suggestion.status) ? suggestion.status : "pending",
-        createdAt: Number(suggestion.createdAt || Date.now()),
-        reviewedAt: suggestion.reviewedAt ? Number(suggestion.reviewedAt) : 0,
-        outcome: suggestion.outcome && typeof suggestion.outcome === "object"
-          ? {
-            type: String(suggestion.outcome.type || "").slice(0, 40),
-            label: String(suggestion.outcome.label || "").slice(0, 140),
-            sourceId: String(suggestion.outcome.sourceId || ""),
-            queueEntryId: String(suggestion.outcome.queueEntryId || ""),
-            scheduleEntryId: String(suggestion.outcome.scheduleEntryId || ""),
-            at: Number(suggestion.outcome.at || Date.now())
-          }
-          : null
-      }))
-      .filter((suggestion) => suggestion.title)
-      .slice(-120)
-  };
-}
-
 function publicCommunity({ admin = false } = {}) {
-  state.community = normalizeCommunityState(state.community);
-  const crewCount = state.users.filter((user) => ["crew", "operator"].includes(user.supporterTier)).length;
-  const pendingSuggestions = state.community.suggestions.filter((suggestion) => suggestion.status === "pending");
-  const approvedSuggestions = state.community.suggestions.filter((suggestion) => suggestion.status === "approved").slice(-6).reverse();
-  const suggestionCounts = state.community.suggestions.reduce((counts, suggestion) => {
-    counts[suggestion.status] = (counts[suggestion.status] || 0) + 1;
-    return counts;
-  }, { pending: 0, approved: 0, archived: 0 });
-  const members = admin
-    ? state.users
-        .map((user) => {
-          const tier = supporterTierById(user.supporterTier || "viewer");
-          return {
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            supporterTier: tier.id,
-            supporterLabel: tier.label,
-            supporterBadge: tier.badge,
-            createdAt: user.createdAt || 0
-          };
-        })
-        .sort((a, b) => String(a.username).localeCompare(String(b.username)))
-    : [];
-  return {
-    stationMode: state.community.stationMode,
-    supporterGoal: state.community.supporterGoal,
-    spotlight: state.community.spotlight,
-    takeoverPolicy: state.community.takeoverPolicy,
-    tiers: SUPPORTER_TIERS,
-    crewCount,
-    pendingSuggestionCount: pendingSuggestions.length,
-    suggestionCounts,
-    activeCrew: activeCommunityCrew(),
-    suggestions: admin ? [...state.community.suggestions].reverse() : approvedSuggestions,
-    recentOutcomes: state.community.suggestions
-      .filter((suggestion) => suggestion.outcome)
-      .sort((a, b) => Number(b.outcome?.at || b.reviewedAt || b.createdAt || 0) - Number(a.outcome?.at || a.reviewedAt || a.createdAt || 0))
-      .slice(0, admin ? 12 : 4),
-    members
-  };
+  return domainPublicCommunity(state, { admin });
+}
+
+function publicLore({ query = "" } = {}) {
+  return domainPublicLore(state, { query });
+}
+
+async function upsertLoreEntry(body = {}) {
+  return domainUpsertLoreEntry({ state, body, saveState, recordContinuityEvent });
 }
 
 function activeCommunityCrew() {
-  const byName = new Map();
-  const remember = ({ username, supporterTier, activity, createdAt }) => {
-    if (!username) return;
-    const tier = supporterTier === "host"
-      ? { id: "host", label: "Station Host", badge: "HOST", weight: 4 }
-      : supporterTierById(supporterTier || "viewer");
-    if (tier.id === "viewer" && supporterTier !== "host") return;
-    const key = username.toLowerCase();
-    const current = byName.get(key);
-    if (current && Number(current.createdAt || 0) >= Number(createdAt || 0)) return;
-    byName.set(key, {
-      username,
-      supporterTier: tier.id,
-      supporterLabel: tier.label,
-      supporterBadge: tier.badge,
-      activity,
-      createdAt: Number(createdAt || 0)
-    });
-  };
+  return domainActiveCommunityCrew(state);
+}
 
-  for (const message of state.chat || []) {
-    remember({
-      username: message.username,
-      supporterTier: message.role === "admin" ? "host" : message.supporterTier,
-      activity: "chat",
-      createdAt: message.createdAt
-    });
-  }
-  for (const suggestion of state.community.suggestions || []) {
-    remember({
-      username: suggestion.username,
-      supporterTier: suggestion.supporterTier,
-      activity: suggestion.status === "approved" ? "pick approved" : "pick sent",
-      createdAt: suggestion.reviewedAt || suggestion.createdAt
-    });
-  }
+function supporterTierById(id = "viewer") {
+  return domainSupporterTierById(id);
+}
 
-  return [...byName.values()]
-    .sort((a, b) => b.createdAt - a.createdAt)
-    .slice(0, 5);
+function sessionSupporterTier(session = null) {
+  return domainSessionSupporterTier(state, session);
 }
 
 function stationHealthSummary() {
@@ -1329,10 +1236,11 @@ async function projectAuditSummary() {
       weeklyBlocks: (state.weeklyBlocks || []).length,
       activeFx: activeBroadcastFx().length,
       users: (state.users || []).length,
-        communitySuggestions: state.community?.suggestions?.length || 0,
-        continuityEvents: (state.continuityLog || []).length,
-        fxSnapshots: (state.fxSnapshots || []).length,
-        bumpClasses: BUMP_CLASSES.length,
+      communitySuggestions: state.community?.suggestions?.length || 0,
+      loreEntries: state.lore?.entries?.length || 0,
+      continuityEvents: (state.continuityLog || []).length,
+      fxSnapshots: (state.fxSnapshots || []).length,
+      bumpClasses: BUMP_CLASSES.length,
       bumpClassCounts,
       largeFiles,
       defaultAdminCredentialsActive: ADMIN_USER === "DoinkWizard" || ADMIN_PASSWORD === "ChipTanaka12!@"
@@ -1426,48 +1334,23 @@ function normalizeYouTubePlaylistId(input) {
 }
 
 function normalizeInternetArchiveId(input) {
-  const value = String(input || "").trim();
-  if (!value) return "";
-  if (/^[A-Za-z0-9_.-]{3,120}$/.test(value) && !value.includes("http")) return value;
-  try {
-    const url = new URL(value);
-    const parts = url.pathname.split("/").filter(Boolean);
-    const detailsIndex = parts.indexOf("details");
-    if (detailsIndex !== -1 && parts[detailsIndex + 1]) return decodeURIComponent(parts[detailsIndex + 1]);
-    const downloadIndex = parts.indexOf("download");
-    if (downloadIndex !== -1 && parts[downloadIndex + 1]) return decodeURIComponent(parts[downloadIndex + 1]);
-  } catch {
-    return "";
-  }
-  return "";
+  return mediaDiscovery.normalizeInternetArchiveId(input);
 }
 
 function archiveDownloadUrl(identifier, fileName) {
-  return `https://archive.org/download/${encodeURIComponent(identifier)}/${String(fileName || "").split("/").map(encodeURIComponent).join("/")}`;
+  return mediaDiscovery.archiveDownloadUrl(identifier, fileName);
 }
 
 function encodeArchiveFilePath(fileName) {
-  return String(fileName || "").split("/").map(encodeURIComponent).join("/");
+  return mediaDiscovery.encodeArchiveFilePath(fileName);
 }
 
 function normalizeSearchQuery(value) {
-  return String(value || "")
-    .replace(/https?:\/\/\S+/gi, " ")
-    .replace(/\([^)]*\)/g, " ")
-    .replace(/\b(ep|episode|official|video|youtube|yt|hd|hq|full|clip)\b/gi, " ")
-    .replace(/[#()[\]{}"']/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 120);
+  return mediaDiscovery.normalizeSearchQuery(value);
 }
 
 function parseDurationText(text) {
-  const parts = String(text || "")
-    .trim()
-    .split(":")
-    .map((part) => Number(part));
-  if (!parts.length || parts.some((part) => !Number.isFinite(part))) return 0;
-  return parts.reduce((total, part) => total * 60 + part, 0);
+  return mediaDiscovery.parseDurationText(text);
 }
 
 function extractInitialData(html) {
@@ -1588,192 +1471,47 @@ async function getYouTubeInfo(input) {
 }
 
 async function getInternetArchiveInfo(input, preferredFileName = "") {
-  const archiveId = normalizeInternetArchiveId(input);
-  if (!archiveId) throw new Error("Enter an Internet Archive item URL or identifier.");
-  const data = await loadInternetArchiveMetadata(archiveId);
-  const preferredFile = String(preferredFileName || "").trim();
-  const file = preferredFile
-    ? (Array.isArray(data.files) ? data.files : []).find((item) => item.name === preferredFile && isInternetArchiveVideoFile(item))
-    : chooseInternetArchiveVideoFile(data);
-  if (!file) throw new Error("No playable video file was found on that Internet Archive item.");
-  const title = preferredFile ? archiveFileTitle(file) : String(data.metadata?.title || archiveId).trim();
-  const duration = Math.max(5, Math.round(Number(file.length) || parseDurationText(data.metadata?.runtime) || 300));
-  return {
-    archiveId,
-    archiveFile: file.name,
-    fileUrl: archiveDownloadUrl(archiveId, file.name),
-    url: `https://archive.org/details/${archiveId}`,
-    title,
-    duration,
-    format: file.format || "",
-    size: Number(file.size || 0)
-  };
+  return mediaDiscovery.getInternetArchiveInfo(input, preferredFileName);
 }
 
 async function searchInternetArchiveSources(query, rows = 10) {
-  const normalized = normalizeSearchQuery(query);
-  const terms = normalized
-    .split(/\s+/)
-    .filter((term) => /^[a-z0-9][a-z0-9.-]{1,40}$/i.test(term))
-    .slice(0, 10);
-  if (!terms.length) return [];
-
-  const search = new URL("https://archive.org/advancedsearch.php");
-  const fieldQuery = terms
-    .map((term) => `(title:${term} OR description:${term} OR subject:${term})`)
-    .join(" AND ");
-  search.searchParams.set("q", `(${fieldQuery}) AND mediatype:movies`);
-  ["identifier", "title", "description", "creator", "date", "year", "downloads", "publicdate"].forEach((field) => {
-    search.searchParams.append("fl[]", field);
-  });
-  search.searchParams.append("fl[]", "subject");
-  search.searchParams.set("rows", String(Math.max(1, Math.min(20, Number(rows) || 10))));
-  search.searchParams.set("page", "1");
-  search.searchParams.set("sort[]", "downloads desc");
-  search.searchParams.set("output", "json");
-
-  const response = await fetch(search, {
-    headers: { "user-agent": "DoinkTV Internet Archive Source Search" }
-  });
-  if (!response.ok) throw new Error("Could not search Internet Archive right now.");
-  const data = await response.json();
-  const docs = Array.isArray(data.response?.docs) ? data.response.docs : [];
-  const candidates = await Promise.all(docs.map((doc) => internetArchiveSearchResultForDoc(doc).catch(() => null)));
-  return candidates.filter(Boolean);
+  return mediaDiscovery.searchInternetArchiveSources(query, rows);
 }
 
 async function internetArchiveSearchResultForDoc(doc = {}) {
-  const archiveId = String(doc.identifier || "").trim();
-  if (!archiveId) return null;
-  const metadata = await loadInternetArchiveMetadata(archiveId);
-  const file = chooseInternetArchiveVideoFile(metadata);
-  if (!file) return null;
-  const title = String(doc.title || metadata.metadata?.title || archiveId).trim();
-  const description = Array.isArray(doc.description) ? doc.description.join(" ") : String(doc.description || "");
-  const subject = Array.isArray(doc.subject) ? doc.subject.join(", ") : String(doc.subject || "");
-  const result = {
-    archiveId,
-    archiveFile: file.name,
-    fileUrl: archiveDownloadUrl(archiveId, file.name),
-    url: `https://archive.org/details/${archiveId}`,
-    title,
-    fileTitle: archiveFileTitle(file),
-    duration: Math.max(5, Math.round(Number(file.length) || parseDurationText(metadata.metadata?.runtime) || 300)),
-    format: file.format || "",
-    size: Number(file.size || 0),
-    creator: Array.isArray(doc.creator) ? doc.creator.join(", ") : String(doc.creator || ""),
-    year: String(doc.year || doc.date || "").slice(0, 12),
-    downloads: Number(doc.downloads || 0),
-    subject,
-    description: description.replace(/\s+/g, " ").trim().slice(0, 220)
-  };
-  return {
-    ...result,
-    quality: archiveQualitySignals(result)
-  };
+  return mediaDiscovery.internetArchiveSearchResultForDoc(doc);
 }
 
 function archiveQualitySignals(candidate = {}) {
-  const haystack = [
-    candidate.title,
-    candidate.fileTitle,
-    candidate.creator,
-    candidate.subject,
-    candidate.description,
-    candidate.archiveId,
-    candidate.archiveFile
-  ].join(" ").toLowerCase();
-  let score = 50;
-  const flags = [];
-  const duration = Number(candidate.duration || 0);
-  const size = Number(candidate.size || 0);
-  if (duration >= 60 && duration <= 60 * 60 * 4) score += 12;
-  if (duration < 30) {
-    score -= 22;
-    flags.push("very short");
-  }
-  if (/h\.?264|mpeg4|mp4|512kb|ia\.mp4/i.test(`${candidate.format || ""} ${candidate.archiveFile || ""}`)) score += 14;
-  if (size > 25_000_000) score += 8;
-  if (Number(candidate.downloads || 0) > 1000) score += 8;
-  if (/(english|eng|dubbed|subtitled|closed caption|caption)/i.test(haystack)) {
-    score += 8;
-    flags.push("english/captions hint");
-  }
-  if (/(trailer|sample|preview|conference|gameplay|walkthrough)/i.test(haystack)) {
-    score -= 14;
-    flags.push("low programming fit");
-  }
-  if (isClearlyPornographicArchiveCandidate(candidate)) {
-    score = 0;
-    flags.push("explicit filter");
-  }
-  const normalizedScore = Math.max(0, Math.min(100, Math.round(score)));
-  return {
-    score: normalizedScore,
-    label: normalizedScore >= 78 ? "strong" : normalizedScore >= 58 ? "usable" : normalizedScore >= 35 ? "iffy" : "reject",
-    flags: flags.slice(0, 3)
-  };
+  return mediaDiscovery.archiveQualitySignals(candidate);
 }
 
 async function loadInternetArchiveMetadata(archiveId) {
-  const response = await fetch(`https://archive.org/metadata/${encodeURIComponent(archiveId)}`, {
-    headers: { "user-agent": "DoinkTV Internet Archive Source Importer" }
-  });
-  if (!response.ok) throw new Error("Could not load that Internet Archive item.");
-  return response.json();
+  return mediaDiscovery.loadInternetArchiveMetadata(archiveId);
 }
 
 function chooseInternetArchiveVideoFile(item = {}) {
-  return chooseInternetArchiveVideoFiles(item, 1)[0] || null;
+  return mediaDiscovery.chooseInternetArchiveVideoFile(item);
 }
 
 function chooseInternetArchiveVideoFiles(item = {}, limit = 50) {
-  const files = Array.isArray(item.files) ? item.files : [];
-  return files
-    .filter((file) => isInternetArchiveVideoFile(file))
-    .sort((a, b) => internetArchiveFileScore(b) - internetArchiveFileScore(a))
-    .slice(0, Math.max(1, limit));
+  return mediaDiscovery.chooseInternetArchiveVideoFiles(item, limit);
 }
 
 function chooseEnglishCaptionFile(item = {}, archiveFile = "") {
-  const files = Array.isArray(item.files) ? item.files : [];
-  const videoBase = String(archiveFile || "").replace(/\.[^.]+$/, "").toLowerCase();
-  return files
-    .filter((file) => isInternetArchiveCaptionFile(file))
-    .map((file) => ({ file, score: internetArchiveCaptionScore(file, videoBase) }))
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score)[0]?.file || null;
+  return mediaDiscovery.chooseEnglishCaptionFile(item, archiveFile);
 }
 
 function isInternetArchiveCaptionFile(file = {}) {
-  const name = String(file.name || "");
-  const format = String(file.format || "");
-  if (!/\.(srt|vtt)$/i.test(name)) return false;
-  return /(subrip|subtitle|caption|webvtt|vtt|srt)/i.test(`${format} ${name}`);
+  return mediaDiscovery.isInternetArchiveCaptionFile(file);
 }
 
 function internetArchiveCaptionScore(file = {}, videoBase = "") {
-  const name = String(file.name || "");
-  const lower = name.toLowerCase();
-  let score = /\.(vtt)$/i.test(name) ? 16 : 12;
-  if (/(^|[._ -])(en|eng|english|en-us|en_us)([._ -]|$)/i.test(lower)) score += 60;
-  if (!/(^|[._ -])(en|eng|english|en-us|en_us)([._ -]|$)/i.test(lower) && /(^|[._ -])(jp|jpn|ja|es|spa|fr|fre|de|ger|ita|pt|rus)([._ -]|$)/i.test(lower)) score -= 80;
-  if (videoBase) {
-    const captionBase = lower.replace(/\.[^.]+$/, "");
-    if (captionBase.includes(videoBase.slice(0, 32)) || videoBase.includes(captionBase.slice(0, 32))) score += 25;
-  }
-  if (/auto|machine|whisper/i.test(lower)) score -= 8;
-  return score;
+  return mediaDiscovery.internetArchiveCaptionScore(file, videoBase);
 }
 
 function srtToWebVtt(text = "") {
-  return `WEBVTT\n\n${String(text)
-    .replace(/^\uFEFF/, "")
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
-    .replace(/^\d+\n(?=\d\d:\d\d:\d\d[,\.]\d{3}\s+-->\s+)/gm, "")
-    .replace(/(\d\d:\d\d:\d\d),(\d{3})/g, "$1.$2")
-    .trim()}\n`;
+  return mediaDiscovery.srtToWebVtt(text);
 }
 
 async function captionInfoForSourceId(sourceId = "") {
@@ -1807,31 +1545,15 @@ async function captionFileForRequest(sourceId = "", captionFile = "") {
 }
 
 function isInternetArchiveVideoFile(file = {}) {
-  const name = String(file.name || "");
-  const format = String(file.format || "").toLowerCase();
-  if (!name || /_thumb|_meta|_files|_archive\.torrent|\.gif$/i.test(name)) return false;
-  return /\.(mp4|m4v|webm|ogv|mov|mpg|mpeg|avi|mkv)$/i.test(name)
-    || /h\.?264|mpeg4|mpeg-4|matroska|webm|quicktime|ogg video|mpeg|avi/i.test(format);
+  return mediaDiscovery.isInternetArchiveVideoFile(file);
 }
 
 function internetArchiveFileScore(file = {}) {
-  const name = String(file.name || "").toLowerCase();
-  const format = String(file.format || "").toLowerCase();
-  let score = 0;
-  if (name.endsWith(".mp4")) score += 50;
-  if (/h\.?264|mpeg4|mpeg-4/.test(format)) score += 35;
-  if (/512kb|ia\.mp4/.test(name)) score += 20;
-  if (/derivative/.test(String(file.source || "").toLowerCase())) score += 8;
-  score += Math.min(20, Number(file.size || 0) / 100_000_000);
-  return score;
+  return mediaDiscovery.internetArchiveFileScore(file);
 }
 
 function archiveFileTitle(file = {}) {
-  return String(file.name || "Untitled archive video")
-    .replace(/\.[^.]+$/, "")
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return mediaDiscovery.archiveFileTitle(file);
 }
 
 async function importInternetArchiveCollection(body = {}) {
@@ -1925,14 +1647,17 @@ function publicProgram() {
   applyDetectedFadeBreaks();
   const program = programSnapshot();
   const fx = activeBroadcastFx();
+  const continuity = stationContinuityBrain(program.live, program.next);
   queueFadeBreakDetectionForProgram(program);
   return {
     ...program,
     audience: publicAudience(),
     performance: {
-      blockPack: blockIdentityPackFor(program.live),
-      activeCue: fx.find((item) => item.id === "show-cue")?.params || null
+      blockPack: continuity.blockPack,
+      activeCue: fx.find((item) => item.id === "show-cue")?.params || null,
+      continuity
     },
+    continuity,
     votePoll: publicProgramVotePoll(program.live),
     fx,
     stream: {
@@ -1990,20 +1715,11 @@ function ensureProgramVotePoll(live) {
 }
 
 function isMovieLikeProgram(live = {}) {
-  const source = live.source || {};
-  const title = `${live.title || ""} ${source.title || ""}`.toLowerCase();
-  return source.type === "internet-archive"
-    && Number(live.duration || source.duration || 0) >= 40 * 60
-    && !/(episode|ep\.?\s*\d+|cartoon|short|music video|talk show|interview)/i.test(title);
+  return mediaDiscovery.isMovieLikeProgram(live);
 }
 
 function isShowLikeProgram(live = {}) {
-  if (isMovieLikeProgram(live)) return false;
-  const source = live.source || {};
-  const title = `${live.title || ""} ${source.title || ""} ${source.archiveFile || ""}`.toLowerCase();
-  return source.type === "internet-archive"
-    && (Number(live.duration || source.duration || 0) < 40 * 60
-      || /(episode|ep\.?\s*\d+|cartoon|short|series|show|talk show|interview|ova|serial)/i.test(title));
+  return mediaDiscovery.isShowLikeProgram(live);
 }
 
 function publicVotePoll(poll = {}) {
@@ -2091,72 +1807,23 @@ function maybeQueueComparableFilmSuggestions(poll, live) {
 }
 
 async function comparableFilmSuggestions(live = {}) {
-  const source = live.source || {};
-  const query = comparableArchiveQuery(live);
-  const candidates = await searchInternetArchiveSources(query, 20);
-  const currentKey = `${source.archiveId || ""}:${source.archiveFile || ""}`;
-  return candidates
-    .filter((candidate) => Number(candidate.duration || 0) >= 40 * 60)
-    .filter((candidate) => `${candidate.archiveId}:${candidate.archiveFile}` !== currentKey)
-    .filter((candidate) => comparableFilmCandidateFits(live, candidate))
-    .filter((candidate) => !isClearlyPornographicArchiveCandidate(candidate))
-    .slice(0, PROGRAM_VOTE_MAX_OPTIONS - 2);
+  return mediaDiscovery.comparableFilmSuggestions(live, { maxOptions: PROGRAM_VOTE_MAX_OPTIONS });
 }
 
 function comparableArchiveQuery(live = {}) {
-  const block = `${live.weeklyBlockId || ""} ${live.weeklyBlockName || ""}`.toLowerCase();
-  if (block.includes("anime")) return "anime ova";
-  const title = live.title || live.source?.title || "";
-  return String(title || "")
-    .replace(/\b(19|20)\d{2}\b/g, "")
-    .replace(/\b(vhs|dubbed|english|espanol|spanish|full|movie|film|feature|late|night|anime)\b/gi, " ")
-    .replace(/[^a-z0-9 ]+/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .split(" ")
-    .filter((word) => word.length > 2)
-    .slice(0, 5)
-    .join(" ") || "feature film";
+  return mediaDiscovery.comparableArchiveQuery(live);
 }
 
 function comparableFilmCandidateFits(live = {}, candidate = {}) {
-  const haystack = [
-    candidate.title,
-    candidate.fileTitle,
-    candidate.creator,
-    candidate.subject,
-    candidate.description,
-    candidate.archiveId
-  ].join(" ").toLowerCase();
-  if (isClearlyPornographicArchiveCandidate(candidate)) return false;
-  if (/(gamevideoarchive|video game|commercials?|miniseries|episode|newsreel|trailer|sample reel|conference)/i.test(haystack)) return false;
-  const block = `${live.weeklyBlockId || ""} ${live.weeklyBlockName || ""}`.toLowerCase();
-  if (block.includes("anime")) return /(anime|ova|manga|japan|japanese|toonami|animation)/i.test(haystack);
-  return true;
+  return mediaDiscovery.comparableFilmCandidateFits(live, candidate);
 }
 
 function cleanVoteSuggestions(suggestions = []) {
-  const seen = new Set();
-  return suggestions.filter((suggestion) => {
-    const key = `${suggestion.archiveId || ""}:${suggestion.archiveFile || ""}`;
-    if (!suggestion.archiveId || !suggestion.archiveFile || seen.has(key)) return false;
-    seen.add(key);
-    return !isClearlyPornographicArchiveCandidate(suggestion);
-  });
+  return mediaDiscovery.cleanVoteSuggestions(suggestions);
 }
 
 function isClearlyPornographicArchiveCandidate(candidate = {}) {
-  const haystack = [
-    candidate.title,
-    candidate.fileTitle,
-    candidate.creator,
-    candidate.subject,
-    candidate.description,
-    candidate.archiveId,
-    candidate.archiveFile,
-    candidate.url
-  ].filter(Boolean).join(" ");
-  return EXPLICIT_ARCHIVE_PATTERN.test(haystack);
+  return mediaDiscovery.isClearlyPornographicArchiveCandidate(candidate);
 }
 
 async function castProgramVote(req, body = {}) {
@@ -2209,133 +1876,57 @@ function hasAdminOnline() {
 }
 
 function activeBroadcastFx() {
-  const now = Date.now();
-  const beforeCount = (state.activeFx || []).length;
-  const adminOnline = hasAdminOnline();
-  state.activeFx = (state.activeFx || []).filter((fx) => {
-    const expiresAt = Number(fx.expiresAt);
-    const unexpired = fx.expiresAt == null || !Number.isFinite(expiresAt) || expiresAt > now;
-    const recentlyFiredByAdmin = now - Number(fx.startedAt || 0) < ADMIN_FX_GRACE_MS;
-    return unexpired && (adminOnline || recentlyFiredByAdmin);
+  const result = domainActiveBroadcastFx(state, {
+    adminOnline: hasAdminOnline(),
+    graceMs: ADMIN_FX_GRACE_MS
   });
-  if (state.activeFx.length !== beforeCount) timelineSaveNeeded = true;
-  return state.activeFx;
+  if (result.changed) timelineSaveNeeded = true;
+  return result.fx;
 }
 
 function programSnapshot() {
-  const now = Date.now();
-  const entries = activeBroadcastEntries()
-    .map((entry) => ({
-      ...entry,
-      source: state.sources.find((source) => source.id === entry.sourceId)
-    }))
-    .filter((entry) => entry.source && Number.isFinite(entry.startAt) && Number.isFinite(entry.duration))
-    .sort((a, b) => a.startAt - b.startAt);
-
-  const live = entries.find((entry) => now >= entry.startAt && now < entry.startAt + entry.duration * 1000);
-  const next = entries.find((entry) => entry.startAt > now && isAudienceScheduleEntry(entry));
-
-  return {
-    serverTime: now,
-    mode: state.broadcastMode,
-        live: live
-          ? {
-          id: live.id,
-          title: live.title || live.source.title,
-        startAt: live.startAt,
-          duration: live.duration,
-        offset: Math.max(0, (now - live.startAt) / 1000),
-        sourceOffset: Math.max(0, Number(live.sourceOffset || 0)),
-        lane: live.broadcastLane || "scheduled",
-        weeklyBlockId: live.weeklyBlockId || "",
-        weeklyBlockName: live.weeklyBlockName || "",
-        gapFiller: Boolean(live.gapFiller),
-        reason: programEntryReason(live),
-        source: live.source
-        }
-      : null,
-    next: next
-      ? {
-          id: next.id,
-          title: next.title || next.source.title,
-          startAt: next.startAt,
-          duration: next.duration,
-          sourceOffset: Math.max(0, Number(next.sourceOffset || 0)),
-          lane: next.broadcastLane || "scheduled",
-          weeklyBlockId: next.weeklyBlockId || "",
-          weeklyBlockName: next.weeklyBlockName || "",
-          gapFiller: Boolean(next.gapFiller),
-          reason: programEntryReason(next),
-          source: next.source
-        }
-      : null
-  };
+  return resolveBroadcastTimeline(state, {
+    now: Date.now(),
+    blockIdentityForEntry
+  });
 }
 
 function programEntryReason(entry = {}) {
-  if (entry.gapFiller) return "Standby filler until scheduled programming resumes.";
-  if (entry.autoBump || entry.source?.type === "bump") return "Station continuity bump.";
-  if (entry.broadcastLane === "queue") return "Live queue item selected by admin.";
-  if (entry.weeklyBlockName) return `Scheduled block: ${entry.weeklyBlockName}.`;
-  return "Scheduled programming.";
+  return engineEntryReason(entry);
 }
 
 function isAudienceScheduleEntry(entry) {
-  return entry?.source && !entry.gapFiller && !entry.autoBump && !isBumpSource(entry.source);
+  return engineIsAudienceScheduleEntry(entry);
 }
 
 function isBumpSource(source) {
-  return source?.type === "bump";
+  return engineIsBumpSource(source);
 }
 
 function maintainScheduledGapFillers() {
   const now = Date.now();
-  const realSchedule = state.schedule
-    .filter((entry) => !entry.gapFiller)
-    .filter((entry) => entryEnd(entry) > now - 1000 * 60)
-    .sort((a, b) => a.startAt - b.startAt);
-  const currentReal = realSchedule.find((entry) => now >= entry.startAt && now < entryEnd(entry));
-  const nextReal = realSchedule.find((entry) => entry.startAt > now);
-  const beforeCount = state.schedule.length;
-
-  state.schedule = state.schedule.filter((entry) => {
-    if (!entry.gapFiller) return true;
-    if (entry.gapFillerVersion !== GAP_FILLER_VERSION) return false;
-    if (entryEnd(entry) < now - 1000 * 30) return false;
-    if (!nextReal || currentReal) return entryEnd(entry) < now + 1000 * 5;
-    if (entry.startAt >= nextReal.startAt) return false;
-    return !realSchedule.some((realEntry) => entriesOverlap(entry, realEntry));
+  const plan = plannedGapFillWindow(state.schedule, {
+    now,
+    version: GAP_FILLER_VERSION,
+    lookaheadMs: GAP_FILLER_LOOKAHEAD_MS,
+    minGapSeconds: GAP_FILLER_MIN_GAP_SECONDS
   });
-
-  let changed = state.schedule.length !== beforeCount;
-  if (currentReal || !nextReal) {
-    if (changed) pruneUnusedBumpSources();
-    return changed;
-  }
-
-  const fillUntil = Math.min(nextReal.startAt, now + GAP_FILLER_LOOKAHEAD_MS);
-  if ((fillUntil - now) / 1000 < GAP_FILLER_MIN_GAP_SECONDS) {
-    if (changed) pruneUnusedBumpSources();
-    return changed;
-  }
-
-  const existingFillers = state.schedule
-    .filter((entry) => entry.gapFiller && entryEnd(entry) > now - 1000 && entry.startAt < fillUntil)
-    .sort((a, b) => a.startAt - b.startAt);
-  let cursor = existingFillers.reduce((latest, entry) => Math.max(latest, entryEnd(entry)), now);
-  if (cursor >= fillUntil - GAP_FILLER_MIN_GAP_SECONDS * 1000) {
+  state.schedule = plan.schedule;
+  let changed = plan.changed;
+  if (!plan.shouldFill) {
     if (changed) pruneUnusedBumpSources();
     return changed;
   }
 
   const candidates = gapFillerCandidates();
-  let index = existingFillers.length;
-  while (cursor < fillUntil - GAP_FILLER_MIN_GAP_SECONDS * 1000 && index < GAP_FILLER_MAX_ENTRIES) {
-    const remaining = Math.floor((fillUntil - cursor) / 1000);
-    const useBump = index % 3 === 0 || remaining < GAP_FILLER_MIN_SOURCE_SECONDS + 4;
+  let cursor = plan.cursor;
+  let index = plan.existingFillers.length;
+  while (cursor < plan.fillUntil - GAP_FILLER_MIN_GAP_SECONDS * 1000 && index < GAP_FILLER_MAX_ENTRIES) {
+    const remaining = Math.floor((plan.fillUntil - cursor) / 1000);
+    const useBump = shouldUseGapFillerBump(index, remaining, GAP_FILLER_MIN_SOURCE_SECONDS);
     const entry = useBump
-      ? createGapFillerBumpEntry(cursor, nextReal, index, remaining)
-      : createGapFillerSourceEntry(cursor, nextReal, candidates, index, remaining);
+      ? createGapFillerBumpEntry(cursor, plan.nextReal, index, remaining)
+      : createGapFillerSourceEntry(cursor, plan.nextReal, candidates, index, remaining);
     if (!entry) break;
     state.schedule.push(entry);
     cursor = entryEnd(entry);
@@ -2355,14 +1946,13 @@ function gapFillerCandidates() {
   const scored = [];
   for (const source of state.sources || []) {
     if (!source || isBumpSource(source) || source.type === "youtube") continue;
-    const duration = Number(source.duration || 0);
-    if (duration < GAP_FILLER_MIN_SOURCE_SECONDS || duration > GAP_FILLER_MAX_SOURCE_SECONDS) continue;
-    const haystack = `${source.title || ""} ${source.archiveFile || ""} ${folders.get(source.folderId) || ""}`;
-    if (isClearlyPornographicArchiveCandidate({ ...source, title: haystack })) continue;
-    const adScore = /(^|[^a-z])(commercials?|ads?|adverts?|advertisements?|promo|psa|bumper|trailer|station\s*(id|ident|break)|ident)([^a-z]|$)/i.test(haystack) ? 80 : 0;
-    const shortScore = Math.max(0, GAP_FILLER_MAX_SOURCE_SECONDS - duration) / 8;
-    if (!adScore) continue;
-    scored.push({ source, score: adScore + shortScore });
+    const score = mediaDiscovery.standbyFillerCandidateScore(source, {
+      folderName: folders.get(source.folderId) || "",
+      minSeconds: GAP_FILLER_MIN_SOURCE_SECONDS,
+      maxSeconds: GAP_FILLER_MAX_SOURCE_SECONDS
+    });
+    if (!score) continue;
+    scored.push({ source, score });
   }
   return scored
     .sort((a, b) => b.score - a.score || a.source.title.localeCompare(b.source.title))
@@ -2389,8 +1979,12 @@ function createGapFillerSourceEntry(cursor, nextReal, candidates = [], index = 0
 }
 
 function createGapFillerBumpEntry(cursor, nextReal, index = 0, remaining = GAP_FILLER_BUMP_DURATION) {
-  const duration = Math.max(GAP_FILLER_MIN_GAP_SECONDS, Math.min(GAP_FILLER_BUMP_DURATION, Math.floor(remaining)));
-  const bumpSource = createGapFillerBumpSource(nextReal, cursor, index, duration);
+  const promo = Boolean(nextReal?.sourceId) && index % 3 === 1;
+  const targetDuration = promo ? GAP_FILLER_PROMO_DURATION : GAP_FILLER_BUMP_DURATION;
+  const duration = Math.max(GAP_FILLER_MIN_GAP_SECONDS, Math.min(targetDuration, Math.floor(remaining)));
+  const bumpSource = promo
+    ? createGapFillerPromoBumpSource(nextReal, cursor, index, duration)
+    : createGapFillerBumpSource(nextReal, cursor, index, duration);
   state.sources.push(bumpSource);
   return {
     id: crypto.randomUUID(),
@@ -2411,6 +2005,7 @@ function createGapFillerBumpSource(nextReal = {}, cursor = Date.now(), index = 0
   const seed = Math.abs(hashString(`gap:${nextReal.id || nextReal.startAt}:${cursor}:${index}`)) % 100000;
   const deliberateGlitch = seed % 7 === 3;
   const music = randomBumpMusic(duration);
+  const promoTarget = gapFillerPromoTarget(nextReal);
   return {
     id: crypto.randomUUID(),
     type: "bump",
@@ -2423,7 +2018,7 @@ function createGapFillerBumpSource(nextReal = {}, cursor = Date.now(), index = 0
       heading: sample(["more shortly", "station break", "please stand by", "back to program soon"]),
       lines: [
         GAP_FILLER_BLOCK_NAME,
-        nextReal?.title ? `NEXT: ${nextReal.title}` : "PROGRAMMING RESUMES SHORTLY",
+        promoTarget?.title ? `NEXT: ${promoTarget.title}` : nextReal?.title ? `NEXT: ${nextReal.title}` : "PROGRAMMING RESUMES SHORTLY",
         nextReal?.startAt ? formatEstTime(nextReal.startAt) : ""
       ].filter(Boolean),
       alignment: deliberateGlitch ? sample(["left", "center", "right"]) : sample(["left", "center"]),
@@ -2431,7 +2026,7 @@ function createGapFillerBumpSource(nextReal = {}, cursor = Date.now(), index = 0
       tone: deliberateGlitch ? sample(["classic", "caption", "washed"]) : sample(["caption", "washed"]),
       secondsPerLine: Math.max(4, Math.round((duration / 3) * 10) / 10),
       tintStrength: deliberateGlitch ? 28 : 16,
-      creditText: "STANDBY FILLER\nNO DEAD AIR",
+      creditText: music.creditText,
       creditSize: 18,
       creditPosition: "bottom-right",
       wallpaper: {
@@ -2448,10 +2043,175 @@ function createGapFillerBumpSource(nextReal = {}, cursor = Date.now(), index = 0
       effectIntensity: deliberateGlitch ? 38 : 18,
       intentionalGlitch: deliberateGlitch,
       presentation: generatedBumpPresentation(deliberateGlitch),
+      productionStyle: deliberateGlitch ? "standard" : "lower-third",
+      productionAccent: "signal",
+      productionBadge: "STATION BREAK",
+      productionKicker: promoTarget?.title ? "coming up after this" : "continuity filler",
       audio: music.path,
       audioStart: music.start
     }
   };
+}
+
+function createGapFillerPromoBumpSource(nextReal = {}, cursor = Date.now(), index = 0, duration = GAP_FILLER_PROMO_DURATION) {
+  const lineup = gapFillerPromoLineup(nextReal);
+  const target = lineup[0] || gapFillerPromoTarget(nextReal);
+  const source = sourceForEntry(target);
+  const seed = Math.abs(hashString(`promo:${nextReal.id || nextReal.startAt}:${cursor}:${index}`)) % 100000;
+  const music = randomBumpMusic(duration);
+  const identity = blockIdentityForEntry(target) || blockIdentityForEntry(nextReal) || weeklyBlockIdentity({ id: "station-break", name: GAP_FILLER_BLOCK_NAME });
+  const blockName = String(identity.heading || target.weeklyBlockName || nextReal.weeklyBlockName || "DoinkTV").trim();
+  const preview = bumpPreviewBackgroundForEntry(target, duration, seed);
+  const when = nextReal.startAt ? formatEstTime(nextReal.startAt) : "shortly";
+  const heading = sample([
+    `tonight on ${blockName}`,
+    `next on ${blockName}`,
+    `${blockName} promo`,
+    "do not leave the frequency"
+  ]);
+  const lineupLines = lineup
+    .slice(0, GAP_FILLER_PROMO_LINEUP_COUNT)
+    .map((entry) => {
+      const entrySource = sourceForEntry(entry);
+      const title = promoProgramTitle(entry, entrySource);
+      return title ? `${formatEstTime(entry.startAt)}  ${title}` : "";
+    })
+    .filter(Boolean);
+  const lines = [
+    `${blockName} lineup`,
+    ...(lineupLines.length ? lineupLines : ["Programming resumes shortly"]),
+    `Starts ${when}`
+  ].slice(0, 6);
+
+  return {
+    id: crypto.randomUUID(),
+    type: "bump",
+    title: `${blockName}: promo bump`,
+    duration,
+    randomEligible: false,
+    weeklyBlockId: target.weeklyBlockId || nextReal.weeklyBlockId || identity.id || "station-break",
+    bump: {
+      kind: "gap-filler-promo-bump",
+      blockId: target.weeklyBlockId || nextReal.weeklyBlockId || identity.id || "",
+      blockName,
+      blockStyleId: identity.styleId || "",
+      bumpClass: "block-promo-bump",
+      heading,
+      lines,
+      secondsPerLine: Math.max(3.2, Math.round((duration / Math.max(1, lines.length)) * 10) / 10),
+      fontSize: preview ? 42 : 52,
+      alignment: preview ? sample(["left", "right"]) : sample(["left", "center"]),
+      placement: sample(["top", "middle", "bottom"]),
+      tone: preview ? "caption" : sample(["caption", "washed"]),
+      tintStrength: preview ? 42 : 20,
+      creditText: music.creditText,
+      creditSize: 17,
+      creditPosition: "bottom-right",
+      wallpaper: {
+        shapes: identity.shapes || sample(["lines", "stripes", "checkerboard", "starburst", "mondrian"]),
+        scheme: identity.scheme || sample(["broadcast", "blueprint", "miami", "arcade", "pool"]),
+        spacing: 78 + (seed % 72),
+        seed
+      },
+      effects: preview ? sampleMany(identity.effects || BUMP_CLEAN_EFFECTS, 1) : sampleMany(identity.effects || BUMP_CLEAN_EFFECTS, 2),
+      effectIntensity: preview ? 10 : 18,
+      intentionalGlitch: false,
+      presentation: generatedBumpPresentation(false),
+      productionStyle: preview ? "split-card" : "schedule-card",
+      productionAccent: identity.scheme === "warning" ? "hot" : "cool",
+      productionBadge: blockName,
+      productionKicker: `starts ${when}`,
+      format: "landscape",
+      audio: music.path,
+      audioStart: music.start,
+      ...(preview || {})
+    }
+  };
+}
+
+function gapFillerPromoTarget(nextReal = {}) {
+  const source = sourceForEntry(nextReal);
+  if (source && !isBumpSource(source)) return nextReal;
+  return state.schedule
+    .filter((entry) => !entry.gapFiller)
+    .filter((entry) => Number(entry.startAt || 0) >= Number(nextReal.startAt || Date.now()))
+    .sort((a, b) => Number(a.startAt || 0) - Number(b.startAt || 0))
+    .find((entry) => {
+      const entrySource = sourceForEntry(entry);
+      return entrySource && !isBumpSource(entrySource);
+    }) || nextReal;
+}
+
+function gapFillerPromoLineup(nextReal = {}, count = GAP_FILLER_PROMO_LINEUP_COUNT) {
+  const target = gapFillerPromoTarget(nextReal);
+  const from = Number(nextReal.startAt || target.startAt || Date.now());
+  const blockId = target.weeklyBlockId || nextReal.weeklyBlockId || "";
+  const seen = new Set();
+  const lineup = [];
+  for (const entry of state.schedule
+    .filter((item) => !item.gapFiller)
+    .filter((item) => Number(item.startAt || 0) >= from - 1000)
+    .filter((item) => !blockId || item.weeklyBlockId === blockId)
+    .sort((a, b) => Number(a.startAt || 0) - Number(b.startAt || 0))) {
+    const entrySource = sourceForEntry(entry);
+    if (!entrySource || isBumpSource(entrySource)) continue;
+    const key = sourceEpisodeKey(entrySource);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    lineup.push({ ...entry, source: entrySource });
+    if (lineup.length >= count) break;
+  }
+  if (!lineup.length && target?.sourceId) {
+    const targetSource = sourceForEntry(target);
+    if (targetSource && !isBumpSource(targetSource)) lineup.push({ ...target, source: targetSource });
+  }
+  return lineup;
+}
+
+function sourceForEntry(entry = {}) {
+  return entry?.source || state.sources.find((source) => source.id === entry?.sourceId) || null;
+}
+
+function sourceEpisodeKey(source = {}) {
+  return [
+    source.archiveId || source.youtubeId || source.id || "",
+    source.archiveFile || source.path || source.title || ""
+  ].join(":");
+}
+
+function promoProgramTitle(entry = {}, source = null) {
+  const raw = String(source?.title || entry.title || "").trim();
+  const blockName = String(entry.weeklyBlockName || "").trim();
+  if (!raw) return "";
+  return blockName ? raw.replace(new RegExp(`^${escapeRegExp(blockName)}\\s*:\\s*`, "i"), "").trim() : raw;
+}
+
+function bumpPreviewBackgroundForEntry(entry = {}, duration = GAP_FILLER_PROMO_DURATION, seed = 0) {
+  const source = sourceForEntry(entry);
+  if (!source || isBumpSource(source) || source.type === "youtube") return null;
+  if (isClearlyPornographicArchiveCandidate(source)) return null;
+  const sourceDuration = Math.max(0, Number(source.duration || entry.duration || 0));
+  const windowEnd = Math.max(0, sourceDuration - Math.max(4, duration + 4));
+  const start = windowEnd > 12 ? 4 + (seed % Math.floor(windowEnd - 4)) : 0;
+  if (source.type === "local") {
+    const filePath = mediaPathFromSource(source.path);
+    if (source.path && BUMP_PREVIEW_VIDEO_EXTENSIONS.test(source.path) && filePath && existsSync(filePath)) {
+      return {
+        background: source.path,
+        backgroundStart: start
+      };
+    }
+  }
+  if (source.type === "internet-archive") {
+    const fileUrl = source.fileUrl || (source.archiveId && source.archiveFile ? archiveDownloadUrl(source.archiveId, source.archiveFile) : "");
+    if (fileUrl && /^https?:\/\//i.test(fileUrl) && BUMP_PREVIEW_VIDEO_EXTENSIONS.test(fileUrl.split("?")[0])) {
+      return {
+        backgroundUrl: fileUrl,
+        backgroundStart: start
+      };
+    }
+  }
+  return null;
 }
 
 function formatEstTime(timestamp) {
@@ -2585,6 +2345,13 @@ function createAutoBumpSource(afterEntryEnd, upcomingEntries = null) {
       effectIntensity: visuals.effectIntensity,
       intentionalGlitch: visuals.intentionalGlitch,
       presentation: generatedBumpPresentation(visuals.intentionalGlitch),
+      productionStyle: visuals.intentionalGlitch ? "standard" : "schedule-card",
+      productionAccent: "signal",
+      productionBadge: "NEXT",
+      productionKicker: "coming up",
+      creditText: audio.creditText,
+      creditPosition: "bottom-right",
+      creditSize: 18,
       audio: audio.path,
       audioStart: audio.start
     },
@@ -2601,6 +2368,134 @@ function autoBumpLines(afterEntryEnd, upcoming) {
         time: formatEstTime(entry.startAt)
       }))
     : [{ title: "More DoinkTV shortly", time: formatEstTime(afterEntryEnd) }];
+}
+
+function weatherCityForTime(timestamp = Date.now()) {
+  const bucket = Math.floor(Number(timestamp || Date.now()) / WEATHER_BUMP_INTERVAL_MS);
+  return WEATHER_CITIES[Math.abs(hashString(`weather:${bucket}`)) % WEATHER_CITIES.length];
+}
+
+function weatherCodeLabel(code) {
+  const labels = {
+    0: "clear",
+    1: "mostly clear",
+    2: "partly cloudy",
+    3: "overcast",
+    45: "fog",
+    48: "rime fog",
+    51: "light drizzle",
+    53: "drizzle",
+    55: "heavy drizzle",
+    61: "light rain",
+    63: "rain",
+    65: "heavy rain",
+    71: "light snow",
+    73: "snow",
+    75: "heavy snow",
+    80: "rain showers",
+    81: "showers",
+    82: "heavy showers",
+    95: "thunderstorms"
+  };
+  return labels[Number(code)] || "mixed skies";
+}
+
+async function weatherForecastForCity(city = WEATHER_CITIES[0]) {
+  const cacheKey = `${city.name}:${new Date().toISOString().slice(0, 10)}`;
+  const cached = weatherForecastCache.get(cacheKey);
+  if (cached && Date.now() - cached.cachedAt < 1000 * 60 * 60 * 6) return cached.forecast;
+
+  const params = new URLSearchParams({
+    latitude: String(city.latitude),
+    longitude: String(city.longitude),
+    daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
+    temperature_unit: "fahrenheit",
+    timezone: "auto",
+    forecast_days: "7"
+  });
+
+  try {
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`, { signal: AbortSignal.timeout(6500) });
+    if (!response.ok) throw new Error(`weather ${response.status}`);
+    const data = await response.json();
+    const daily = data.daily || {};
+    const forecast = (daily.time || []).slice(0, 7).map((date, index) => ({
+      date,
+      label: weatherCodeLabel(daily.weather_code?.[index]),
+      high: Math.round(Number(daily.temperature_2m_max?.[index])),
+      low: Math.round(Number(daily.temperature_2m_min?.[index])),
+      rain: Math.max(0, Math.min(100, Math.round(Number(daily.precipitation_probability_max?.[index] || 0))))
+    })).filter((day) => Number.isFinite(day.high) && Number.isFinite(day.low));
+    if (!forecast.length) throw new Error("empty forecast");
+    weatherForecastCache.set(cacheKey, { cachedAt: Date.now(), forecast });
+    return forecast;
+  } catch {
+    return [];
+  }
+}
+
+function weatherDayLabel(dateText = "") {
+  const date = new Date(`${dateText}T12:00:00`);
+  if (!Number.isFinite(date.getTime())) return "Soon";
+  return new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(date);
+}
+
+async function createWeatherBumpSource(startAt = Date.now()) {
+  const city = weatherCityForTime(startAt);
+  const forecast = await weatherForecastForCity(city);
+  const music = randomBumpMusic(WEATHER_BUMP_DURATION);
+  const seed = Math.abs(hashString(`weather:${city.name}:${Math.floor(startAt / WEATHER_BUMP_INTERVAL_MS)}`)) % 100000;
+  const lines = forecast.length
+    ? [
+        `${city.name}, ${city.country}`,
+        ...forecast.slice(0, 7).map((day) => `${weatherDayLabel(day.date)} ${day.high}/${day.low}F ${day.label} ${day.rain ? `${day.rain}% wet` : "dry-ish"}`)
+      ]
+    : [
+        `${city.name}, ${city.country}`,
+        "forecast signal fuzzy",
+        "weather department is chewing the antenna"
+      ];
+  return {
+    id: crypto.randomUUID(),
+    type: "bump",
+    title: `Weather: ${city.name}`,
+    folderId: "",
+    duration: WEATHER_BUMP_DURATION,
+    randomEligible: false,
+    bump: {
+      kind: "weather-bump",
+      bumpClass: "weather-bump",
+      heading: "one-week forecast",
+      lines,
+      secondsPerLine: Math.max(3.2, Math.round((WEATHER_BUMP_DURATION / Math.max(1, lines.length)) * 10) / 10),
+      fontSize: 39,
+      alignment: "left",
+      placement: "middle",
+      tone: "caption",
+      tintStrength: 18,
+      creditText: music.creditText,
+      creditPosition: "bottom-right",
+      creditSize: 17,
+      wallpaper: {
+        shapes: sample(["lines", "stripes", "argyle", "terrazzo", "mondrian"]),
+        scheme: sample(["blueprint", "pool", "mint", "broadcast", "paper"]),
+        spacing: 84 + (seed % 66),
+        seed
+      },
+      effects: sampleMany(["scanlines", "letterbox", "vhs", "chromatic"], 2),
+      effectIntensity: 14,
+      intentionalGlitch: false,
+      presentation: generatedBumpPresentation(false),
+      productionStyle: "schedule-card",
+      productionAccent: "cool",
+      productionBadge: "WORLD WEATHER",
+      productionKicker: `${city.country} / 7 day forecast`,
+      audio: music.path,
+      audioStart: music.start
+    },
+    weatherCity: city.name,
+    generatedAt: Date.now()
+  };
 }
 
 function queueFadeBreakDetectionForProgram(program = {}) {
@@ -2627,7 +2522,8 @@ function queueFadeBreakDetectionForProgram(program = {}) {
     if (!source?.id || seen.has(source.id)) continue;
     seen.add(source.id);
     const cached = state.fadeBreaks?.[source.id];
-    if (cached?.status === "ready" || cached?.status === "none") continue;
+    if (cached?.status === "ready" && Number(cached.planVersion || 0) >= LONGFORM_BREAK_PLAN_VERSION) continue;
+    if (cached?.status === "none" && Number(cached.planVersion || 0) >= LONGFORM_BREAK_PLAN_VERSION) continue;
     if (cached?.status === "pending" && fadeBreakDetectionInFlight.has(source.id)) continue;
     if (fadeBreakDetectionInFlight.size >= FADE_BREAK_MAX_CONCURRENT_PROBES) break;
     startFadeBreakDetection(source);
@@ -2640,7 +2536,7 @@ function fadeBreakEntryEligible(entry = {}, source = {}) {
   if (entry.autoBump || entry.blockBump || entry.fadeBreakBump || entry.fadeBreakResume || entry.fadeBreakSplit) return false;
   const sourceDuration = Number(source.duration || entry.duration || 0);
   const entryDuration = Number(entry.duration || 0);
-  if (sourceDuration < FADE_BREAK_MIN_SOURCE_DURATION || entryDuration < FADE_BREAK_MIN_SOURCE_DURATION) return false;
+  if (sourceDuration < LONGFORM_BREAK_MIN_PROGRAM_SECONDS || entryDuration < LONGFORM_BREAK_MIN_PROGRAM_SECONDS) return false;
   const sourceOffset = Number(entry.sourceOffset || 0);
   return sourceOffset < sourceDuration - FADE_BREAK_MIN_REMAINING_SECONDS;
 }
@@ -2652,15 +2548,16 @@ function startFadeBreakDetection(source = {}) {
   state.fadeBreaks ||= {};
   state.fadeBreaks[source.id] = {
     status: "pending",
+    planVersion: LONGFORM_BREAK_PLAN_VERSION,
     updatedAt: Date.now()
   };
   timelineSaveNeeded = true;
 
   detectSourceFadeBreak(source)
-    .then(async (breakAt) => {
-      state.fadeBreaks[source.id] = breakAt
-        ? { status: "ready", breakAt, updatedAt: Date.now() }
-        : { status: "none", updatedAt: Date.now() };
+    .then(async (breakpoints) => {
+      state.fadeBreaks[source.id] = breakpoints.length
+        ? { status: "ready", breakAt: breakpoints[0], breakpoints, planVersion: LONGFORM_BREAK_PLAN_VERSION, updatedAt: Date.now() }
+        : { status: "none", planVersion: LONGFORM_BREAK_PLAN_VERSION, updatedAt: Date.now() };
       fadeBreakDetectionInFlight.delete(source.id);
       applyDetectedFadeBreaks();
       await saveState();
@@ -2669,6 +2566,7 @@ function startFadeBreakDetection(source = {}) {
     .catch(async (error) => {
       state.fadeBreaks[source.id] = {
         status: "error",
+        planVersion: LONGFORM_BREAK_PLAN_VERSION,
         message: String(error.message || "Fade detection failed.").slice(0, 180),
         updatedAt: Date.now()
       };
@@ -2699,7 +2597,7 @@ async function detectSourceFadeBreak(source = {}) {
     "-vf", "blackdetect=d=0.22:pix_th=0.10",
     "-f", "null",
     "-"
-  ], 1000 * 55);
+  ], 1000 * 90);
   return parseFadeBreakProbe(stderr, scanStart, duration);
 }
 
@@ -2744,17 +2642,22 @@ function runFadeBreakProbe(args, timeoutMs) {
 
 function parseFadeBreakProbe(stderr = "", scanStart = FADE_BREAK_MIN_SECONDS, duration = 0) {
   const matches = [...String(stderr).matchAll(/black_start:([\d.]+)\s+black_end:([\d.]+)\s+black_duration:([\d.]+)/g)];
+  const breakpoints = [];
+  let lastAccepted = 0;
   for (const match of matches) {
     const rawStart = Number(match[1]);
     const rawEnd = Number(match[2]);
     const blackDuration = Number(match[3]);
     if (!Number.isFinite(rawEnd) || !Number.isFinite(blackDuration) || blackDuration < 0.18) continue;
     const absoluteEnd = rawEnd < scanStart - 1 ? rawEnd + scanStart : rawEnd;
-    if (absoluteEnd < FADE_BREAK_MIN_SECONDS) continue;
-    if (duration && absoluteEnd > duration - FADE_BREAK_MIN_REMAINING_SECONDS) continue;
-    return Math.round(absoluteEnd);
+    if (absoluteEnd < LONGFORM_BREAK_FIRST_AFTER_SECONDS) continue;
+    if (duration && absoluteEnd > duration - LONGFORM_BREAK_END_GUARD_SECONDS) continue;
+    if (lastAccepted && absoluteEnd - lastAccepted < LONGFORM_BREAK_MIN_SPACING_SECONDS) continue;
+    breakpoints.push(Math.round(absoluteEnd));
+    lastAccepted = absoluteEnd;
+    if (breakpoints.length >= LONGFORM_BREAK_MAX_PER_ENTRY) break;
   }
-  return null;
+  return breakpoints;
 }
 
 function applyDetectedFadeBreaks() {
@@ -2780,105 +2683,204 @@ function applyDetectedFadeBreaksToCollection(collectionName) {
     };
     const source = state.sources.find((item) => item.id === entry.sourceId);
     const cached = source?.id ? state.fadeBreaks[source.id] : null;
-    const breakAt = Number(cached?.breakAt);
-    if (cached?.status !== "ready" || !Number.isFinite(breakAt) || !fadeBreakEntryEligible(entry, source)) {
+    const plannedBreaks = longformContinuityBreaksForEntry(entry, source, cached, now);
+    if (!plannedBreaks.length || !fadeBreakEntryEligible(entry, source)) {
       rebuilt.push(entry);
       continue;
     }
 
     const sourceOffset = Math.max(0, Number(entry.sourceOffset || 0));
     const entryDuration = Math.max(0, Number(entry.duration || 0));
-    const firstDuration = Math.round(breakAt - sourceOffset);
-    const breakStartAt = Number(entry.startAt || 0) + firstDuration * 1000;
-    if (
-      firstDuration < FADE_BREAK_MIN_SECONDS
-      || firstDuration > entryDuration - FADE_BREAK_MIN_REMAINING_SECONDS
-      || breakStartAt <= now + 10000
-    ) {
-      rebuilt.push(entry);
-      continue;
+    let segmentStartOffset = sourceOffset;
+    let segmentStartAt = Number(entry.startAt || 0);
+    let insertedBreaks = 0;
+
+    for (const breakAt of plannedBreaks) {
+      const segmentDuration = Math.round(breakAt - segmentStartOffset);
+      const breakStartAt = segmentStartAt + segmentDuration * 1000;
+      if (segmentDuration < FADE_BREAK_MIN_SECONDS || breakStartAt <= now + 10000) continue;
+
+      rebuilt.push({
+        ...entry,
+        id: insertedBreaks ? crypto.randomUUID() : entry.id,
+        startAt: segmentStartAt,
+        duration: segmentDuration,
+        sourceOffset: segmentStartOffset,
+        fadeBreakSplit: true,
+        fadeBreakAt: breakAt,
+        longformContinuityBreak: true
+      });
+
+      const cluster = createLongformContinuityBreakCluster(source, entry, {
+        breakAt,
+        breakIndex: insertedBreaks,
+        startAt: breakStartAt
+      });
+      state.sources.push(...cluster.sources);
+      rebuilt.push(...cluster.entries);
+      segmentStartOffset = breakAt;
+      segmentStartAt = breakStartAt + cluster.duration * 1000;
+      timelineShiftMs += cluster.duration * 1000;
+      insertedBreaks += 1;
     }
 
-    const bumpSource = createFadeBreakBumpSource(source, entry);
-    state.sources.push(bumpSource);
-    const firstEntry = {
-      ...entry,
-      duration: firstDuration,
-      fadeBreakSplit: true,
-      fadeBreakAt: breakAt
-    };
-    const bumpEntry = {
-      id: crypto.randomUUID(),
-      sourceId: bumpSource.id,
-      title: bumpSource.title,
-      startAt: breakStartAt,
-      duration: bumpSource.duration,
-      queuedAt: entry.queuedAt || now,
-      autoBump: true,
-      fadeBreakBump: true,
-      fadeBreakOf: entry.id,
-      weeklyBlockId: entry.weeklyBlockId || "",
-      weeklyBlockName: entry.weeklyBlockName || ""
-    };
-    const resumeEntry = {
-      ...entry,
-      id: crypto.randomUUID(),
-      startAt: breakStartAt + bumpSource.duration * 1000,
-      duration: Math.max(5, Math.round(entryDuration - firstDuration)),
-      sourceOffset: breakAt,
-      fadeBreakResume: true,
-      fadeBreakOf: entry.id
-    };
-    rebuilt.push(firstEntry, bumpEntry, resumeEntry);
-    timelineShiftMs += bumpSource.duration * 1000;
-    changed = true;
+    if (insertedBreaks) {
+      rebuilt.push({
+        ...entry,
+        id: crypto.randomUUID(),
+        startAt: segmentStartAt,
+        duration: Math.max(5, Math.round(sourceOffset + entryDuration - segmentStartOffset)),
+        sourceOffset: segmentStartOffset,
+        fadeBreakResume: true,
+        fadeBreakOf: entry.id
+      });
+      changed = true;
+    } else {
+      rebuilt.push(entry);
+    }
   }
 
   if (changed) state[collectionName] = rebuilt.sort((a, b) => a.startAt - b.startAt);
   return changed;
 }
 
+function longformContinuityBreaksForEntry(entry = {}, source = {}, cached = {}, now = Date.now()) {
+  return planLongformContinuityBreaks(entry, cached, {
+    now,
+    firstAfterSeconds: LONGFORM_BREAK_FIRST_AFTER_SECONDS,
+    minSpacingSeconds: LONGFORM_BREAK_MIN_SPACING_SECONDS,
+    endGuardSeconds: LONGFORM_BREAK_END_GUARD_SECONDS,
+    maxBreaks: LONGFORM_BREAK_MAX_PER_ENTRY
+  });
+}
+
 function createFadeBreakBumpSource(source = {}, entry = {}) {
-  const music = randomBumpMusic(FADE_BREAK_BUMP_DURATION);
+  return createLongformContinuityBumpSource(source, entry, {
+    duration: FADE_BREAK_BUMP_DURATION,
+    phase: "identity",
+    breakIndex: 0
+  });
+}
+
+function createLongformContinuityBreakCluster(source = {}, entry = {}, options = {}) {
+  const blockIdentity = blockIdentityForEntry(entry) || weeklyBlockIdentity({ id: "station", name: "DoinkTV" });
+  const phases = [
+    { phase: "out", duration: 6 },
+    { phase: "identity", duration: Math.min(FADE_BREAK_BUMP_DURATION + 6, LONGFORM_BREAK_CLUSTER_MAX_SECONDS - 12) },
+    { phase: "return", duration: 6 }
+  ];
+  const sources = phases.map((phaseOptions) => createLongformContinuityBumpSource(source, entry, {
+    ...phaseOptions,
+    breakIndex: options.breakIndex || 0,
+    breakAt: options.breakAt,
+    blockIdentity
+  }));
+  const entries = [];
+  let cursor = Number(options.startAt || Date.now());
+  for (const bumpSource of sources) {
+    entries.push({
+      id: crypto.randomUUID(),
+      sourceId: bumpSource.id,
+      title: bumpSource.title,
+      startAt: cursor,
+      duration: bumpSource.duration,
+      queuedAt: Date.now(),
+      autoBump: true,
+      fadeBreakBump: true,
+      longformContinuityBreak: true,
+      fadeBreakOf: entry.id,
+      weeklyBlockId: entry.weeklyBlockId || "",
+      weeklyBlockName: entry.weeklyBlockName || ""
+    });
+    cursor += bumpSource.duration * 1000;
+  }
+  return {
+    sources,
+    entries,
+    duration: sources.reduce((sum, bumpSource) => sum + Number(bumpSource.duration || 0), 0)
+  };
+}
+
+function createLongformContinuityBumpSource(source = {}, entry = {}, options = {}) {
+  const duration = Math.max(4, Math.min(36, Math.round(Number(options.duration || FADE_BREAK_BUMP_DURATION))));
+  const music = randomBumpMusic(duration);
   const blockName = entry.weeklyBlockName || "";
+  const identity = options.blockIdentity || blockIdentityForEntry(entry) || weeklyBlockIdentity({ id: "station", name: "DoinkTV" });
+  const continuity = stationContinuityBrain({ ...entry, source, title: entry.title || source.title }, null);
   const returnLine = source.title ? `WE RETURN TO: ${source.title}` : "WE NOW RETURN TO THE PROGRAM";
+  const phase = options.phase || "identity";
+  const phaseCopy = longformContinuityPhaseCopy(phase, { source, entry, identity, continuity, returnLine });
+  const seed = Math.abs(hashString(`longform:${source.id}:${entry.id}:${phase}:${options.breakAt || 0}:${options.breakIndex || 0}`)) % 100000;
   return {
     id: crypto.randomUUID(),
     type: "bump",
-    title: blockName ? `${blockName}: break bump` : "Break bump",
-    duration: FADE_BREAK_BUMP_DURATION,
+    title: `${identity.heading || blockName || "DoinkTV"}: ${phaseCopy.title}`,
+    duration,
     randomEligible: false,
     weeklyBlockId: entry.weeklyBlockId || "",
     bump: {
       kind: "fade-break-bump",
       bumpClass: "fade-break",
-      heading: sample(["we'll be right back", "station break", "hold that thought", "do not adjust your set"]),
-      lines: [
-        blockName || "DOINKTV",
-        returnLine,
-        "RIGHT AFTER THIS"
-      ],
-      alignment: sample(["left", "center", "right"]),
-      placement: sample(["top", "middle", "bottom"]),
-      tone: sample(["classic", "caption", "washed"]),
-      secondsPerLine: 1.45,
-      tintStrength: 24,
-      creditText: "UNSCHEDULED BREAK\nSIGNAL WILL RESUME",
+      heading: phaseCopy.heading,
+      lines: phaseCopy.lines,
+      alignment: identity.alignment || sample(["left", "center", "right"]),
+      placement: phase === "return" ? "middle" : identity.placement || sample(["top", "middle", "bottom"]),
+      tone: identity.tone || sample(["classic", "caption", "washed"]),
+      fontSize: phase === "identity" ? Math.max(38, Number(identity.fontSize || 52) - 8) : 42,
+      secondsPerLine: Math.max(1.3, Math.round((duration / Math.max(1, phaseCopy.lines.length)) * 10) / 10),
+      tintStrength: phase === "identity" ? 26 : 18,
+      creditText: music.creditText,
       creditSize: 18,
       creditPosition: "bottom-right",
       wallpaper: {
-        shapes: sample(["lines", "stripes", "starburst", "diamonds", "argyle"]),
-        scheme: sample(["broadcast", "warning", "midnight", "blueprint", "ruby"]),
-        spacing: 82 + Math.floor(Math.random() * 62),
-        seed: Math.floor(Math.random() * 100000)
+        shapes: identity.shapes || sample(["lines", "stripes", "starburst", "diamonds", "argyle"]),
+        scheme: identity.scheme || sample(["broadcast", "warning", "midnight", "blueprint", "ruby"]),
+        spacing: 82 + (seed % 62),
+        seed
       },
-      effects: sampleMany(["vhs", "scanlines", "chromatic", "letterbox"], 2),
-      effectIntensity: 24,
+      effects: sampleMany(identity.effects?.length ? identity.effects : ["vhs", "scanlines", "chromatic", "letterbox"], phase === "identity" ? 2 : 1),
+      effectIntensity: phase === "identity" ? 22 : 12,
       intentionalGlitch: false,
       presentation: generatedBumpPresentation(false),
+      productionStyle: phase === "identity" ? "promo-card" : "lower-third",
+      productionAccent: "signal",
+      productionBadge: identity.heading || blockName || "DOINKTV",
+      productionKicker: phaseCopy.kicker,
       audio: music.path,
       audioStart: music.start
     }
+  };
+}
+
+function longformContinuityPhaseCopy(phase, { source = {}, identity = {}, continuity = {}, returnLine = "" } = {}) {
+  const blockHeading = identity.heading || continuity.blockPack?.label || "DOINKTV";
+  const tagline = identity.taglines?.length ? sample(identity.taglines) : continuity.stationVoice?.slogan || "STATION CONTINUITY";
+  if (phase === "out") {
+    return {
+      title: "break out",
+      heading: sample(["signal break", "quick station break", "hold that tape"]),
+      kicker: "break begins",
+      lines: [blockHeading, tagline].filter(Boolean)
+    };
+  }
+  if (phase === "return") {
+    return {
+      title: "return sting",
+      heading: sample(["we now return", "back to the tape", "program resumes"]),
+      kicker: "clean return",
+      lines: [returnLine, blockHeading].filter(Boolean)
+    };
+  }
+  return {
+    title: "continuity break",
+    heading: continuity.stationVoice?.label || sample(["doinktv continuity", "station identity", "still on this frequency"]),
+    kicker: "longform continuity",
+    lines: [
+      blockHeading,
+      tagline,
+      source.title ? `NOW PLAYING: ${source.title}` : "",
+      returnLine
+    ].filter(Boolean).slice(0, 5)
   };
 }
 
@@ -2918,7 +2920,7 @@ function createManualBumpSource(body = {}) {
       placement: ["top", "middle", "bottom"].includes(body.placement) ? body.placement : "middle",
       tone: ["classic", "caption", "washed"].includes(body.tone) ? body.tone : "classic",
       tintStrength: Math.max(0, Math.min(100, Number(body.tintStrength) || 0)),
-      creditText: String(body.creditText || "").trim(),
+      creditText: normalizeBumpCreditText(body.creditText, audio.path, !body.audio),
       creditPosition: String(body.creditPosition || "bottom-right"),
       creditFont: String(body.creditFont || "Arial, Helvetica, sans-serif"),
       creditSize: Math.max(10, Math.min(72, Number(body.creditSize) || 24)),
@@ -2929,6 +2931,10 @@ function createManualBumpSource(body = {}) {
       effectIntensity: Math.max(0, Math.min(100, Number(body.effectIntensity) || 0)),
       intentionalGlitch,
       presentation: body.presentation || generatedBumpPresentation(intentionalGlitch),
+      productionStyle: BUMP_PRODUCTION_STYLES.has(body.productionStyle) ? body.productionStyle : "standard",
+      productionAccent: BUMP_PRODUCTION_ACCENTS.has(body.productionAccent) ? body.productionAccent : "auto",
+      productionBadge: String(body.productionBadge || "").trim().slice(0, 32),
+      productionKicker: String(body.productionKicker || "").trim().slice(0, 80),
       audio: audio.path,
       audioStart: audio.start,
       background,
@@ -2950,7 +2956,7 @@ function normalizeBumpBackground(backgroundPath = "") {
 
 function randomBumpMusic(requiredSeconds = AUTO_BUMP_DURATION) {
   const music = state.bumpMusic?.length ? state.bumpMusic[Math.floor(Math.random() * state.bumpMusic.length)] : null;
-  if (!music) return { path: "", start: 0 };
+  if (!music) return { path: "", start: 0, title: "", artist: "", creditText: "" };
   return randomBumpMusicClip(music, requiredSeconds);
 }
 
@@ -2960,8 +2966,49 @@ function randomBumpMusicClip(music, requiredSeconds = AUTO_BUMP_DURATION) {
   const maxStart = Math.max(0, duration - safeRequiredSeconds);
   return {
     path: music.path,
-    start: maxStart > 0 ? Math.round(Math.random() * maxStart * 10) / 10 : 0
+    start: maxStart > 0 ? Math.round(Math.random() * maxStart * 10) / 10 : 0,
+    title: bumpMusicTitle(music),
+    artist: BUMP_MUSIC_ARTIST,
+    creditText: bumpMusicCredit(music)
   };
+}
+
+function bumpMusicTitle(music = {}) {
+  const raw = String(music.title || music.name || "Doink Wizard").replace(/\.[^/.]+$/, "").trim();
+  const parts = raw.split(/\s+-\s+/).map((part) => part.trim()).filter(Boolean);
+  const withoutArtist = parts[0]?.toLowerCase() === BUMP_MUSIC_ARTIST.toLowerCase() ? parts.slice(1) : parts;
+  const likelyTitle = withoutArtist.length > 1 ? withoutArtist[withoutArtist.length - 1] : withoutArtist[0] || raw;
+  return likelyTitle
+    .replace(/[_-]+/g, " ")
+    .replace(/^\d+\s+/, "")
+    .replace(/\s*\[(?:cl|clean|clip)\]\s*$/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function bumpMusicCredit(music = {}) {
+  const title = bumpMusicTitle(music);
+  return title ? `${title}\n${BUMP_MUSIC_ARTIST}` : "";
+}
+
+function bumpMusicForPath(audioPath = "") {
+  const value = String(audioPath || "");
+  if (!value) return null;
+  return (state.bumpMusic || []).find((music) => music.path === value) || null;
+}
+
+function bumpMusicCreditForPath(audioPath = "") {
+  const music = bumpMusicForPath(audioPath);
+  return music ? bumpMusicCredit(music) : "";
+}
+
+function normalizeBumpCreditText(creditText = "", audioPath = "", forceServerMusicCredit = false) {
+  const text = String(creditText || "").trim();
+  const musicCredit = bumpMusicCreditForPath(audioPath);
+  if (!musicCredit) return text;
+  if (forceServerMusicCredit) return musicCredit;
+  if (!text || /server library|unknown artist|^song:/im.test(text)) return musicCredit;
+  return text;
 }
 
 function ensureAutoBumpAudioStarts() {
@@ -2974,6 +3021,8 @@ function ensureAutoBumpAudioStarts() {
     const clip = music ? randomBumpMusicClip(music, source.duration || AUTO_BUMP_DURATION) : { path: source.bump.audio || "", start: 0 };
     source.bump.audio = clip.path;
     source.bump.audioStart = clip.start;
+    source.bump.creditText = clip.creditText || source.bump.creditText || "";
+    source.bump.creditPosition = "bottom-right";
     changed = true;
   }
   return changed;
@@ -2987,6 +3036,7 @@ async function refreshBumpMusic() {
     .map((file) => file.name);
   state.bumpMusic = (await Promise.all(musicFiles.map(async (fileName) => ({
     name: fileName.replace(/\.[^/.]+$/, ""),
+    artist: BUMP_MUSIC_ARTIST,
     path: `/media/bump-music/${encodeURIComponent(fileName).replace(/%2F/g, "/")}`,
     duration: await readAudioDuration(path.join(BUMP_MUSIC_DIR, fileName))
   }))))
@@ -3186,6 +3236,10 @@ function queueEntryFromItem(item, startAt, now = Date.now()) {
     sourceOffset: Math.max(0, Number(item.sourceOffset || 0)),
     queuedAt: item.queuedAt || now,
     autoQueued: item.autoQueued,
+    weatherBump: item.weatherBump,
+    weatherBumpSplit: item.weatherBumpSplit,
+    weatherBumpResume: item.weatherBumpResume,
+    weatherBumpOf: item.weatherBumpOf,
     fadeBreakSplit: item.fadeBreakSplit,
     fadeBreakResume: item.fadeBreakResume,
     fadeBreakOf: item.fadeBreakOf,
@@ -3217,6 +3271,99 @@ function refreshAutoBumpLines(entries = state.liveQueue) {
     const afterBump = entry.startAt + entry.duration * 1000;
     source.bump.lines = autoBumpLines(afterBump, upcomingNormalQueueItems(afterBump, 3, entries));
   }
+}
+
+function weatherBumpEntries(entries = []) {
+  return engineWeatherBumpEntries(entries, {
+    sourceFor: (entry) => state.sources.find((source) => source.id === entry.sourceId)
+  });
+}
+
+async function createWeatherBumpEntry(startAt = Date.now(), now = Date.now()) {
+  const bumpSource = await createWeatherBumpSource(startAt);
+  state.sources.push(bumpSource);
+  return {
+    id: crypto.randomUUID(),
+    sourceId: bumpSource.id,
+    title: bumpSource.title,
+    startAt,
+    duration: WEATHER_BUMP_DURATION,
+    queuedAt: now,
+    autoBump: true,
+    weatherBump: true
+  };
+}
+
+async function ensureWeatherBumps() {
+  const scheduleChanged = await ensureWeatherBumpsInCollection("schedule");
+  const queueChanged = state.broadcastMode === "queue" ? await ensureWeatherBumpsInCollection("liveQueue") : false;
+  if (scheduleChanged || queueChanged) {
+    state.schedule.sort((a, b) => a.startAt - b.startAt);
+    state.liveQueue.sort((a, b) => a.startAt - b.startAt);
+    pruneUnusedBumpSources();
+  }
+  return scheduleChanged || queueChanged;
+}
+
+async function ensureWeatherBumpsInCollection(collectionName) {
+  const now = Date.now();
+  let changed = false;
+  const targets = planWeatherBumpTargets(state[collectionName], {
+    now,
+    horizonMs: WEATHER_BUMP_LOOKAHEAD_MS,
+    intervalMs: WEATHER_BUMP_INTERVAL_MS,
+    minGapMs: WEATHER_BUMP_MIN_GAP_MS,
+    sourceFor: (entry) => state.sources.find((source) => source.id === entry.sourceId)
+  });
+  for (const target of targets) {
+    if (await insertWeatherBumpInCollection(collectionName, target, now)) {
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+async function insertWeatherBumpInCollection(collectionName, targetStartAt, now = Date.now()) {
+  const entries = state[collectionName]
+    .filter((entry) => entryEnd(entry) > now)
+    .sort((a, b) => a.startAt - b.startAt);
+  const bumpEntry = await createWeatherBumpEntry(targetStartAt, now);
+  const plan = planTimedBumpInsertion(entries, {
+    targetStartAt,
+    duration: WEATHER_BUMP_DURATION,
+    now,
+    minSegmentSeconds: 8 * 60,
+    sourceFor: (entry) => state.sources.find((source) => source.id === entry.sourceId)
+  });
+  if (plan.mode === "gap") {
+    state[collectionName].push(bumpEntry);
+    return true;
+  }
+
+  if (plan.mode !== "split") {
+    state.sources = state.sources.filter((item) => item.id !== bumpEntry.sourceId);
+    return false;
+  }
+
+  const firstEntry = {
+    ...plan.containing,
+    duration: plan.firstDuration,
+    weatherBumpSplit: true
+  };
+  const resumeEntry = {
+    ...plan.containing,
+    id: crypto.randomUUID(),
+    startAt: plan.resumeStartAt,
+    duration: plan.resumeDuration,
+    sourceOffset: plan.resumeSourceOffset,
+    weatherBumpResume: true,
+    weatherBumpOf: plan.containing.id
+  };
+  state[collectionName] = state[collectionName]
+    .filter((entry) => entry.id !== plan.containing.id)
+    .concat(firstEntry, bumpEntry, resumeEntry)
+    .sort((a, b) => a.startAt - b.startAt);
+  return true;
 }
 
 function rebuildLiveQueueTimings({ insertAutoBumps = true, leadingAutoBump = false } = {}) {
@@ -3361,31 +3508,19 @@ function pruneUnusedBumpSources() {
 }
 
 function entryEnd(entry) {
-  return Number(entry.startAt || 0) + Number(entry.duration || 0) * 1000;
+  return engineEntryEnd(entry);
 }
 
 function entriesOverlap(first, second) {
-  return Number(first.startAt || 0) < entryEnd(second) && Number(second.startAt || 0) < entryEnd(first);
+  return engineEntriesOverlap(first, second);
 }
 
 function protectQueueEntryAgainstSchedule(entry, scheduled = state.schedule) {
-  const conflict = scheduled
-    .filter((scheduleEntry) => entriesOverlap(entry, scheduleEntry))
-    .sort((a, b) => a.startAt - b.startAt)[0];
-  if (!conflict) return entry;
-  if (entry.startAt >= conflict.startAt) return null;
-  const duration = Math.floor((conflict.startAt - entry.startAt) / 1000);
-  return duration >= 5 ? { ...entry, duration, clippedBySchedule: true } : null;
+  return protectOverrideEntryAgainstSchedule(entry, scheduled);
 }
 
 function activeBroadcastEntries() {
-  const scheduled = state.schedule.map((entry) => ({ ...entry, broadcastLane: "scheduled" }));
-  if (state.broadcastMode !== "queue") return scheduled;
-  const protectedQueue = state.liveQueue
-    .map((entry) => protectQueueEntryAgainstSchedule(entry, scheduled))
-    .filter(Boolean)
-    .map((entry) => ({ ...entry, broadcastLane: "queue" }));
-  return [...scheduled, ...protectedQueue].sort((a, b) => a.startAt - b.startAt);
+  return engineActiveBroadcastEntries(state);
 }
 
 function broadcastProgram() {
@@ -3446,6 +3581,14 @@ async function flushTimelineSave() {
 async function syncHlsPlayout() {
   const program = publicProgram();
   const live = program.live || standbyProgram(program.serverTime);
+  const handoff = hlsHandoffProgram(program);
+  if (handoff && hlsPlayout.id !== handoff.id && hlsPlayout.handoffFromId !== live.id) {
+    await startHlsPlayout(handoff, { handoffFromId: live.id });
+    return;
+  }
+  if (hlsPlayout.handoffFromId === live.id && hlsPlayout.id !== live.id && Date.now() < entryEnd(live) + 500) {
+    return;
+  }
   if (hlsPlayout.id === live.id && hlsPlayout.status === "running" && hlsPlayout.process && !hlsPlayout.process.killed) {
     if (Date.now() - hlsPlayout.startedAt < 12000) return;
     if (await isHlsPlaylistFresh()) return;
@@ -3453,6 +3596,30 @@ async function syncHlsPlayout() {
   }
 
   await startHlsPlayout(live);
+}
+
+function hlsHandoffProgram(program = {}) {
+  const live = program.live;
+  const next = hlsNextPlayoutProgram(live);
+  if (!live || !next || !next.source) return null;
+  if (hlsPlayout.id !== live.id) return null;
+  const remainingMs = entryEnd(live) - Date.now();
+  if (remainingMs < -250 || remainingMs > HLS_HANDOFF_LEAD_MS) return null;
+  return {
+    ...next,
+    startAt: Date.now(),
+    offset: 0,
+    sourceOffset: Math.max(0, Number(next.sourceOffset || 0)),
+    earlyHandoff: true,
+    handoffFromId: live.id
+  };
+}
+
+function hlsNextPlayoutProgram(live = null) {
+  return engineNextPlayoutProgram(state, live, {
+    now: Date.now(),
+    blockIdentityForEntry
+  });
 }
 
 async function isHlsPlaylistFresh(maxAgeMs = 10000) {
@@ -3479,10 +3646,11 @@ function standbyProgram(now = Date.now()) {
   };
 }
 
-async function startHlsPlayout(live) {
+async function startHlsPlayout(live, options = {}) {
   stopHlsPlayout();
   hlsPlayout.id = live.id;
   hlsPlayout.startedAt = Date.now();
+  hlsPlayout.handoffFromId = options.handoffFromId || live.handoffFromId || "";
   hlsPlayout.status = "starting";
   hlsPlayout.error = "";
   await mkdir(HLS_DIR, { recursive: true });
@@ -3591,13 +3759,7 @@ function hlsArgsForProgram(live) {
 function hlsSlateArgs(live, remaining, segmentPattern, playlist) {
   const source = live.source || {};
   const bump = normalizedBumpForRender(source.bump || {});
-  const backgroundPath = bump.background ? mediaPathFromSource(bump.background) : "";
-  const hasBackground = backgroundPath && existsSync(backgroundPath) && BUMP_BACKGROUND_EXTENSIONS.test(backgroundPath);
-  const videoArgs = hasBackground
-    ? /\.(mp4|mov|m4v|webm)$/i.test(backgroundPath)
-      ? ["-stream_loop", "-1", "-re", "-i", backgroundPath]
-      : ["-loop", "1", "-framerate", "30", "-re", "-i", backgroundPath]
-    : ["-f", "lavfi", "-re", "-i", "color=c=0x090b10:s=1280x720:r=30"];
+  const videoArgs = bumpBackgroundInputArgs(bump);
   const audioPath = bump.audio ? mediaPathFromSource(bump.audio) : "";
   const audioArgs = audioPath && existsSync(audioPath)
     ? ["-stream_loop", "-1", "-ss", String(Math.max(0, Number(bump.audioStart) || 0)), "-i", audioPath]
@@ -3636,12 +3798,41 @@ function hlsSlateArgs(live, remaining, segmentPattern, playlist) {
   ];
 }
 
+function bumpBackgroundInputArgs(bump = {}) {
+  const backgroundStart = String(Math.max(0, Number(bump.backgroundStart) || 0));
+  const backgroundPath = bump.background ? mediaPathFromSource(bump.background) : "";
+  if (backgroundPath && existsSync(backgroundPath) && BUMP_BACKGROUND_EXTENSIONS.test(backgroundPath)) {
+    return /\.(mp4|mov|m4v|webm)$/i.test(backgroundPath)
+      ? ["-stream_loop", "-1", "-ss", backgroundStart, "-re", "-i", backgroundPath]
+      : ["-loop", "1", "-framerate", "30", "-re", "-i", backgroundPath];
+  }
+  const backgroundUrl = String(bump.backgroundUrl || "");
+  if (/^https?:\/\//i.test(backgroundUrl) && BUMP_PREVIEW_VIDEO_EXTENSIONS.test(backgroundUrl.split("?")[0])) {
+    return [
+      "-reconnect", "1",
+      "-reconnect_streamed", "1",
+      "-reconnect_delay_max", "5",
+      "-rw_timeout", "15000000",
+      "-ss", backgroundStart,
+      "-re",
+      "-i", backgroundUrl
+    ];
+  }
+  return ["-f", "lavfi", "-re", "-i", "color=c=0x090b10:s=1280x720:r=30"];
+}
+
 function normalizedBumpForRender(bump = {}) {
   const manual = bump.kind === "manual-bump";
   if (manual) return bump;
   const intentionalGlitch = intentionalBumpGlitch(bump);
   return {
     ...bump,
+    creditText: bumpMusicCreditForPath(bump.audio) || bump.creditText || "",
+    creditPosition: "bottom-right",
+    productionStyle: BUMP_PRODUCTION_STYLES.has(bump.productionStyle) ? bump.productionStyle : defaultProductionStyleForBump(bump),
+    productionAccent: BUMP_PRODUCTION_ACCENTS.has(bump.productionAccent) ? bump.productionAccent : "auto",
+    productionBadge: String(bump.productionBadge || defaultProductionBadgeForBump(bump)).trim().slice(0, 32),
+    productionKicker: String(bump.productionKicker || defaultProductionKickerForBump(bump)).trim().slice(0, 80),
     effects: sanitizedBumpEffects(bump.effects, intentionalGlitch),
     effectIntensity: normalizedGeneratedBumpIntensity(bump.effectIntensity, intentionalGlitch),
     presentation: {
@@ -3651,11 +3842,56 @@ function normalizedBumpForRender(bump = {}) {
   };
 }
 
+function defaultProductionStyleForBump(bump = {}) {
+  if (bump.kind === "gap-filler-promo-bump") return bump.background || bump.backgroundUrl ? "split-card" : "schedule-card";
+  if (bump.kind === "auto-bump") return "schedule-card";
+  if (bump.kind === "block-bump") return bump.bumpClass === "intro" ? "promo-card" : "lower-third";
+  if (bump.kind === "fade-break-bump") return "promo-card";
+  return "standard";
+}
+
+function defaultProductionBadgeForBump(bump = {}) {
+  if (bump.kind === "gap-filler-promo-bump") return bump.blockName || "PROMO";
+  if (bump.kind === "auto-bump") return "NEXT";
+  if (bump.kind === "block-bump") return bump.blockName || "DOINKTV";
+  if (bump.kind === "fade-break-bump") return bump.blockName || "DOINKTV";
+  return "";
+}
+
+function defaultProductionKickerForBump(bump = {}) {
+  if (bump.kind === "gap-filler-promo-bump") return "station promo";
+  if (bump.kind === "auto-bump") return "coming up";
+  if (bump.kind === "block-bump") return bump.bumpClass === "intro" ? "block premiere" : "station identification";
+  if (bump.kind === "fade-break-bump") return "program resumes after this";
+  return "";
+}
+
 function normalizeGeneratedBumpsInState() {
   let changed = false;
   for (const source of state.sources || []) {
-    if (source.type !== "bump" || !source.bump || source.bump.kind === "manual-bump") continue;
+    if (source.type !== "bump" || !source.bump) continue;
+    const credit = bumpMusicCreditForPath(source.bump.audio);
+    if (credit && shouldReplaceBumpCredit(source.bump)) {
+      source.bump.creditText = credit;
+      source.bump.creditPosition = "bottom-right";
+      changed = true;
+    }
+    if (source.bump.kind === "manual-bump") continue;
     const normalized = normalizedBumpForRender(source.bump);
+    if (String(source.bump.creditText || "") !== String(normalized.creditText || "")) {
+      source.bump.creditText = normalized.creditText;
+      changed = true;
+    }
+    if (source.bump.creditPosition !== "bottom-right") {
+      source.bump.creditPosition = "bottom-right";
+      changed = true;
+    }
+    for (const key of ["productionStyle", "productionAccent", "productionBadge", "productionKicker"]) {
+      if (String(source.bump[key] || "") !== String(normalized[key] || "")) {
+        source.bump[key] = normalized[key];
+        changed = true;
+      }
+    }
     if (JSON.stringify(source.bump.effects || []) !== JSON.stringify(normalized.effects || [])) {
       source.bump.effects = normalized.effects;
       changed = true;
@@ -3678,8 +3914,16 @@ function normalizeGeneratedBumpsInState() {
   return changed;
 }
 
+function shouldReplaceBumpCredit(bump = {}) {
+  if (bump.kind !== "manual-bump") return true;
+  if (bump.performanceCueId || bump.performanceSceneId) return true;
+  const text = String(bump.creditText || "").trim();
+  if (!text) return true;
+  return /server library|unknown artist|standby filler|no dead air|block promo|preview clip|signal will resume|continuity dept|cartoon relay|archive feed|station id|block start/i.test(text);
+}
+
 function isManualBump(bump = {}) {
-  return Boolean(bump.secondsPerLine || bump.fontSize || bump.creditText || bump.tintStrength || bump.format || bump.background);
+  return Boolean(bump.secondsPerLine || bump.fontSize || bump.creditText || bump.tintStrength || bump.format || bump.background || bump.backgroundUrl);
 }
 
 function mediaPathFromSource(sourcePath = "") {
@@ -3699,19 +3943,26 @@ function manualBumpVideoFilter(lines = [], bump = {}) {
   const placement = ["top", "middle", "bottom"].includes(bump.placement) ? bump.placement : "middle";
   const alignment = ["left", "center", "right"].includes(bump.alignment) ? bump.alignment : "left";
   const tone = ["classic", "caption", "washed"].includes(bump.tone) ? bump.tone : "classic";
+  const productionStyle = BUMP_PRODUCTION_STYLES.has(bump.productionStyle) ? bump.productionStyle : "standard";
   const fontSize = Math.max(18, Math.min(120, Number(bump.fontSize) || 58));
   const lineHeight = Math.round(fontSize * 1.28);
   const pad = Math.round(720 * 0.075);
-  const textWidth = Math.min(1280 - pad * 2, Math.round(1280 * 0.62), fontSize * 16);
-  const textX = alignment === "right" ? 1280 - pad : alignment === "center" ? 640 : pad;
+  const textWidth = productionStyle === "standard"
+    ? Math.min(1280 - pad * 2, Math.round(1280 * 0.62), fontSize * 16)
+    : Math.min(760, 1280 - pad * 4, fontSize * 18);
+  const textX = productionStyle !== "standard" && alignment === "left"
+    ? pad + 42
+    : alignment === "right" ? 1280 - pad : alignment === "center" ? 640 : pad;
   const textXExpr = textXExpression(textX, alignment);
   const cardX = alignment === "right" ? 1280 - pad - textWidth : alignment === "center" ? 640 - textWidth / 2 : pad;
   const textMotion = intentionalBumpGlitch(bump) ? "+sin(t*0.9)*3" : "";
   const secondsPerLine = Math.max(0.5, Number(bump.secondsPerLine) || 2.5);
   const safeLines = lines.map((line) => String(line || " ")).filter((line) => line.trim()).length ? lines : [" "];
+  const staticProductionLines = ["schedule-card", "split-card"].includes(productionStyle);
+  const renderedLines = staticProductionLines ? safeLines.slice(0, 6) : safeLines;
   const maxWrapped = 4;
   const creditLines = String(bump.creditText || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean).slice(0, 4);
-  const hasBackground = Boolean(bump.background);
+  const hasBackground = Boolean(bump.background || bump.backgroundUrl);
   const filters = hasBackground
     ? [
         "scale=1280:720:force_original_aspect_ratio=increase",
@@ -3728,19 +3979,29 @@ function manualBumpVideoFilter(lines = [], bump = {}) {
 
   if (tone === "classic") filters.push(`drawbox=x=0:y=0:w=1280:h=720:color=black@${Math.max(0, Math.min(1, Number(bump.tintStrength || 0) / 100))}:t=fill`);
   if (tone === "washed") filters.push("drawbox=x=0:y=0:w=1280:h=720:color=white@0.08:t=fill");
+  if (productionStyle !== "standard") filters.push(...productionChromeFilters(bump, { font, palette, fontSize }));
 
-  safeLines.forEach((rawLine, index) => {
+  renderedLines.forEach((rawLine, index) => {
     const sourceLine = typeof rawLine === "string" ? rawLine : rawLine?.title || " ";
-    const enable = `between(mod(t\\,${secondsPerLine * safeLines.length})\\,${index * secondsPerLine}\\,${(index + 1) * secondsPerLine})`;
+    const enable = staticProductionLines ? "" : `:enable='between(mod(t\\,${secondsPerLine * safeLines.length})\\,${index * secondsPerLine}\\,${(index + 1) * secondsPerLine})'`;
     const wrapped = wrapDrawTextLine(sourceLine, Math.max(8, Math.floor(textWidth / (fontSize * 0.56)))).slice(0, maxWrapped);
     const blockHeight = wrapped.length * lineHeight;
-    const y = placement === "top" ? pad : placement === "bottom" ? 720 - pad - blockHeight : Math.round(360 - blockHeight / 2);
-    if (tone === "caption") {
+    const productionY = productionStyle === "lower-third"
+      ? 720 - pad - Math.round(fontSize * 2.4)
+      : productionStyle === "promo-card"
+        ? Math.max(132, Math.round(360 - blockHeight / 2))
+        : productionStyle === "schedule-card" || productionStyle === "split-card"
+          ? 150 + index * Math.round(lineHeight * 1.08)
+          : null;
+    const y = productionY ?? (placement === "top" ? pad : placement === "bottom" ? 720 - pad - blockHeight : Math.round(360 - blockHeight / 2));
+    if (tone === "caption" && productionStyle === "standard") {
       const cardPad = Math.round(fontSize * 0.72);
-      filters.push(`drawbox=x=${Math.round(cardX - cardPad)}:y=${Math.round(y - cardPad * 0.7)}:w=${Math.round(textWidth + cardPad * 2)}:h=${Math.round(blockHeight + cardPad * 1.25)}:color=black@0.68:t=fill:enable='${enable}'`);
+      filters.push(`drawbox=x=${Math.round(cardX - cardPad)}:y=${Math.round(y - cardPad * 0.7)}:w=${Math.round(textWidth + cardPad * 2)}:h=${Math.round(blockHeight + cardPad * 1.25)}:color=black@0.68:t=fill${enable}`);
     }
     wrapped.forEach((line, lineIndex) => {
-      filters.push(`drawtext=fontfile='${font}':text='${drawTextEscape(line)}':fontcolor=0xf4f0e8:fontsize=${fontSize}:x=${textXExpr}:y=${Math.round(y + lineIndex * lineHeight)}${textMotion}:shadowcolor=black@0.75:shadowx=0:shadowy=3:enable='${enable}'`);
+      const lineSize = staticProductionLines && index === 0 ? Math.round(fontSize * 1.1) : fontSize;
+      const lineColor = staticProductionLines && index === 0 ? productionAccentColor(bump, palette) : "0xf4f0e8";
+      filters.push(`drawtext=fontfile='${font}':text='${drawTextEscape(line)}':fontcolor=${lineColor}:fontsize=${lineSize}:x=${textXExpr}:y=${Math.round(y + lineIndex * lineHeight)}${textMotion}:shadowcolor=black@0.75:shadowx=0:shadowy=3${enable}`);
     });
   });
 
@@ -3760,6 +4021,39 @@ function manualBumpVideoFilter(lines = [], bump = {}) {
 
   filters.push(...effectFilters(bump.effects, Math.max(0, Math.min(1, Number(bump.effectIntensity || 0) / 100))));
   return filters.join(",");
+}
+
+function productionAccentColor(bump = {}, palette = bumpPalette("broadcast")) {
+  const accent = BUMP_PRODUCTION_ACCENTS.has(bump.productionAccent) ? bump.productionAccent : "auto";
+  if (accent === "hot") return "0xff4f7b";
+  if (accent === "cool") return "0x36c8ff";
+  if (accent === "signal") return "0xffe066";
+  if (accent === "mono") return "0xf4f0e8";
+  return palette.shape[Math.abs(Number(bump.seed || bump.wallpaper?.seed || 0)) % palette.shape.length] || "0xffe066";
+}
+
+function productionChromeFilters(bump = {}, { font, palette, fontSize }) {
+  const style = BUMP_PRODUCTION_STYLES.has(bump.productionStyle) ? bump.productionStyle : "standard";
+  const accent = productionAccentColor(bump, palette);
+  const badge = String(bump.productionBadge || bump.blockName || "DOINKTV").trim().slice(0, 32).toUpperCase();
+  const kicker = String(bump.productionKicker || "").trim().slice(0, 80).toUpperCase();
+  const badgeWidth = Math.max(132, Math.min(480, badge.length * Math.round(fontSize * 0.36) + 78));
+  const panel = style === "lower-third"
+    ? "drawbox=x=54:y=526:w=1172:h=118:color=black@0.58:t=fill"
+    : style === "split-card"
+      ? "drawbox=x=54:y=110:w=742:h=500:color=black@0.62:t=fill,drawbox=x=866:y=110:w=282:h=500:color=white@0.10:t=fill"
+      : "drawbox=x=54:y=112:w=812:h=494:color=black@0.62:t=fill";
+  const filters = [
+    "drawbox=x=54:y=54:w=1172:h=612:color=white@0.10:t=2",
+    panel,
+    `drawbox=x=54:y=112:w=9:h=${style === "lower-third" ? 118 : 494}:color=${accent}@0.96:t=fill`,
+    `drawbox=x=54:y=42:w=${badgeWidth}:h=43:color=${accent}@0.94:t=fill`,
+    `drawtext=fontfile='${font}':text='${drawTextEscape(badge)}':fontcolor=0x090b10:fontsize=${Math.max(16, Math.round(fontSize * 0.34))}:x=76:y=54:shadowcolor=white@0.0:shadowx=0:shadowy=0`
+  ];
+  if (kicker) {
+    filters.push(`drawtext=fontfile='${font}':text='${drawTextEscape(kicker)}':fontcolor=0xf4f0e8@0.86:fontsize=${Math.max(14, Math.round(fontSize * 0.3))}:x=54:y=650:shadowcolor=black@0.85:shadowx=0:shadowy=2`);
+  }
+  return filters;
 }
 
 function wrapDrawTextLine(text, maxChars) {
@@ -3983,6 +4277,7 @@ async function streamDebug() {
       id: hlsPlayout.id,
       status: hlsPlayout.status,
       startedAt: hlsPlayout.startedAt,
+      handoffFromId: hlsPlayout.handoffFromId,
       running: Boolean(hlsPlayout.process),
       error: hlsPlayout.error
     },
@@ -4023,91 +4318,26 @@ async function createChatMessage(req, body) {
 }
 
 async function createCommunitySuggestion(req, body = {}) {
-  const session = getSession(req);
-  if (!session) throw new Error("Log in to suggest programming.");
-  const title = String(body.title || "").replace(/\s+/g, " ").trim().slice(0, 120);
-  const note = String(body.note || "").replace(/\s+/g, " ").trim().slice(0, 320);
-  if (title.length < 3) throw new Error("Give the suggestion a title.");
-  const tier = sessionSupporterTier(session);
-  state.community = normalizeCommunityState(state.community);
-  const suggestion = {
-    id: crypto.randomUUID(),
-    title,
-    note,
-    username: session.username,
-    supporterTier: tier.id,
-    status: "pending",
-    createdAt: Date.now()
-  };
-  state.community.suggestions.push(suggestion);
-  state.community.suggestions = state.community.suggestions.slice(-120);
-  recordContinuityEvent({
-    type: "community",
-    title: "Crew pick submitted",
-    detail: `${session.username} suggested ${title}.`,
-    suggestionId: suggestion.id
+  return domainCreateCommunitySuggestion({
+    state,
+    session: getSession(req),
+    body,
+    saveState,
+    broadcastChat,
+    recordContinuityEvent
   });
-  await saveState();
-  broadcastChat();
-  return suggestion;
 }
 
 async function updateCommunitySettings(body = {}) {
-  state.community = normalizeCommunityState({
-    ...state.community,
-    stationMode: COMMUNITY_MODES.has(body.stationMode) ? body.stationMode : state.community.stationMode,
-    supporterGoal: body.supporterGoal ?? state.community.supporterGoal,
-    spotlight: body.spotlight ?? state.community.spotlight,
-    takeoverPolicy: body.takeoverPolicy ?? state.community.takeoverPolicy
-  });
-  await saveState();
-  broadcastChat();
-  return publicCommunity({ admin: true });
+  return domainUpdateCommunitySettings({ state, body, saveState, broadcastChat });
 }
 
 async function updateCommunitySuggestion(body = {}) {
-  const id = String(body.id || "");
-  const status = ["pending", "approved", "archived"].includes(body.status) ? body.status : "";
-  if (!id || !status) throw new Error("Choose a valid suggestion action.");
-  state.community = normalizeCommunityState(state.community);
-  const suggestion = state.community.suggestions.find((item) => item.id === id);
-  if (!suggestion) throw new Error("Suggestion not found.");
-  suggestion.status = status;
-  suggestion.reviewedAt = Date.now();
-  if (body.outcome && typeof body.outcome === "object") {
-    suggestion.outcome = {
-      type: String(body.outcome.type || status).slice(0, 40),
-      label: String(body.outcome.label || suggestion.title).slice(0, 140),
-      sourceId: String(body.outcome.sourceId || ""),
-      queueEntryId: String(body.outcome.queueEntryId || ""),
-      scheduleEntryId: String(body.outcome.scheduleEntryId || ""),
-      at: Date.now()
-    };
-  }
-  recordContinuityEvent({
-    type: "community",
-    title: `Crew pick ${status}`,
-    detail: `${suggestion.title}${suggestion.outcome?.label ? ` -> ${suggestion.outcome.label}` : ""}`,
-    severity: status === "approved" ? "success" : status === "archived" ? "warning" : "info",
-    suggestionId: suggestion.id,
-    sourceId: suggestion.outcome?.sourceId || "",
-    entryId: suggestion.outcome?.queueEntryId || suggestion.outcome?.scheduleEntryId || ""
-  });
-  await saveState();
-  broadcastChat();
-  return publicCommunity({ admin: true });
+  return domainUpdateCommunitySuggestion({ state, body, saveState, broadcastChat, recordContinuityEvent });
 }
 
 async function updateSupporterTier(body = {}) {
-  const userId = String(body.userId || "");
-  const tier = supporterTierById(body.supporterTier || "viewer");
-  const user = state.users.find((item) => item.id === userId);
-  if (!user) throw new Error("User not found.");
-  user.supporterTier = tier.id;
-  user.supporterUpdatedAt = Date.now();
-  await saveState();
-  broadcastChat();
-  return publicCommunity({ admin: true });
+  return domainUpdateSupporterTier({ state, body, saveState, broadcastChat });
 }
 
 function cleanSchedule() {
@@ -4393,6 +4623,7 @@ async function seedWeeklyArchiveSchedule(options = {}) {
           archiveFile: candidate.archiveFile,
           fileUrl: candidate.fileUrl,
           url: candidate.url,
+          language: candidate.language || "",
           randomEligible: true,
           weeklyBlockId: block.id
         });
@@ -4405,6 +4636,7 @@ async function seedWeeklyArchiveSchedule(options = {}) {
   const materialized = materializeWeeklySchedule();
   state.broadcastMode = "scheduled";
   cleanSchedule();
+  await ensureWeatherBumps();
   await saveState();
   broadcastProgram();
   queueAutoIngestSourceIds(materialized.entries.map((entry) => entry.sourceId), "weekly schedule seed", { force: true });
@@ -4418,6 +4650,7 @@ async function materializeWeeklyScheduleFromExisting(options = {}) {
   const materialized = materializeWeeklySchedule();
   state.broadcastMode = "scheduled";
   cleanSchedule();
+  await ensureWeatherBumps();
   await saveState();
   broadcastProgram();
   queueAutoIngestSourceIds(materialized.entries.map((entry) => entry.sourceId), "weekly schedule materialize", { force: false });
@@ -4428,7 +4661,7 @@ function resetWeeklyGeneratedContent(blockIds = null) {
   const selectedBlockIds = blockIds || new Set(weeklyBlockTemplates().map((block) => block.id));
   const generatedSourceIds = new Set(
     state.sources
-      .filter((source) => selectedBlockIds.has(source.weeklyBlockId))
+      .filter((source) => source.type === "bump" && selectedBlockIds.has(source.weeklyBlockId))
       .map((source) => source.id)
   );
   state.sources = state.sources.filter((source) => !generatedSourceIds.has(source.id));
@@ -4436,34 +4669,11 @@ function resetWeeklyGeneratedContent(blockIds = null) {
 }
 
 function weeklyArchiveCandidateFitsBlock(block, candidate = {}) {
-  const haystack = [
-    candidate.title,
-    candidate.fileTitle,
-    candidate.creator,
-    candidate.description,
-    candidate.archiveId
-  ].join(" ").toLowerCase();
-  if (WEEKLY_ARCHIVE_EXCLUDE_TERMS.some((term) => haystack.includes(term))) return false;
-  if (Number(candidate.duration || 0) < Number(block.minDuration || 45)) return false;
-  if (Number.isFinite(Number(block.maxYear)) && candidateLooksNewerThanBlock(candidate, Number(block.maxYear))) return false;
-  if (Array.isArray(block.requireAny) && block.requireAny.length) {
-    return block.requireAny.some((term) => haystack.includes(term));
-  }
-  return true;
+  return mediaDiscovery.weeklyArchiveCandidateFitsBlock(block, candidate);
 }
 
 function candidateLooksNewerThanBlock(candidate = {}, maxYear = Infinity) {
-  const yearText = [
-    candidate.year,
-    candidate.title,
-    candidate.fileTitle,
-    candidate.description,
-    candidate.archiveId
-  ].join(" ");
-  const years = [...yearText.matchAll(/\b(19\d{2}|20\d{2})\b/g)]
-    .map((match) => Number(match[1]))
-    .filter((year) => Number.isFinite(year));
-  return years.length > 0 && years.every((year) => year > maxYear);
+  return mediaDiscovery.candidateLooksNewerThanBlock(candidate, maxYear);
 }
 
 function materializeWeeklySchedule({ lookaheadDays = WEEKLY_SCHEDULE_LOOKAHEAD_DAYS } = {}) {
@@ -4478,7 +4688,11 @@ function materializeWeeklySchedule({ lookaheadDays = WEEKLY_SCHEDULE_LOOKAHEAD_D
   const entries = [];
   for (const block of weeklyBlockTemplates()) {
     const folder = state.sourceFolders.find((item) => item.name === block.folderName);
-    const sources = folder ? librarySources(folder.id).filter((source) => source.duration >= 5) : [];
+    const sources = folder
+      ? librarySources(folder.id)
+          .filter((source) => source.duration >= 5)
+          .filter((source) => weeklyArchiveCandidateFitsBlock(block, source))
+      : [];
     if (!sources.length) continue;
     for (const startAt of weeklyBlockStartTimes(block, lookaheadDays)) {
       if (startAt + block.durationMinutes * 60 * 1000 <= now) continue;
@@ -4513,6 +4727,7 @@ function scheduleSourcesIntoBlock(block, sources, startAt) {
   let index = Math.abs(hashString(`${block.id}:${new Date(startAt).toDateString()}`)) % sources.length;
   const entries = [];
   let contentCount = 0;
+  const usedEpisodes = new Set();
 
   const addBlockBump = (kind, nextSource = null) => {
     const remaining = Math.round((blockEnd - cursor) / 1000);
@@ -4536,9 +4751,11 @@ function scheduleSourcesIntoBlock(block, sources, startAt) {
 
   addBlockBump("intro", sources[index % sources.length]);
   while (cursor < blockEnd - 5000 && entries.length < 80) {
-    const source = sources[index % sources.length];
+    const source = nextUnusedBlockSource(sources, index, usedEpisodes);
+    if (!source) break;
     const remaining = Math.round((blockEnd - cursor) / 1000);
     const duration = Math.max(5, Math.min(Math.round(source.duration), remaining));
+    usedEpisodes.add(sourceEpisodeKey(source));
     entries.push({
       id: crypto.randomUUID(),
       sourceId: source.id,
@@ -4551,9 +4768,19 @@ function scheduleSourcesIntoBlock(block, sources, startAt) {
     cursor += duration * 1000;
     index += 1;
     contentCount += 1;
-    if (contentCount % 2 === 1) addBlockBump("station-id", sources[index % sources.length]);
+    if (contentCount % 2 === 1) addBlockBump("station-id", nextUnusedBlockSource(sources, index, usedEpisodes));
   }
   return entries;
+}
+
+function nextUnusedBlockSource(sources = [], startIndex = 0, usedEpisodes = new Set()) {
+  if (!sources.length) return null;
+  for (let offset = 0; offset < sources.length; offset += 1) {
+    const source = sources[(startIndex + offset) % sources.length];
+    if (!source || usedEpisodes.has(sourceEpisodeKey(source))) continue;
+    return source;
+  }
+  return null;
 }
 
 function createWeeklyBlockBumpSource(block, kind, startAt, nextSource = null, bumpIndex = 0) {
@@ -4562,7 +4789,6 @@ function createWeeklyBlockBumpSource(block, kind, startAt, nextSource = null, bu
   const music = randomBumpMusic(BLOCK_BUMP_DURATION);
   const seed = Math.abs(hashString(`${block.id}:${startAt}:${kind}:${bumpIndex}`)) % 100000;
   const nextLine = nextSource?.title ? `NEXT: ${nextSource.title}` : "MORE STRANGE PROGRAMMING SHORTLY";
-  const kindLabel = kind === "intro" ? "BLOCK START" : "STATION ID";
   return {
     id: crypto.randomUUID(),
     type: "bump",
@@ -4587,13 +4813,17 @@ function createWeeklyBlockBumpSource(block, kind, startAt, nextSource = null, bu
       fontSize: identity.fontSize,
       secondsPerLine: 1.65,
       tintStrength: kind === "intro" ? 18 : 28,
-      creditText: `${kindLabel}\n${identity.creditText}`,
+      creditText: music.creditText,
       creditSize: 19,
       creditPosition: "bottom-right",
       effects: identity.effects,
       effectIntensity: kind === "intro" ? 26 : 20,
       intentionalGlitch: false,
       presentation: generatedBumpPresentation(false),
+      productionStyle: kind === "intro" ? "promo-card" : "lower-third",
+      productionAccent: "signal",
+      productionBadge: block.name,
+      productionKicker: kind === "intro" ? "block premiere" : "station identification",
       format: "landscape",
       seed,
       wallpaper: {
@@ -4615,6 +4845,10 @@ function hashString(value) {
     hash = Math.imul(31, hash) + text.charCodeAt(index) | 0;
   }
   return hash;
+}
+
+function escapeRegExp(value = "") {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 async function reorderLibrarySources(body) {
@@ -4827,58 +5061,19 @@ function ingestSummary(results) {
 }
 
 async function discoverAuthorizedMediaCandidates(source) {
-  const query = normalizeSearchQuery(`${source.title || ""} ${source.url || ""}`);
-  if (query.length < 3) return [];
-  const archiveCandidates = await searchInternetArchiveCandidates(query).catch(() => []);
-  return archiveCandidates.slice(0, 5);
+  return mediaDiscovery.discoverAuthorizedMediaCandidates(source);
 }
 
 async function searchInternetArchiveCandidates(query) {
-  const params = new URLSearchParams({
-    q: `mediatype:(movies) AND (${query})`,
-    fl: "identifier,title,creator,licenseurl,rights,date,description",
-    rows: "6",
-    page: "1",
-    output: "json"
-  });
-  const response = await fetch(`https://archive.org/advancedsearch.php?${params}`);
-  if (!response.ok) return [];
-  const data = await response.json();
-  const docs = data?.response?.docs || [];
-  const candidateGroups = await Promise.all(docs.map((doc) => internetArchiveFilesForDoc(doc).catch(() => [])));
-  return candidateGroups.flat();
+  return mediaDiscovery.searchInternetArchiveCandidates(query);
 }
 
 async function internetArchiveFilesForDoc(doc) {
-  const identifier = String(doc.identifier || "");
-  if (!identifier) return [];
-  const response = await fetch(`https://archive.org/metadata/${encodeURIComponent(identifier)}`);
-  if (!response.ok) return [];
-  const metadata = await response.json();
-  const files = Array.isArray(metadata.files) ? metadata.files : [];
-  return files
-    .filter((file) => playableArchiveFile(file))
-    .slice(0, 2)
-    .map((file) => ({
-      repository: "Internet Archive",
-      identifier,
-      title: String(doc.title || metadata.metadata?.title || identifier),
-      creator: Array.isArray(doc.creator) ? doc.creator.join(", ") : String(doc.creator || metadata.metadata?.creator || ""),
-      licenseUrl: Array.isArray(doc.licenseurl) ? doc.licenseurl[0] : String(doc.licenseurl || metadata.metadata?.licenseurl || ""),
-      rights: Array.isArray(doc.rights) ? doc.rights.join(", ") : String(doc.rights || metadata.metadata?.rights || ""),
-      detailUrl: `https://archive.org/details/${encodeURIComponent(identifier)}`,
-      mediaUrl: `https://archive.org/download/${encodeURIComponent(identifier)}/${encodeArchiveFilePath(file.name)}`,
-      fileName: file.name,
-      format: file.format || "",
-      size: Number(file.size || 0)
-    }));
+  return mediaDiscovery.internetArchiveFilesForDoc(doc);
 }
 
 function playableArchiveFile(file) {
-  const name = String(file.name || "");
-  const format = String(file.format || "");
-  if (/\.(mp4|m4v|mov|webm)$/i.test(name)) return true;
-  return /(mpeg4|h\.264|webm|quicktime)/i.test(format) && !/\.(gif|jpg|png|txt|xml|json)$/i.test(name);
+  return mediaDiscovery.playableArchiveFile(file);
 }
 
 async function createScheduleLibrary(body) {
@@ -5156,49 +5351,11 @@ async function triggerBroadcastFx(body = {}) {
   const id = String(body.id || "").trim();
   const preset = FX_PRESETS[id];
   if (!preset) throw new Error("Unknown FX button.");
-  const toggleFx = new Set([
-    "signal-loss",
-    "tape-warp",
-    "vhs",
-    "color-bars",
-    "aspect-bad",
-    "crop-bad",
-    "pixelate",
-    "glass",
-    "source-overlay",
-    "playlist-audio",
-    "theme-cycle",
-    "dj-mic",
-    "frequency-drift",
-    "party-damage"
-  ]);
-  const isToggle = body.force === true ? false : body.toggle === true || body.mode === "toggle" || toggleFx.has(id);
-  const maxDuration = ["av-warp", "delay", "reverb", "source-overlay", "playlist-audio", "visual-adjust", "theme-cycle", "dj-mic", "frequency-drift", "party-damage"].includes(id) ? 180 : id === "soundboard-sample" ? 60 : 30;
+  const instrument = fxInstrument(id);
+  const isToggle = isFxToggle(id, body);
+  const maxDuration = fxMaxDuration(id);
   let duration = Math.max(2, Math.min(maxDuration, Number(body.duration || preset.duration)));
   const now = Date.now();
-  const commandFx = new Set([
-    "looper-capture",
-    "looper-layer-1",
-    "looper-layer-2",
-    "looper-layer-3",
-    "looper-bpm-down",
-    "looper-bpm-up",
-    "looper-config",
-    "looper-clear",
-    "seed-skip",
-    "delay",
-    "reverb",
-    "source-overlay",
-    "playlist-audio",
-    "visual-adjust",
-    "theme-random",
-    "legal-id",
-    "cart-wall",
-    "record-scratch",
-    "caller-line",
-    "dub-siren",
-    "soundboard-sample"
-  ]);
   const active = activeBroadcastFx();
   let params = typeof body.params === "object" && body.params ? body.params : {};
   if (id === "soundboard-sample") {
@@ -5244,7 +5401,8 @@ async function triggerBroadcastFx(body = {}) {
     params = { ...params, theme: "frutiger-aero" };
   }
   if (id === "legal-id") {
-    const cart = LEGAL_ID_CARTS[Math.floor(Math.random() * LEGAL_ID_CARTS.length)];
+    const brain = stationContinuityBrain(programSnapshot().live, programSnapshot().next);
+    const cart = brain.legalId || LEGAL_ID_CARTS[Math.floor(Math.random() * LEGAL_ID_CARTS.length)];
     params = { ...params, ...cart, legalId: `${cart.call} ${cart.city}` };
   }
   if (id === "cart-wall") {
@@ -5262,60 +5420,56 @@ async function triggerBroadcastFx(body = {}) {
     };
   }
   if (id === "delay" && params.enabled === false) {
-    state.activeFx = active.filter((item) => item.id !== "delay");
-    recordContinuityEvent({ type: "fx", title: "Delay rack disabled", detail: "Delay was switched off.", severity: "info" });
+    beginFxDecay(state, "delay", now);
+    recordContinuityEvent({ type: "fx", title: "Delay rack decaying", detail: "Delay was switched off and is winding down.", severity: "info" });
     await saveState();
     broadcastProgram();
     return { ok: true, fx: state.activeFx };
   }
   if (id === "reverb" && params.enabled === false) {
-    state.activeFx = active.filter((item) => item.id !== "reverb");
-    recordContinuityEvent({ type: "fx", title: "Reverb rack disabled", detail: "Reverb was switched off.", severity: "info" });
+    beginFxDecay(state, "reverb", now);
+    recordContinuityEvent({ type: "fx", title: "Reverb rack decaying", detail: "Reverb was switched off and is winding down.", severity: "info" });
     await saveState();
     broadcastProgram();
     return { ok: true, fx: state.activeFx };
   }
   if (isToggle && active.some((item) => item.id === id)) {
-    state.activeFx = active.filter((item) => item.id !== id);
-    recordContinuityEvent({ type: "fx", title: `${preset.label} toggled off`, detail: "Rack state changed from admin control.", severity: "info" });
+    beginFxDecay(state, id, now);
+    recordContinuityEvent({ type: "fx", title: `${preset.label} winding down`, detail: "Rack state changed from admin control.", severity: "info" });
     await saveState();
     broadcastProgram();
     return { ok: true, toggledOff: true, fx: state.activeFx };
   }
-  const existing = commandFx.has(id) ? null : active.find((item) => item.id === id);
+  const existing = isFxCommand(id) ? null : active.find((item) => item.id === id);
   if (existing) {
-    const continuousFx = new Set(["av-warp", "delay", "reverb", "visual-adjust"]);
-    existing.level = continuousFx.has(id) ? Math.max(1, Number(preset.level || 1)) : Math.min(8, Number(existing.level || preset.level || 1) + 1);
-    existing.hits = Number(existing.hits || 1) + 1;
-    existing.startedAt = now;
-    existing.expiresAt = Math.min(now + 120000, Math.max(existing.expiresAt, now) + duration * 1000);
-    existing.seed = crypto.randomUUID();
-    existing.params = params ? { ...existing.params, ...params } : existing.params || {};
+    const intensified = intensifyFxEntry(existing, { preset, params, duration, now });
+    state.activeFx = active.map((item) => (item.id === id ? intensified : item));
     recordContinuityEvent({
       type: "fx",
       title: `${preset.label} intensified`,
-      detail: `Hit ${existing.hits}; expires in about ${Math.ceil((existing.expiresAt - now) / 1000)}s.`,
+      detail: `Hit ${intensified.hits}; ${intensified.expiresAt == null ? "held as a rack instrument" : `expires in about ${Math.ceil((intensified.expiresAt - now) / 1000)}s`}.`,
       severity: "warning"
     });
     await saveState();
     broadcastProgram();
     return { ok: true, fx: state.activeFx };
   }
-  const fx = {
+  const fx = createFxEntry({
     id,
     label: preset.label,
-    startedAt: now,
-    expiresAt: (["delay", "reverb"].includes(id) && params.enabled === true) || isToggle ? null : now + duration * 1000,
-    seed: crypto.randomUUID(),
-    level: Math.max(1, Number(preset.level || 1)),
-    hits: 1,
-    params
-  };
+    params,
+    duration,
+    isToggle,
+    level: preset.level,
+    now
+  });
   state.activeFx = [...active.filter((item) => item.id !== id), fx].slice(-8);
   recordContinuityEvent({
     type: "fx",
     title: `${preset.label} ${fx.expiresAt == null ? "held" : "active"}`,
-    detail: fx.expiresAt == null ? "Held until cleared or toggled." : `Expires in about ${duration}s.`,
+    detail: fx.expiresAt == null
+      ? `Held as ${instrument?.kind || "live"} instrument until cleared or toggled.`
+      : `Expires in about ${duration}s${instrument ? ` with ${Math.round(fx.decayMs / 1000)}s decay` : ""}.`,
     severity: isToggle ? "warning" : "info"
   });
   await saveState();
@@ -5435,10 +5589,18 @@ function fxBodyForPerformanceStep(stepId, cue, intensity, options = {}) {
 function performanceBumpBody(cue, intensity, options = {}) {
   const scene = performanceSceneById(cue.sceneId);
   const blockName = String(options.blockName || options.blockPack?.label || cue.label || "DoinkTV").trim();
-  const bumpKind = BUMP_CLASSES.some((item) => item.id === cue.bumpClass) ? cue.bumpClass : "manual-bump";
+  const brain = options.continuity || stationContinuityBrain(programSnapshot().live, programSnapshot().next);
+  const transitionClass = brain.transition?.bumpClass || "";
+  const requestedBumpClass = cue.bumpClass || transitionClass;
+  const bumpKind = BUMP_CLASSES.some((item) => item.id === requestedBumpClass) ? requestedBumpClass : "manual-bump";
   const intentionalGlitch = cue.sceneId !== "anime" && cue.sceneId !== "uhf" && intensity > 0.54;
   const momentLines = communityMomentLines(cue);
-  const lines = (momentLines.length ? momentLines : cue.bumpLines || []).map((title) => ({ time: "", title }));
+  const brainLines = Array.isArray(brain.transition?.lines) ? brain.transition.lines : [];
+  const voiceLine = brain.stationVoice?.slogan ? [brain.stationVoice.slogan] : [];
+  const lines = (momentLines.length ? momentLines : brainLines.length ? brainLines : [...(cue.bumpLines || []), ...voiceLine])
+    .filter(Boolean)
+    .slice(0, 5)
+    .map((title) => ({ time: "", title }));
   return {
     title: `${cue.label} bump`,
     heading: blockName.toUpperCase(),
@@ -5451,7 +5613,7 @@ function performanceBumpBody(cue, intensity, options = {}) {
     placement: intensity > 0.58 ? "middle" : "bottom",
     tone: intensity > 0.65 ? "caption" : "classic",
     tintStrength: Math.round(18 + intensity * 54),
-    creditText: `${scene.label} / ${cue.label}`,
+    creditText: `${brain.stationVoice?.label || scene.label} / ${cue.label}`,
     wallpaper: {
       scheme: cue.sceneId === "anime" ? "blueprint" : cue.sceneId === "party" ? "miami" : cue.sceneId === "uhf" ? "mono" : "broadcast",
       shapes: cue.sceneId === "training" ? "checkerboard" : intensity > 0.7 ? "memphis" : "stripes",
@@ -5494,7 +5656,9 @@ function communityMomentLines(cue) {
 
 async function triggerPerformanceCue(body = {}) {
   const cue = performanceCueById(body.cueId || body.id);
-  const blockPack = blockIdentityPackFor(programSnapshot().live);
+  const program = programSnapshot();
+  const continuity = stationContinuityBrain(program.live, program.next);
+  const blockPack = continuity.blockPack;
   const requestedIntensity = performanceIntensity(body.intensity);
   const blockCeiling = Number(blockPack.chaosCeiling || 1);
   const intensity = cue.id === "panic-reset" ? 0 : Math.min(requestedIntensity, Math.max(0.2, Math.min(1, blockCeiling)));
@@ -5527,7 +5691,7 @@ async function triggerPerformanceCue(body = {}) {
     }
   }
   const queuedBump = body.queueBump
-    ? await queueManualBump(performanceBumpBody(cue, intensity, { blockPack, blockName: body.blockName }))
+    ? await queueManualBump(performanceBumpBody(cue, intensity, { blockPack, blockName: body.blockName, continuity }))
     : null;
   recordContinuityEvent({
     type: "performance",
@@ -5663,12 +5827,14 @@ async function serveFile(req, res, baseDir, urlPrefix = "") {
 async function handleApi(req, res, pathname) {
   try {
     if (req.method === "GET" && pathname === "/api/health") {
+      const programming = programmingDomainView(state);
       sendJson(res, 200, {
         ok: true,
         serverTime: Date.now(),
-        mode: state.broadcastMode,
-        queueLength: state.liveQueue.length,
-        scheduleLength: state.schedule.length,
+        mode: programming.broadcastMode,
+        programmingEngine: "programming-engine",
+        queueLength: programming.liveQueue.length,
+        scheduleLength: programming.schedule.length,
         stream: {
           url: "/stream/live.m3u8",
           status: hlsPlayout.status,
@@ -5847,12 +6013,19 @@ async function handleApi(req, res, pathname) {
         weeklyBlocks: state.weeklyBlocks,
         bumpClasses: BUMP_CLASSES,
         community: publicCommunity({ admin: true }),
+        lore: publicLore(),
         stationHealth: stationHealthSummary(),
         projectAudit: await projectAuditSummary(),
         continuityLog: publicContinuityLog(32),
         showControl: publicShowControl(),
         liveQueue: state.liveQueue,
         broadcastMode: state.broadcastMode,
+        programmingEngine: {
+          operatingSystem: true,
+          queueRole: "live-override",
+          scheduleRole: "station-clock",
+          protection: queueProtectionSummary(state)
+        },
         bumpMusic: state.bumpMusic
       });
       return;
@@ -5867,6 +6040,25 @@ async function handleApi(req, res, pathname) {
     if (req.method === "GET" && pathname === "/api/admin/continuity-log") {
       if (!requireAdmin(req, res)) return;
       sendJson(res, 200, { events: publicContinuityLog(80) });
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/admin/continuity-brain") {
+      if (!requireAdmin(req, res)) return;
+      const program = programSnapshot();
+      sendJson(res, 200, stationContinuityBrain(program.live, program.next));
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/admin/lore") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, publicLore({ query: url.searchParams.get("q") || "" }));
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/admin/lore-entry") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await upsertLoreEntry(await readJson(req)));
       return;
     }
 
@@ -6099,6 +6291,7 @@ async function handleApi(req, res, pathname) {
 await ensureState();
 await refreshBumpMusic();
 if (ensureAutoBumpAudioStarts()) await saveState();
+if (await ensureWeatherBumps()) await saveState();
 queueAutoIngestForLiveQueue("server startup");
 syncHlsPlayout().catch((error) => {
   hlsPlayout.status = "error";
@@ -6119,6 +6312,7 @@ setInterval(async () => {
   try {
     cleanSchedule();
     maintainBroadcastTimeline();
+    await ensureWeatherBumps();
     queueAutoIngestForLiveQueue("live queue maintenance");
     await pruneHlsDirectory();
     await flushTimelineSave();

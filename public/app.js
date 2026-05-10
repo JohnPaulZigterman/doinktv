@@ -39,6 +39,7 @@ const chatPanel = document.querySelector("#chatPanel");
 const queuePanel = document.querySelector("#queuePanel");
 const soundboardPanel = document.querySelector("#soundboardPanel");
 const fxPanel = document.querySelector("#fxPanel");
+const lorePanel = document.querySelector("#lorePanel");
 const fxOverlay = document.querySelector("#fxOverlay");
 const fxAudioLayer = document.querySelector("#fxAudioLayer");
 const chatToggle = document.querySelector("#chatToggle");
@@ -50,7 +51,8 @@ const showBroadcastPanelButtons = [
   document.querySelector("#showBroadcastPanelButtonQueue"),
   document.querySelector("#showBroadcastPanelButtonBump"),
   document.querySelector("#showBroadcastPanelButtonSoundboard"),
-  document.querySelector("#showBroadcastPanelButtonFx")
+  document.querySelector("#showBroadcastPanelButtonFx"),
+  document.querySelector("#showBroadcastPanelButtonLore")
 ].filter(Boolean);
 const showSchedulePanelButtons = [
   document.querySelector("#showSchedulePanelButton"),
@@ -59,7 +61,8 @@ const showSchedulePanelButtons = [
   document.querySelector("#showSchedulePanelButtonQueue"),
   document.querySelector("#showSchedulePanelButtonBump"),
   document.querySelector("#showSchedulePanelButtonSoundboard"),
-  document.querySelector("#showSchedulePanelButtonFx")
+  document.querySelector("#showSchedulePanelButtonFx"),
+  document.querySelector("#showSchedulePanelButtonLore")
 ].filter(Boolean);
 const showQueuePanelButtons = [
   document.querySelector("#showQueuePanelButton"),
@@ -68,7 +71,8 @@ const showQueuePanelButtons = [
   document.querySelector("#showQueuePanelButtonQueue"),
   document.querySelector("#showQueuePanelButtonBump"),
   document.querySelector("#showQueuePanelButtonSoundboard"),
-  document.querySelector("#showQueuePanelButtonFx")
+  document.querySelector("#showQueuePanelButtonFx"),
+  document.querySelector("#showQueuePanelButtonLore")
 ].filter(Boolean);
 const showSoundboardPanelButtons = [
   document.querySelector("#showSoundboardPanelButton"),
@@ -77,7 +81,8 @@ const showSoundboardPanelButtons = [
   document.querySelector("#showSoundboardPanelButtonQueue"),
   document.querySelector("#showSoundboardPanelButtonBump"),
   document.querySelector("#showSoundboardPanelButtonSoundboard"),
-  document.querySelector("#showSoundboardPanelButtonFx")
+  document.querySelector("#showSoundboardPanelButtonFx"),
+  document.querySelector("#showSoundboardPanelButtonLore")
 ].filter(Boolean);
 const showFxPanelButtons = [
   document.querySelector("#showFxPanelButton"),
@@ -86,7 +91,18 @@ const showFxPanelButtons = [
   document.querySelector("#showFxPanelButtonQueue"),
   document.querySelector("#showFxPanelButtonBump"),
   document.querySelector("#showFxPanelButtonSoundboard"),
-  document.querySelector("#showFxPanelButtonFx")
+  document.querySelector("#showFxPanelButtonFx"),
+  document.querySelector("#showFxPanelButtonLore")
+].filter(Boolean);
+const showLorePanelButtons = [
+  document.querySelector("#showLorePanelButton"),
+  document.querySelector("#showLorePanelButtonAlt"),
+  document.querySelector("#showLorePanelButtonSchedule"),
+  document.querySelector("#showLorePanelButtonQueue"),
+  document.querySelector("#showLorePanelButtonBump"),
+  document.querySelector("#showLorePanelButtonSoundboard"),
+  document.querySelector("#showLorePanelButtonFx"),
+  document.querySelector("#showLorePanelButtonLore")
 ].filter(Boolean);
 const showChatPanelButtons = [
   document.querySelector("#showChatPanelButton"),
@@ -95,8 +111,34 @@ const showChatPanelButtons = [
   document.querySelector("#showChatPanelButtonQueue"),
   document.querySelector("#showChatPanelButtonBump"),
   document.querySelector("#showChatPanelButtonSoundboard"),
-  document.querySelector("#showChatPanelButtonFx")
+  document.querySelector("#showChatPanelButtonFx"),
+  document.querySelector("#showChatPanelButtonLore")
 ].filter(Boolean);
+const adminCockpitRail = window.DoinkAdminCockpit?.createRailController({
+  shell,
+  chatPanel,
+  panels: {
+    broadcast: adminPanel,
+    schedule: schedulePanel,
+    queue: queuePanel,
+    soundboard: soundboardPanel,
+    fx: fxPanel,
+    lore: lorePanel
+  },
+  buttons: {
+    broadcast: showBroadcastPanelButtons,
+    schedule: showSchedulePanelButtons,
+    queue: showQueuePanelButtons,
+    soundboard: showSoundboardPanelButtons,
+    fx: showFxPanelButtons,
+    lore: showLorePanelButtons,
+    chat: showChatPanelButtons
+  },
+  onViewChange(view) {
+    adminRailView = view;
+    applyStoredRailWidth();
+  }
+});
 const chatStatus = document.querySelector("#chatStatus");
 const chatMessages = document.querySelector("#chatMessages");
 const chatForm = document.querySelector("#chatForm");
@@ -127,6 +169,7 @@ const registerMessage = document.querySelector("#registerMessage");
 const logoutButton = document.querySelector("#logoutButton");
 const adminIdentity = document.querySelector("#adminIdentity");
 const adminTools = document.querySelector("#adminTools");
+const hostMacroPanel = document.querySelector("#hostMacroPanel");
 const stationHealthStatus = document.querySelector("#stationHealthStatus");
 const stationHealthChecks = document.querySelector("#stationHealthChecks");
 const stationHealthWarnings = document.querySelector("#stationHealthWarnings");
@@ -146,6 +189,13 @@ const communityAdminMessage = document.querySelector("#communityAdminMessage");
 const communityAdminSummary = document.querySelector("#communityAdminSummary");
 const communityMemberList = document.querySelector("#communityMemberList");
 const communitySuggestionList = document.querySelector("#communitySuggestionList");
+const loreEntryForm = document.querySelector("#loreEntryForm");
+const loreFormResetButton = document.querySelector("#loreFormResetButton");
+const loreMessage = document.querySelector("#loreMessage");
+const loreSearchInput = document.querySelector("#loreSearchInput");
+const loreTypeFilter = document.querySelector("#loreTypeFilter");
+const loreStats = document.querySelector("#loreStats");
+const loreEntries = document.querySelector("#loreEntries");
 const sourceSearchForm = document.querySelector("#sourceSearchForm");
 const sourceForm = document.querySelector("#sourceForm");
 const scheduleForm = document.querySelector("#scheduleForm");
@@ -320,6 +370,7 @@ let schedulePickMode = "source";
 let draggedQueueId = "";
 let draggedSourceId = "";
 let adminDataCache = { sourceFolders: [], sources: [] };
+let loreCache = { entries: [], counts: {} };
 let showControlCache = { scenes: [], cues: [], macros: {}, snapshots: [] };
 let programVotePoll = null;
 let railResizeDrag = null;
@@ -561,10 +612,17 @@ function setMessage(node, text, isError = false) {
   node.classList.toggle("error", isError);
 }
 
-function setProgramBlock(node, blockName = "") {
+function setProgramBlock(node, blockName = "", identity = null) {
   if (!node) return;
-  const label = String(blockName || "").trim();
+  const label = String(identity?.heading || identity?.label || blockName || "").trim();
   node.textContent = label;
+  node.title = identity?.taglines?.[0] || label;
+  const styleId = String(identity?.styleId || identity?.id || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/^-|-$/g, "");
+  if (styleId) node.dataset.blockStyle = styleId;
+  else delete node.dataset.blockStyle;
   node.classList.toggle("hidden", !label);
 }
 
@@ -755,11 +813,15 @@ function setUserState(user) {
     setAdminRailView(adminRailView || "broadcast");
     setAdminStageView(adminStageView);
   } else {
-    adminPanel.classList.add("hidden");
-    schedulePanel.classList.add("hidden");
-    queuePanel.classList.add("hidden");
-    soundboardPanel.classList.add("hidden");
-    fxPanel.classList.add("hidden");
+    adminCockpitRail?.hideAdminPanels();
+    if (!adminCockpitRail) {
+      adminPanel.classList.add("hidden");
+      schedulePanel.classList.add("hidden");
+      queuePanel.classList.add("hidden");
+      soundboardPanel.classList.add("hidden");
+      fxPanel.classList.add("hidden");
+      lorePanel.classList.add("hidden");
+    }
     chatPanel.classList.remove("hidden");
     setAdminStageView("tv");
   }
@@ -778,18 +840,24 @@ function setChatCollapsed(isCollapsed) {
 }
 
 function setAdminRailView(view) {
-  adminRailView = ["broadcast", "schedule", "queue", "soundboard", "fx", "chat"].includes(view) ? view : "broadcast";
+  if (adminCockpitRail) {
+    adminRailView = adminCockpitRail.setView(view);
+    return;
+  }
+  adminRailView = ["broadcast", "schedule", "queue", "soundboard", "fx", "lore", "chat"].includes(view) ? view : "broadcast";
   const showingBroadcast = adminRailView === "broadcast";
   const showingSchedule = adminRailView === "schedule";
   const showingQueue = adminRailView === "queue";
   const showingSoundboard = adminRailView === "soundboard";
   const showingFx = adminRailView === "fx";
+  const showingLore = adminRailView === "lore";
   adminPanel.classList.toggle("hidden", !showingBroadcast);
   schedulePanel.classList.toggle("hidden", !showingSchedule);
   queuePanel.classList.toggle("hidden", !showingQueue);
   soundboardPanel.classList.toggle("hidden", !showingSoundboard);
   fxPanel.classList.toggle("hidden", !showingFx);
-  chatPanel.classList.toggle("hidden", showingBroadcast || showingSchedule || showingQueue || showingSoundboard || showingFx);
+  lorePanel.classList.toggle("hidden", !showingLore);
+  chatPanel.classList.toggle("hidden", showingBroadcast || showingSchedule || showingQueue || showingSoundboard || showingFx || showingLore);
   chatPanel.classList.remove("collapsed");
   shell.classList.remove("chat-collapsed");
   showBroadcastPanelButtons.forEach((button) => button.classList.toggle("active", showingBroadcast));
@@ -797,6 +865,7 @@ function setAdminRailView(view) {
   showQueuePanelButtons.forEach((button) => button.classList.toggle("active", showingQueue));
   showSoundboardPanelButtons.forEach((button) => button.classList.toggle("active", showingSoundboard));
   showFxPanelButtons.forEach((button) => button.classList.toggle("active", showingFx));
+  showLorePanelButtons.forEach((button) => button.classList.toggle("active", showingLore));
   showChatPanelButtons.forEach((button) => button.classList.toggle("active", adminRailView === "chat"));
   applyStoredRailWidth();
 }
@@ -1034,9 +1103,7 @@ async function addArchiveResultToQueue(result) {
     body: JSON.stringify({ sourceId: source.id, duration: source.duration })
   });
   if (activeCommunityPick?.id) {
-    await api("/api/admin/community-suggestion", {
-      method: "POST",
-      body: JSON.stringify({
+      await adminCockpitApi.community.updateSuggestion({
         id: activeCommunityPick.id,
         status: "approved",
         outcome: {
@@ -1045,8 +1112,7 @@ async function addArchiveResultToQueue(result) {
           sourceId: source.id,
           queueEntryId: queueEntry.id
         }
-      })
-    });
+      });
   }
   setMessage(
     sourceSearchMessage,
@@ -1065,6 +1131,8 @@ async function api(path, options = {}) {
   if (!response.ok) throw new Error(data.error || "Request failed.");
   return data;
 }
+
+const adminCockpitApi = window.DoinkAdminCockpit?.createApi(api);
 
 function activeOffset(program = currentProgram) {
   if (!program?.live) return 0;
@@ -2212,10 +2280,7 @@ async function broadcastLooperConfig(capture = false) {
   applyLooperLayerConfig(params);
   renderLooperLayers();
   try {
-    const result = await api("/api/fx", {
-      method: "POST",
-      body: JSON.stringify({ id: capture ? "looper-capture" : "looper-config", duration: 2, params })
-    });
+    const result = await adminCockpitApi.fx.trigger({ id: capture ? "looper-capture" : "looper-config", duration: 2, params });
     setMessage(fxMessage, `${result.fx.at(-1)?.label || "Signal looper"} fired.`);
   } catch (error) {
     setMessage(fxMessage, error.message, true);
@@ -2226,10 +2291,7 @@ async function broadcastLooperLayerConfig(layerNumber) {
   const layer = looperLayers[Math.max(0, Math.min(2, Number(layerNumber) - 1))];
   if (!layer) return;
   try {
-    await api("/api/fx", {
-      method: "POST",
-      body: JSON.stringify({ id: "looper-config", duration: 2, params: normalizedLooperSettings(layer) })
-    });
+    await adminCockpitApi.fx.trigger({ id: "looper-config", duration: 2, params: normalizedLooperSettings(layer) });
     updateLooperMonitor(`Moved L${layer.layer}`);
   } catch (error) {
     setMessage(fxMessage, error.message, true);
@@ -2955,7 +3017,7 @@ async function broadcastAvWarp() {
   clearTimeout(avWarpPostTimer);
   avWarpPostTimer = setTimeout(async () => {
     try {
-      await api("/api/fx", { method: "POST", body: JSON.stringify({ id: "av-warp", duration: 90, params: values }) });
+      await adminCockpitApi.fx.trigger({ id: "av-warp", duration: 90, params: values });
       setMessage(fxMessage, "A/V warp updated.");
     } catch (error) {
       setMessage(fxMessage, error.message, true);
@@ -2989,7 +3051,7 @@ async function broadcastVisualAdjust() {
   clearTimeout(visualPostTimer);
   visualPostTimer = setTimeout(async () => {
     try {
-      await api("/api/fx", { method: "POST", body: JSON.stringify({ id: "visual-adjust", duration: 90, params: values }) });
+      await adminCockpitApi.fx.trigger({ id: "visual-adjust", duration: 90, params: values });
       setMessage(fxMessage, "Visual abuse updated.");
     } catch (error) {
       setMessage(fxMessage, error.message, true);
@@ -3005,10 +3067,7 @@ async function resetVisualAdjust() {
   if (visualTrackingSlider) visualTrackingSlider.value = "0";
   if (visualSmearSlider) visualSmearSlider.value = "0";
   updateVisualLabels();
-  await api("/api/fx", {
-    method: "POST",
-    body: JSON.stringify({ id: "visual-adjust", duration: 2, params: readVisualControls() })
-  }).catch(() => {});
+  await adminCockpitApi.fx.trigger({ id: "visual-adjust", duration: 2, params: readVisualControls() }).catch(() => {});
 }
 
 function delayControlNumber(control, fallback) {
@@ -3170,10 +3229,7 @@ async function broadcastSourceOverlay() {
     scale: Number(overlayScaleSlider.value || 100) / 100
   };
   try {
-    const result = await api("/api/fx", {
-      method: "POST",
-      body: JSON.stringify({ id: "source-overlay", duration: Number(overlayDurationSlider.value || 45), params, toggle: true })
-    });
+    const result = await adminCockpitApi.fx.trigger({ id: "source-overlay", duration: Number(overlayDurationSlider.value || 45), params, toggle: true });
     setMessage(fxMessage, `Source overlay ${result.toggledOff ? "off" : "on"}.`);
   } catch (error) {
     setMessage(fxMessage, error.message, true);
@@ -3406,7 +3462,7 @@ async function broadcastDelay() {
   clearTimeout(delayPostTimer);
   delayPostTimer = setTimeout(async () => {
     try {
-      await api("/api/fx", { method: "POST", body: JSON.stringify({ id: "delay", params: { ...values, enabled: true } }) });
+      await adminCockpitApi.fx.trigger({ id: "delay", params: { ...values, enabled: true } });
       setMessage(fxMessage, "Delay on.");
     } catch (error) {
       setMessage(fxMessage, error.message, true);
@@ -3420,7 +3476,7 @@ async function toggleDelay() {
     disableDelay(true);
     clearTimeout(delayPostTimer);
     try {
-      await api("/api/fx", { method: "POST", body: JSON.stringify({ id: "delay", params: { enabled: false } }) });
+      await adminCockpitApi.fx.trigger({ id: "delay", params: { enabled: false } });
       setMessage(fxMessage, "Delay off.");
     } catch (error) {
       setMessage(fxMessage, error.message, true);
@@ -3445,7 +3501,7 @@ async function broadcastReverb() {
   clearTimeout(reverbPostTimer);
   reverbPostTimer = setTimeout(async () => {
     try {
-      await api("/api/fx", { method: "POST", body: JSON.stringify({ id: "reverb", params: { ...values, enabled: true } }) });
+      await adminCockpitApi.fx.trigger({ id: "reverb", params: { ...values, enabled: true } });
       setMessage(fxMessage, "Reverb on.");
     } catch (error) {
       setMessage(fxMessage, error.message, true);
@@ -3459,7 +3515,7 @@ async function toggleReverb() {
     disableReverb(true);
     clearTimeout(reverbPostTimer);
     try {
-      await api("/api/fx", { method: "POST", body: JSON.stringify({ id: "reverb", params: { enabled: false } }) });
+      await adminCockpitApi.fx.trigger({ id: "reverb", params: { enabled: false } });
       setMessage(fxMessage, "Reverb off.");
     } catch (error) {
       setMessage(fxMessage, error.message, true);
@@ -3535,7 +3591,7 @@ function syncProgram(program) {
   const next = program.next;
   const liveChanged = live?.id !== currentProgramId;
 
-  setProgramBlock(nextBlock, next?.weeklyBlockName);
+  setProgramBlock(nextBlock, next?.weeklyBlockName, next?.blockIdentity);
   setProgramTitle(nextTitle, next ? `${programDisplayTitle(next)} at ${new Date(next.startAt).toLocaleTimeString()}` : "Unscheduled");
   if (nextReason) nextReason.textContent = next?.reason || "";
 
@@ -3559,8 +3615,8 @@ function syncProgram(program) {
 
   liveBadge.textContent = "Live";
   liveBadge.classList.remove("off");
-  setProgramBlock(nowBlock, live.weeklyBlockName);
-  setProgramBlock(viewerNowBlock, live.weeklyBlockName);
+  setProgramBlock(nowBlock, live.weeklyBlockName, live.blockIdentity);
+  setProgramBlock(viewerNowBlock, live.weeklyBlockName, live.blockIdentity);
   setProgramTitle(nowTitle, programDisplayTitle(live));
   setProgramTitle(viewerNowTitle, programDisplayTitle(live));
   if (nowReason) nowReason.textContent = live.reason || "";
@@ -3571,6 +3627,7 @@ function syncProgram(program) {
     }, 2500);
   } else {
     enterStreamMode();
+    if (liveChanged && currentProgramId && hlsLoaded) resetHlsStream();
   }
 
   if (liveChanged) syncCaptions(live);
@@ -3668,6 +3725,7 @@ function renderPerformanceControl(control = {}) {
     scenes: Array.isArray(control.scenes) ? control.scenes : [],
     cues: Array.isArray(control.cues) ? control.cues : [],
     macros: control.macros || {},
+    instruments: control.instruments || {},
     snapshots: Array.isArray(control.snapshots) ? control.snapshots : []
   };
   if (performanceSceneSelect) {
@@ -3711,10 +3769,12 @@ function renderFxSnapshots(snapshots = []) {
 function updatePerformanceUi(performance = {}) {
   const pack = performance?.blockPack || {};
   const activeCue = performance?.activeCue || null;
+  const continuity = performance?.continuity || currentProgram?.continuity || {};
   if (performanceBlockPack) performanceBlockPack.textContent = pack.label || "Station Default";
   if (performanceActiveCue) {
+    const voice = continuity.stationVoice?.label ? ` / ${continuity.stationVoice.label}` : "";
     performanceActiveCue.textContent = activeCue?.label
-      ? `${activeCue.label}${activeCue.intensity ? ` / ${activeCue.intensity}%` : ""}`
+      ? `${activeCue.label}${activeCue.intensity ? ` / ${activeCue.intensity}%` : ""}${voice}`
       : pack.cueId ? `Suggested: ${cueLabel(pack.cueId)}` : "Ready";
   }
   if (performanceSceneSelect && pack.cueId && !performanceSceneSelect.value) performanceSceneSelect.value = pack.cueId;
@@ -3736,23 +3796,38 @@ function renderPerformanceSceneDetail() {
   const cue = selectedPerformanceCue();
   const scene = showControlCache.scenes.find((item) => item.id === cue.sceneId) || {};
   const pack = currentProgram?.performance?.blockPack || {};
+  const continuity = currentProgram?.performance?.continuity || currentProgram?.continuity || {};
+  const voice = continuity.stationVoice || {};
+  const transition = continuity.transition || {};
   const ceiling = Math.round(Number(pack.chaosCeiling || scene.chaosCeiling || 1) * 100);
+  const description = [cue.clip || scene.description || pack.note || "", voice.tone || ""].filter(Boolean).join(" / ");
+  const transitionLabel = transition.label ? `${transition.label}` : `${ceiling}% ceiling`;
   performanceSceneDetail.innerHTML = `
     <span style="--scene-color:${escapeHtml(scene.color || pack.sceneColor || "#68c3b7")}"></span>
     <div>
       <strong>${escapeHtml(scene.label || pack.sceneLabel || "Scene")}: ${escapeHtml(cue.label || "Identity Hit")}</strong>
-      <small>${escapeHtml(cue.clip || scene.description || pack.note || "")}</small>
+      <small>${escapeHtml(description)}</small>
     </div>
-    <em>${ceiling}% ceiling</em>`;
+    <em title="${escapeHtml(transition.reason || "")}">${escapeHtml(transitionLabel)}</em>`;
 }
 
 function renderPerformanceBumpPackage(pack = {}) {
   if (!performanceBumpPackage) return;
-  const packageIds = Array.isArray(pack.bumpPackage) ? pack.bumpPackage : [];
-  performanceBumpPackage.innerHTML = packageIds.length
+  const continuity = currentProgram?.performance?.continuity || currentProgram?.continuity || {};
+  const voice = continuity.stationVoice || {};
+  const transition = continuity.transition || {};
+  const packageItems = Array.isArray(continuity.bumpPackage) && continuity.bumpPackage.length
+    ? continuity.bumpPackage
+    : (Array.isArray(pack.bumpPackage) ? pack.bumpPackage : []).map((id) => ({ id, label: id.replace(/-/g, " ") }));
+  const chips = [
+    transition.bumpClass ? { id: transition.bumpClass, label: transition.label || transition.bumpClass } : null,
+    voice.label ? { id: voice.id || "voice", label: voice.label } : null,
+    ...packageItems
+  ].filter(Boolean);
+  performanceBumpPackage.innerHTML = chips.length
     ? `
-      <span>Bump package</span>
-      <div>${packageIds.slice(0, 4).map((id) => `<small>${escapeHtml(id.replace(/-/g, " "))}</small>`).join("")}</div>`
+      <span>Continuity</span>
+      <div>${chips.slice(0, 5).map((item) => `<small data-bump-class="${escapeHtml(item.id || "")}">${escapeHtml(item.label || item.id || "")}</small>`).join("")}</div>`
     : "";
 }
 
@@ -3764,8 +3839,11 @@ function renderActiveFxRack(active = lastBroadcastFx) {
       <span>Active rack</span>
       <div>
         ${items.slice(-8).map((fx) => {
-          const remaining = fx.expiresAt == null ? "hold" : `${Math.max(0, Math.ceil((Number(fx.expiresAt) - (Date.now() + clockDelta)) / 1000))}s`;
-          return `<small><b>${escapeHtml(fx.label || fx.id)}</b><em>${escapeHtml(remaining)}</em></small>`;
+          const remainingSeconds = fx.expiresAt == null ? null : Math.max(0, Math.ceil((Number(fx.expiresAt) - (Date.now() + clockDelta)) / 1000));
+          const remaining = fx.expiresAt == null ? "hold" : fx.state === "decaying" ? `decay ${remainingSeconds}s` : `${remainingSeconds}s`;
+          const label = fx.instrumentLabel || fx.label || fx.id;
+          const kind = fx.instrumentKind && fx.instrumentKind !== "command" ? `${fx.instrumentKind} / ` : "";
+          return `<small data-fx-state="${escapeHtml(fx.state || "active")}"><b>${escapeHtml(label)}</b><em>${escapeHtml(kind + remaining)}</em></small>`;
         }).join("")}
       </div>`
     : `<span>Active rack</span><div><small><b>Clean signal</b><em>ready</em></small></div>`;
@@ -3948,6 +4026,91 @@ function renderCommunityAdmin(community = {}) {
     : `<p class="message">No crew picks yet.</p>`;
 }
 
+function loreTypeLabel(type = "lore") {
+  return {
+    lore: "Lore",
+    theme: "Theme",
+    errata: "Errata"
+  }[type] || "Lore";
+}
+
+function resetLoreForm(entry = null) {
+  if (!loreEntryForm) return;
+  loreEntryForm.reset();
+  loreEntryForm.elements.id.value = entry?.id || "";
+  loreEntryForm.elements.type.value = entry?.type || "lore";
+  loreEntryForm.elements.status.value = entry?.status || "draft";
+  loreEntryForm.elements.title.value = entry?.title || "";
+  loreEntryForm.elements.tags.value = Array.isArray(entry?.tags) ? entry.tags.join(", ") : "";
+  loreEntryForm.elements.body.value = entry?.body || "";
+}
+
+function filteredLoreEntries() {
+  const query = String(loreSearchInput?.value || "").trim().toLowerCase();
+  const type = String(loreTypeFilter?.value || "");
+  return (loreCache.entries || []).filter((entry) => {
+    if (type && entry.type !== type) return false;
+    if (!query) return true;
+    return [
+      entry.title,
+      entry.body,
+      entry.status,
+      entry.type,
+      ...(Array.isArray(entry.tags) ? entry.tags : [])
+    ].join(" ").toLowerCase().includes(query);
+  });
+}
+
+function renderLoreEntries() {
+  if (!loreEntries) return;
+  const entries = filteredLoreEntries();
+  loreEntries.innerHTML = entries.length
+    ? entries.map((entry) => {
+        const status = entry.status || "draft";
+        const nextStatus = status === "archived" ? "draft" : "archived";
+        const actionLabel = status === "archived" ? "Restore" : "Archive";
+        const tags = Array.isArray(entry.tags) ? entry.tags : [];
+        return `
+          <article class="lore-entry ${escapeHtml(entry.type || "lore")} ${escapeHtml(status)}">
+            <div class="lore-entry-top">
+              <span>${escapeHtml(loreTypeLabel(entry.type))}</span>
+              <small>${escapeHtml(status)}</small>
+            </div>
+            <strong>${escapeHtml(entry.title || "Untitled note")}</strong>
+            <p>${escapeHtml(entry.body || "")}</p>
+            ${tags.length ? `<div class="lore-tags">${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}
+            <div class="lore-entry-actions">
+              <small>${escapeHtml(entry.updatedAt ? new Date(entry.updatedAt).toLocaleString() : "New")}</small>
+              <button class="secondary compact" data-edit-lore-entry="${escapeHtml(entry.id)}" type="button">Edit</button>
+              <button class="secondary compact" data-lore-entry-status="${escapeHtml(nextStatus)}" data-lore-entry="${escapeHtml(entry.id)}" type="button">${actionLabel}</button>
+            </div>
+          </article>`;
+      }).join("")
+    : `<p class="message">No lore notes match that search.</p>`;
+}
+
+function renderLore(lore = {}) {
+  loreCache = {
+    entries: Array.isArray(lore.entries) ? lore.entries : [],
+    counts: lore.counts || {}
+  };
+  if (loreStats) {
+    const counts = loreCache.counts || {};
+    loreStats.innerHTML = [
+      ["Lore", counts.lore || 0],
+      ["Theme", counts.theme || 0],
+      ["Errata", counts.errata || 0],
+      ["Draft", counts.draft || 0]
+    ].map(([label, value]) => `
+      <span>
+        <strong>${escapeHtml(String(value))}</strong>
+        <small>${escapeHtml(label)}</small>
+      </span>`)
+      .join("");
+  }
+  renderLoreEntries();
+}
+
 async function launchPerformanceCue(cueId) {
   if (!cueId) return;
   const cue = showControlCache.cues.find((item) => item.id === cueId);
@@ -3979,6 +4142,7 @@ function renderAdmin(data) {
   renderProjectAudit(data.projectAudit || {});
   renderContinuityLog(data.continuityLog || []);
   renderCommunityAdmin(data.community || {});
+  renderLore(data.lore || {});
   const folders = data.sourceFolders || [];
   setBroadcastModeUI(data.broadcastMode);
   const librarySources = data.sources.filter((source) => source.type !== "bump");
@@ -4154,7 +4318,7 @@ function protectQueueEntryUI(entry, scheduled = []) {
 async function loadDjSoundboard() {
   if (!djSoundboardGrid) return;
   try {
-    const board = await api("/api/dj-soundboard");
+    const board = await adminCockpitApi.soundboard.load();
     renderDjSoundboard(board);
   } catch (error) {
     djSoundboardGrid.innerHTML = `<p class="message error">${escapeHtml(error.message || "Could not load soundboard.")}</p>`;
@@ -4499,7 +4663,7 @@ function insertChatEmoji(emoji) {
 }
 
 async function loadAdmin() {
-  const data = await api("/api/admin");
+  const data = await adminCockpitApi.admin.load();
   setUserState(data.user);
   renderAdmin(data);
 }
@@ -4529,12 +4693,17 @@ adminToggle.addEventListener("click", () => {
   if (adminAuthenticated) {
     const railOpen = shell.classList.contains("admin-open");
     shell.classList.toggle("admin-open", !railOpen);
-    adminPanel.classList.toggle("hidden", railOpen || adminRailView !== "broadcast");
-    schedulePanel.classList.toggle("hidden", railOpen || adminRailView !== "schedule");
-    queuePanel.classList.toggle("hidden", railOpen || adminRailView !== "queue");
-    soundboardPanel.classList.toggle("hidden", railOpen || adminRailView !== "soundboard");
-    fxPanel.classList.toggle("hidden", railOpen || adminRailView !== "fx");
-    chatPanel.classList.toggle("hidden", railOpen || adminRailView !== "chat");
+    if (adminCockpitRail) {
+      adminCockpitRail.syncShellOpen(!railOpen);
+    } else {
+      adminPanel.classList.toggle("hidden", railOpen || adminRailView !== "broadcast");
+      schedulePanel.classList.toggle("hidden", railOpen || adminRailView !== "schedule");
+      queuePanel.classList.toggle("hidden", railOpen || adminRailView !== "queue");
+      soundboardPanel.classList.toggle("hidden", railOpen || adminRailView !== "soundboard");
+      fxPanel.classList.toggle("hidden", railOpen || adminRailView !== "fx");
+      lorePanel.classList.toggle("hidden", railOpen || adminRailView !== "lore");
+      chatPanel.classList.toggle("hidden", railOpen || adminRailView !== "chat");
+    }
     if (!railOpen) applyStoredRailWidth();
     return;
   }
@@ -4550,19 +4719,55 @@ adminToggle.addEventListener("click", () => {
 
 showLoginButton.addEventListener("click", () => setAuthMode("login"));
 showRegisterButton.addEventListener("click", () => setAuthMode("register"));
-showBroadcastPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("broadcast")));
-showSchedulePanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("schedule")));
-showQueuePanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("queue")));
-showSoundboardPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("soundboard")));
-showFxPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("fx")));
-showChatPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("chat")));
+if (adminCockpitRail) {
+  adminCockpitRail.bind();
+} else {
+  showBroadcastPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("broadcast")));
+  showSchedulePanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("schedule")));
+  showQueuePanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("queue")));
+  showSoundboardPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("soundboard")));
+  showFxPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("fx")));
+  showLorePanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("lore")));
+  showChatPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("chat")));
+}
+hostMacroPanel?.addEventListener("click", async (event) => {
+  const jump = event.target.closest("[data-host-jump]");
+  if (jump) {
+    const view = jump.dataset.hostJump || "broadcast";
+    if (adminCockpitRail) {
+      adminCockpitRail.setView(view);
+    } else {
+      setAdminRailView(view);
+    }
+    applyStoredRailWidth();
+    return;
+  }
+
+  const action = event.target.closest("[data-host-action]")?.dataset.hostAction || "";
+  if (!action) return;
+  try {
+    if (action === "station-clock") {
+      await adminCockpitApi.broadcast.setMode("scheduled");
+      setMessage(scheduleMessage, "Station clock restored. Live queue remains saved but will not override.");
+      await loadAdmin();
+      return;
+    }
+    if (action === "clean-signal") {
+      await adminCockpitApi.fx.clear();
+      setMessage(fxMessage, "Signal cleaned. Active FX cleared.");
+      await loadAdmin();
+    }
+  } catch (error) {
+    setMessage(action === "clean-signal" ? fxMessage : scheduleMessage, error.message, true);
+  }
+});
 stageTvButton?.addEventListener("click", () => setAdminStageView("tv"));
 stageBumpButton?.addEventListener("click", () => setAdminStageView("bump"));
 pickModeButtons.forEach((button) => button.addEventListener("click", () => setSchedulePickMode(button.dataset.pickMode)));
 chatToggle.addEventListener("click", () => setChatCollapsed(!chatCollapsed));
 scheduledModeButton.addEventListener("click", async () => {
   try {
-    await api("/api/broadcast-mode", { method: "POST", body: JSON.stringify({ mode: "scheduled" }) });
+    await adminCockpitApi.broadcast.setMode("scheduled");
     setMessage(scheduleMessage, "Broadcast priority set to scheduled.");
     await loadAdmin();
   } catch (error) {
@@ -4572,7 +4777,7 @@ scheduledModeButton.addEventListener("click", async () => {
 
 queueModeButton.addEventListener("click", async () => {
   try {
-    await api("/api/broadcast-mode", { method: "POST", body: JSON.stringify({ mode: "queue" }) });
+    await adminCockpitApi.broadcast.setMode("queue");
     setMessage(scheduleMessage, "Broadcast priority set to live queue.");
     await loadAdmin();
   } catch (error) {
@@ -4628,7 +4833,7 @@ supporterSuggestionForm?.addEventListener("submit", async (event) => {
     const form = new FormData(supporterSuggestionForm);
     const title = String(form.get("title") || "").trim();
     const note = String(form.get("note") || "").trim();
-    await api("/api/community-suggestions", { method: "POST", body: JSON.stringify({ title, note }) });
+    await adminCockpitApi.community.submitSuggestion({ title, note });
     supporterSuggestionForm.reset();
     setMessage(supporterSuggestionMessage, "Crew pick sent for admin review.");
   } catch (error) {
@@ -4640,14 +4845,11 @@ communityAdminForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
     const form = new FormData(communityAdminForm);
-    const community = await api("/api/admin/community", {
-      method: "POST",
-      body: JSON.stringify({
-        stationMode: form.get("stationMode"),
-        spotlight: form.get("spotlight"),
-        supporterGoal: form.get("supporterGoal"),
-        takeoverPolicy: form.get("takeoverPolicy")
-      })
+    const community = await adminCockpitApi.community.updateSettings({
+      stationMode: form.get("stationMode"),
+      spotlight: form.get("spotlight"),
+      supporterGoal: form.get("supporterGoal"),
+      takeoverPolicy: form.get("takeoverPolicy")
     });
     renderCommunityAdmin(community);
     setMessage(communityAdminMessage, "Community signal saved.");
@@ -4676,10 +4878,7 @@ communitySuggestionList?.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-community-suggestion]");
   if (!button) return;
   try {
-    const community = await api("/api/admin/community-suggestion", {
-      method: "POST",
-      body: JSON.stringify({ id: button.dataset.communitySuggestion, status: button.dataset.communityStatus })
-    });
+    const community = await adminCockpitApi.community.updateSuggestion({ id: button.dataset.communitySuggestion, status: button.dataset.communityStatus });
     renderCommunityAdmin(community);
     setMessage(communityAdminMessage, "Crew pick updated.");
   } catch (error) {
@@ -4691,15 +4890,65 @@ communityMemberList?.addEventListener("change", async (event) => {
   const select = event.target.closest("[data-supporter-tier-user]");
   if (!select) return;
   try {
-    const community = await api("/api/admin/supporter-tier", {
-      method: "POST",
-      body: JSON.stringify({ userId: select.dataset.supporterTierUser, supporterTier: select.value })
-    });
+    const community = await adminCockpitApi.community.updateSupporterTier({ userId: select.dataset.supporterTierUser, supporterTier: select.value });
     renderCommunityAdmin(community);
     setMessage(communityAdminMessage, "Supporter tier updated.");
   } catch (error) {
     setMessage(communityAdminMessage, error.message, true);
     await loadAdmin().catch(() => {});
+  }
+});
+
+loreEntryForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    const form = new FormData(loreEntryForm);
+    const lore = await adminCockpitApi.lore.upsertEntry({
+      id: form.get("id"),
+      type: form.get("type"),
+      status: form.get("status"),
+      title: form.get("title"),
+      tags: form.get("tags"),
+      body: form.get("body")
+    });
+    renderLore(lore);
+    resetLoreForm();
+    setMessage(loreMessage, "Lore note saved.");
+  } catch (error) {
+    setMessage(loreMessage, error.message, true);
+  }
+});
+
+loreFormResetButton?.addEventListener("click", () => {
+  resetLoreForm();
+  setMessage(loreMessage, "");
+});
+
+loreSearchInput?.addEventListener("input", renderLoreEntries);
+loreTypeFilter?.addEventListener("change", renderLoreEntries);
+
+loreEntries?.addEventListener("click", async (event) => {
+  const editButton = event.target.closest("[data-edit-lore-entry]");
+  if (editButton) {
+    const entry = (loreCache.entries || []).find((item) => item.id === editButton.dataset.editLoreEntry);
+    if (!entry) return;
+    resetLoreForm(entry);
+    loreEntryForm?.scrollIntoView({ block: "start", behavior: "smooth" });
+    setMessage(loreMessage, "Editing lore note.");
+    return;
+  }
+
+  const statusButton = event.target.closest("[data-lore-entry]");
+  if (!statusButton) return;
+  try {
+    const lore = await adminCockpitApi.lore.upsertEntry({
+      id: statusButton.dataset.loreEntry,
+      status: statusButton.dataset.loreEntryStatus
+    });
+    renderLore(lore);
+    setMessage(loreMessage, "Lore note updated.");
+  } catch (error) {
+    setMessage(loreMessage, error.message, true);
   }
 });
 
@@ -4972,7 +5221,7 @@ captionsToggle?.addEventListener("click", toggleCaptions);
 
 warpResetButton?.addEventListener("click", async () => {
   resetAvWarp(true);
-  await api("/api/fx", { method: "POST", body: JSON.stringify({ id: "av-warp", duration: 2, params: avWarp }) }).catch(() => {});
+  await adminCockpitApi.fx.trigger({ id: "av-warp", duration: 2, params: avWarp }).catch(() => {});
 });
 
 [visualBrightnessSlider, visualContrastSlider, visualSaturationSlider, visualTearSlider, visualTrackingSlider, visualSmearSlider].forEach((slider) => {
@@ -5081,10 +5330,7 @@ fxSnapshotForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
     const form = new FormData(fxSnapshotForm);
-    const result = await api("/api/admin/fx-snapshots", {
-      method: "POST",
-      body: JSON.stringify({ name: form.get("name") })
-    });
+    const result = await adminCockpitApi.fx.saveSnapshot({ name: form.get("name") });
     renderFxSnapshots(result.snapshots || []);
     fxSnapshotForm.reset();
     setMessage(fxSnapshotMessage, "Rack snapshot saved.");
@@ -5097,10 +5343,7 @@ fxSnapshotList?.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-launch-fx-snapshot]");
   if (!button) return;
   try {
-    const result = await api("/api/admin/fx-snapshots/launch", {
-      method: "POST",
-      body: JSON.stringify({ id: button.dataset.launchFxSnapshot })
-    });
+    const result = await adminCockpitApi.fx.launchSnapshot({ id: button.dataset.launchFxSnapshot });
     if (result.fx) applyBroadcastFx(result.fx);
     renderFxSnapshots(result.snapshots || []);
     setMessage(fxSnapshotMessage, `Snapshot launched: ${button.textContent.trim()}.`);
@@ -5129,7 +5372,7 @@ fxButtons.forEach((button) => button.addEventListener("click", async () => {
       params.division = skipperDivisionSelect.value;
     }
     const isToggle = button.dataset.fxMode === "toggle";
-    const result = await api("/api/fx", { method: "POST", body: JSON.stringify({ id: button.dataset.fx, params, toggle: isToggle }) });
+    const result = await adminCockpitApi.fx.trigger({ id: button.dataset.fx, params, toggle: isToggle });
     const label = button.textContent.trim() || result.fx.at(-1)?.label || "FX";
     setMessage(fxMessage, isToggle ? `${label} ${result.toggledOff ? "off" : "on"}.` : `${result.fx.at(-1)?.label || "FX"} fired.`);
   } catch (error) {
@@ -5147,13 +5390,7 @@ djSoundboardGrid?.addEventListener("click", async (event) => {
   if (!button) return;
   try {
     button.disabled = true;
-    const result = await api("/api/fx", {
-      method: "POST",
-      body: JSON.stringify({
-        id: "soundboard-sample",
-        params: { soundId: button.dataset.soundboardSound },
-      }),
-    });
+    const result = await adminCockpitApi.soundboard.fire(button.dataset.soundboardSound);
     const label = result.fx.at(-1)?.params?.label || button.textContent.trim() || "cart";
     setMessage(fxMessage, `Cart fired: ${label}.`);
   } catch (error) {
@@ -5165,7 +5402,7 @@ djSoundboardGrid?.addEventListener("click", async (event) => {
 
 clearFxButton?.addEventListener("click", async () => {
   try {
-    await api("/api/fx", { method: "DELETE" });
+    await adminCockpitApi.fx.clear();
     disableDelay(true);
     disableReverb(true);
     setMessage(fxMessage, "FX cleared.");

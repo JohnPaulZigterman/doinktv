@@ -293,6 +293,7 @@ main {
 
 .wallpaper-panel,
 .credits-panel,
+.production-panel,
 .effects-panel {
   display: grid;
   gap: 10px;
@@ -305,18 +306,21 @@ main {
 
 .wallpaper-panel,
 .credits-panel,
+.production-panel,
 .effects-panel {
   padding: 0;
 }
 
 .wallpaper-panel[open],
 .credits-panel[open],
+.production-panel[open],
 .effects-panel[open] {
   padding-bottom: 12px;
 }
 
 .wallpaper-panel .field,
 .credits-panel .field,
+.production-panel .field,
 .effects-panel .field {
   margin-bottom: 0;
 }
@@ -339,18 +343,21 @@ main {
 
 .wallpaper-panel .panel-title,
 .credits-panel .panel-title,
+.production-panel .panel-title,
 .effects-panel .panel-title {
   list-style: none;
 }
 
 .wallpaper-panel .panel-title::-webkit-details-marker,
 .credits-panel .panel-title::-webkit-details-marker,
+.production-panel .panel-title::-webkit-details-marker,
 .effects-panel .panel-title::-webkit-details-marker {
   display: none;
 }
 
 .wallpaper-panel .panel-title::after,
 .credits-panel .panel-title::after,
+.production-panel .panel-title::after,
 .effects-panel .panel-title::after {
   content: "+";
   display: grid;
@@ -366,6 +373,7 @@ main {
 
 .wallpaper-panel[open] .panel-title::after,
 .credits-panel[open] .panel-title::after,
+.production-panel[open] .panel-title::after,
 .effects-panel[open] .panel-title::after {
   content: "-";
 }
@@ -380,12 +388,14 @@ main {
 
 .wallpaper-panel[open] .summary-hint,
 .credits-panel[open] .summary-hint,
+.production-panel[open] .summary-hint,
 .effects-panel[open] .summary-hint {
   font-size: 0;
 }
 
 .wallpaper-panel[open] .summary-hint::before,
 .credits-panel[open] .summary-hint::before,
+.production-panel[open] .summary-hint::before,
 .effects-panel[open] .summary-hint::before {
   content: "Close";
   font-size: 0.72rem;

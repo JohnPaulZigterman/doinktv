@@ -132,6 +132,7 @@
           <button id="showQueuePanelButton" class="auth-tab" type="button">Queue</button>
           <button id="showSoundboardPanelButton" class="auth-tab" type="button">Board</button>
           <button id="showFxPanelButton" class="auth-tab" type="button">FX</button>
+          <button id="showLorePanelButton" class="auth-tab" type="button">Lore</button>
           <button id="showChatPanelButton" class="auth-tab active" type="button">Chat</button>
         </div>
         <div class="chat-top">
@@ -227,6 +228,7 @@
           <button id="showQueuePanelButtonAlt" class="auth-tab" type="button">Queue</button>
           <button id="showSoundboardPanelButtonAlt" class="auth-tab" type="button">Board</button>
           <button id="showFxPanelButtonAlt" class="auth-tab" type="button">FX</button>
+          <button id="showLorePanelButtonAlt" class="auth-tab" type="button">Lore</button>
           <button id="showChatPanelButtonAlt" class="auth-tab" type="button">Chat</button>
         </div>
         <div class="panel-top">
@@ -238,6 +240,43 @@
         </div>
 
         <div id="adminTools" class="admin-tools hidden">
+          <section id="hostMacroPanel" class="stack compact-stack host-macro-panel" aria-label="Host macros">
+            <div class="host-macro-top">
+              <div>
+                <h3>Host macros</h3>
+                <p>Fast paths for common live hosting moves.</p>
+              </div>
+              <button class="secondary compact" type="button" data-host-action="station-clock">Station clock</button>
+            </div>
+            <div class="host-macro-grid">
+              <button type="button" data-host-jump="broadcast">
+                <span>Cast</span>
+                <strong>Source hunt</strong>
+                <small>Find Archive media, add sources, then route it.</small>
+              </button>
+              <button type="button" data-host-jump="queue">
+                <span>Queue</span>
+                <strong>Live override</strong>
+                <small>Stack temporary plays without replacing the schedule.</small>
+              </button>
+              <button type="button" data-host-jump="soundboard">
+                <span>Board</span>
+                <strong>Cart hits</strong>
+                <small>Quick drops, stings, quotes, sirens, and reactions.</small>
+              </button>
+              <button type="button" data-host-jump="fx">
+                <span>FX</span>
+                <strong>Scene launch</strong>
+                <small>Use scenes first, then racks when you want detail.</small>
+              </button>
+            </div>
+            <div class="host-macro-actions">
+              <button class="secondary compact" type="button" data-host-jump="schedule">See week</button>
+              <button class="secondary compact" type="button" data-host-jump="lore">Station notes</button>
+              <button class="danger compact" type="button" data-host-action="clean-signal">Clean signal</button>
+            </div>
+          </section>
+
           <section id="stationHealthPanel" class="stack compact-stack station-health-panel">
             <div class="station-health-top">
               <h3>Station health</h3>
@@ -388,6 +427,7 @@
           <button id="showQueuePanelButtonSchedule" class="auth-tab" type="button">Queue</button>
           <button id="showSoundboardPanelButtonSchedule" class="auth-tab" type="button">Board</button>
           <button id="showFxPanelButtonSchedule" class="auth-tab" type="button">FX</button>
+          <button id="showLorePanelButtonSchedule" class="auth-tab" type="button">Lore</button>
           <button id="showChatPanelButtonSchedule" class="auth-tab" type="button">Chat</button>
         </div>
         <div class="panel-top">
@@ -416,6 +456,7 @@
           <button id="showQueuePanelButtonQueue" class="auth-tab active" type="button">Queue</button>
           <button id="showSoundboardPanelButtonQueue" class="auth-tab" type="button">Board</button>
           <button id="showFxPanelButtonQueue" class="auth-tab" type="button">FX</button>
+          <button id="showLorePanelButtonQueue" class="auth-tab" type="button">Lore</button>
           <button id="showChatPanelButtonQueue" class="auth-tab" type="button">Chat</button>
         </div>
         <div class="panel-top">
@@ -436,6 +477,7 @@
           <button id="showQueuePanelButtonSoundboard" class="auth-tab" type="button">Queue</button>
           <button id="showSoundboardPanelButtonSoundboard" class="auth-tab active" type="button">Board</button>
           <button id="showFxPanelButtonSoundboard" class="auth-tab" type="button">FX</button>
+          <button id="showLorePanelButtonSoundboard" class="auth-tab" type="button">Lore</button>
           <button id="showChatPanelButtonSoundboard" class="auth-tab" type="button">Chat</button>
         </div>
         <div class="panel-top">
@@ -464,6 +506,7 @@
           <button id="showQueuePanelButtonFx" class="auth-tab" type="button">Queue</button>
           <button id="showSoundboardPanelButtonFx" class="auth-tab" type="button">Board</button>
           <button id="showFxPanelButtonFx" class="auth-tab active" type="button">FX</button>
+          <button id="showLorePanelButtonFx" class="auth-tab" type="button">Lore</button>
           <button id="showChatPanelButtonFx" class="auth-tab" type="button">Chat</button>
         </div>
         <div class="panel-top">
@@ -874,10 +917,69 @@
         </div>
         <p id="fxMessage" class="message"></p>
       </aside>
+
+      <aside id="lorePanel" class="admin-panel hidden" aria-label="Lore and errata">
+        <div class="rail-tabs hidden" data-admin-rail-tabs>
+          <button id="showBroadcastPanelButtonLore" class="auth-tab" type="button">Cast</button>
+          <button id="showSchedulePanelButtonLore" class="auth-tab" type="button">SCHED</button>
+          <button id="showQueuePanelButtonLore" class="auth-tab" type="button">Queue</button>
+          <button id="showSoundboardPanelButtonLore" class="auth-tab" type="button">Board</button>
+          <button id="showFxPanelButtonLore" class="auth-tab" type="button">FX</button>
+          <button id="showLorePanelButtonLore" class="auth-tab active" type="button">Lore</button>
+          <button id="showChatPanelButtonLore" class="auth-tab" type="button">Chat</button>
+        </div>
+        <div class="panel-top">
+          <div>
+            <h2>Lore Desk</h2>
+            <p>Narrative, theme notes, station bible, and site errata</p>
+          </div>
+          <button id="loreFormResetButton" class="secondary compact" type="button">New note</button>
+        </div>
+        <section class="stack compact-stack lore-compose">
+          <h3>Write station canon</h3>
+          <form id="loreEntryForm" class="lore-entry-form">
+            <input name="id" type="hidden">
+            <div class="lore-form-grid">
+              <select name="type" aria-label="Lore note type">
+                <option value="lore">Lore note</option>
+                <option value="theme">Theme idea</option>
+                <option value="errata">Site errata</option>
+              </select>
+              <select name="status" aria-label="Lore note status">
+                <option value="draft">Draft</option>
+                <option value="active">Active</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
+            <input name="title" maxlength="120" placeholder="Title" required>
+            <input name="tags" maxlength="180" placeholder="Tags, comma separated">
+            <textarea name="body" rows="7" maxlength="3000" placeholder="Narrative idea, recurring gag, block identity, known issue, deployment note..." required></textarea>
+            <div class="lore-action-row">
+              <button type="submit">Save lore</button>
+              <p id="loreMessage" class="message"></p>
+            </div>
+          </form>
+        </section>
+        <section class="stack compact-stack lore-lookup">
+          <div class="section-heading">
+            <h3>Lookup</h3>
+            <select id="loreTypeFilter" aria-label="Filter lore notes">
+              <option value="">All notes</option>
+              <option value="lore">Lore</option>
+              <option value="theme">Theme</option>
+              <option value="errata">Errata</option>
+            </select>
+          </div>
+          <input id="loreSearchInput" placeholder="Search titles, tags, lore notes, or errata">
+          <div id="loreStats" class="lore-stats"></div>
+          <div id="loreEntries" class="lore-entries"></div>
+        </section>
+      </aside>
     </main>
     <div id="youtubeMetadataPlayer" class="metadata-player" aria-hidden="true"></div>
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+    <script src="/admin-cockpit.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>

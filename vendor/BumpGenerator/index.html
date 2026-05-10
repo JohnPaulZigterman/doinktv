@@ -297,6 +297,47 @@
                 <span id="tintStrengthValue">72%</span>
               </div>
             </div>
+
+            <details class="production-panel" open aria-label="Production treatment">
+              <summary class="panel-title">
+                <span>Production</span>
+                <span class="summary-hint">Open</span>
+              </summary>
+              <div class="panel-body">
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="productionStyle">Layout</label>
+                    <select id="productionStyle">
+                      <option value="standard">Standard card</option>
+                      <option value="promo-card">Promo card</option>
+                      <option value="schedule-card">Schedule card</option>
+                      <option value="lower-third">Lower third</option>
+                      <option value="split-card">Split card</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="productionAccent">Accent</label>
+                    <select id="productionAccent">
+                      <option value="auto">Auto</option>
+                      <option value="hot">Hot</option>
+                      <option value="cool">Cool</option>
+                      <option value="signal">Signal</option>
+                      <option value="mono">Mono</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="productionBadge">Bug</label>
+                    <input id="productionBadge" type="text" maxlength="32" value="DOINKTV">
+                  </div>
+                  <div class="field">
+                    <label for="productionKicker">Kicker</label>
+                    <input id="productionKicker" type="text" maxlength="80" placeholder="Sunday signal / starts at 6">
+                  </div>
+                </div>
+              </div>
+            </details>
           </div>
         </details>
 

@@ -22,6 +22,10 @@ const formatInput = document.querySelector("#format");
 const toneInput = document.querySelector("#tone");
 const tintStrength = document.querySelector("#tintStrength");
 const tintStrengthValue = document.querySelector("#tintStrengthValue");
+const productionStyle = document.querySelector("#productionStyle");
+const productionAccent = document.querySelector("#productionAccent");
+const productionBadge = document.querySelector("#productionBadge");
+const productionKicker = document.querySelector("#productionKicker");
 const effectToggles = [...document.querySelectorAll(".effect-toggle")];
 const effectIntensity = document.querySelector("#effectIntensity");
 const effectIntensityValue = document.querySelector("#effectIntensityValue");
@@ -92,6 +96,10 @@ const bumpPresets = {
     wallpaperScheme: "arcade",
     wallpaperSpacing: 86,
     useWallpaper: true,
+    productionStyle: "promo-card",
+    productionAccent: "signal",
+    productionBadge: "DOINKTV",
+    productionKicker: "block signal",
     effects: ["vhs", "scanlines", "chromatic"],
     effectIntensity: 38,
   },
@@ -108,6 +116,10 @@ const bumpPresets = {
     wallpaperScheme: "broadcast",
     wallpaperSpacing: 72,
     useWallpaper: true,
+    productionStyle: "promo-card",
+    productionAccent: "hot",
+    productionBadge: "LEGAL ID",
+    productionKicker: "station identification",
     effects: ["noise", "scanlines", "flicker"],
     effectIntensity: 34,
   },
@@ -124,6 +136,10 @@ const bumpPresets = {
     wallpaperScheme: "warning",
     wallpaperSpacing: 94,
     useWallpaper: true,
+    productionStyle: "split-card",
+    productionAccent: "hot",
+    productionBadge: "AD BREAK",
+    productionKicker: "paid for in weird favors",
     effects: ["vhs", "dvd", "scanlines"],
     effectIntensity: 42,
   },
@@ -140,6 +156,10 @@ const bumpPresets = {
     wallpaperScheme: "miami",
     wallpaperSpacing: 78,
     useWallpaper: true,
+    productionStyle: "schedule-card",
+    productionAccent: "cool",
+    productionBadge: "NEXT",
+    productionKicker: "coming up",
     effects: ["chromatic", "scanlines"],
     effectIntensity: 30,
   },
@@ -156,6 +176,10 @@ const bumpPresets = {
     wallpaperScheme: "pool",
     wallpaperSpacing: 90,
     useWallpaper: true,
+    productionStyle: "lower-third",
+    productionAccent: "signal",
+    productionBadge: "MUSIC",
+    productionKicker: "full song bump",
     effects: ["flicker", "chromatic"],
     effectIntensity: 26,
   },
@@ -172,6 +196,10 @@ const bumpPresets = {
     wallpaperScheme: "warning",
     wallpaperSpacing: 58,
     useWallpaper: true,
+    productionStyle: "promo-card",
+    productionAccent: "hot",
+    productionBadge: "SIGNAL",
+    productionKicker: "technical interruption",
     effects: ["noise", "vhs", "dvd", "warp", "chromatic", "flicker", "scanlines"],
     effectIntensity: 78,
   },
@@ -188,6 +216,10 @@ const bumpPresets = {
     wallpaperScheme: "mono",
     wallpaperSpacing: 110,
     useWallpaper: false,
+    productionStyle: "standard",
+    productionAccent: "mono",
+    productionBadge: "DOINKTV",
+    productionKicker: "",
     effects: [],
     effectIntensity: 0,
     clearAudio: true,
@@ -439,14 +471,14 @@ async function autofillCreditFromAudio(file) {
     const fallbackName = file.name.replace(/\.[^/.]+$/, "");
     const song = metadata.title || fallbackName;
     const artist = metadata.artist || "Unknown artist";
-    const text = `Song: ${song}\nArtist: ${artist}`;
+    const text = `${song}\n${artist}`;
 
     creditText.value = text;
     creditWasAutoFilled = true;
     restartPreview();
   } catch (error) {
     console.warn("Could not read audio metadata", error);
-    creditText.value = `Song: ${file.name.replace(/\.[^/.]+$/, "")}\nArtist: Unknown artist`;
+    creditText.value = `${file.name.replace(/\.[^/.]+$/, "")}\nUnknown artist`;
     creditWasAutoFilled = true;
     restartPreview();
   }
@@ -454,7 +486,7 @@ async function autofillCreditFromAudio(file) {
 
 function autofillCreditFromServerAudio(asset) {
   if (!asset || (!creditWasAutoFilled && creditText.value.trim())) return;
-  creditText.value = `Song: ${asset.name || "Server audio"}\nArtist: Server library`;
+  creditText.value = `${asset.name || "Server audio"}\n${asset.artist || "Doink Wizard"}`;
   creditWasAutoFilled = true;
   restartPreview();
 }
@@ -498,6 +530,10 @@ function doinkQueuePayload() {
     creditSize: Number(creditSize.value) || 24,
     format: formatInput.value,
     wallpaper: wallpaperConfig(),
+    productionStyle: productionStyle.value,
+    productionAccent: productionAccent.value,
+    productionBadge: productionBadge.value.trim(),
+    productionKicker: productionKicker.value.trim(),
     effects: selectedEffects(),
     effectIntensity: Number(effectIntensity.value) || 0
   };
@@ -1248,7 +1284,8 @@ function wrapText(text, maxWidth, font) {
 }
 
 function drawTextBlock(width, height, time) {
-  const text = activeText(time);
+  const layout = productionStyle.value;
+  const text = ["schedule-card", "split-card"].includes(layout) ? textLineValues().join("\n") : activeText(time);
   const fontSize = Number(fontSizeInput.value);
   const lineHeight = fontSize * 1.28;
   const pad = Math.round(Math.min(width, height) * 0.075);
@@ -1260,6 +1297,9 @@ function drawTextBlock(width, height, time) {
   const alignment = selectedAlignment();
   const tone = toneInput.value;
   const drift = Math.sin(time * 0.9) * 3;
+  if (layout !== "standard") {
+    drawProductionChrome(width, height, layout, fontSize);
+  }
   const textXByAlignment = {
     left: pad,
     center: width / 2,
@@ -1274,8 +1314,11 @@ function drawTextBlock(width, height, time) {
   const cardX = cardXByAlignment[alignment];
 
   let y = height / 2 - blockHeight / 2;
-  if (placement === "top") y = pad;
-  if (placement === "bottom") y = height - pad - blockHeight;
+  if (layout === "lower-third") y = height - pad - blockHeight - fontSize * 1.6;
+  else if (layout === "promo-card") y = Math.max(pad * 1.9, height / 2 - blockHeight / 2);
+  else if (layout === "schedule-card") y = Math.max(pad * 2.25, height / 2 - blockHeight / 2);
+  else if (placement === "top") y = pad;
+  else if (placement === "bottom") y = height - pad - blockHeight;
 
   if (tone === "classic") {
     ctx.save();
@@ -1287,7 +1330,7 @@ function drawTextBlock(width, height, time) {
   ctx.save();
   ctx.translate(0, drift);
 
-  if (tone === "caption") {
+  if (tone === "caption" && layout === "standard") {
     const cardPad = fontSize * 0.72;
     ctx.fillStyle = "rgba(0, 0, 0, 0.68)";
     ctx.fillRect(cardX - cardPad, y - cardPad * 0.7, textWidth + cardPad * 2, blockHeight + cardPad * 1.25);
@@ -1305,6 +1348,52 @@ function drawTextBlock(width, height, time) {
     ctx.fillText(line, textX, y + index * lineHeight);
   });
 
+  ctx.restore();
+}
+
+function productionColor(width) {
+  const palette = wallpaperPalette(wallpaperScheme.value);
+  const accent = productionAccent.value;
+  if (accent === "hot") return "#ff4f7b";
+  if (accent === "cool") return "#36c8ff";
+  if (accent === "signal") return "#ffe066";
+  if (accent === "mono") return "#f4f0e8";
+  return cssColorFromHex(palette.shape[Math.abs(wallpaperSeed) % palette.shape.length] || "0xffe066");
+}
+
+function cssColorFromHex(value) {
+  return `#${String(value).replace(/^0x/i, "").padStart(6, "0").slice(-6)}`;
+}
+
+function drawProductionChrome(width, height, layout, fontSize) {
+  const pad = Math.round(Math.min(width, height) * 0.045);
+  const accent = productionColor(width);
+  const badge = productionBadge.value.trim() || "DOINKTV";
+  const kicker = productionKicker.value.trim();
+  ctx.save();
+  ctx.fillStyle = "rgba(0, 0, 0, 0.52)";
+  if (layout === "lower-third") {
+    ctx.fillRect(pad, height - pad - fontSize * 3.4, width - pad * 2, fontSize * 2.9);
+  } else if (layout === "split-card") {
+    ctx.fillRect(pad, pad * 1.7, width * 0.58, height - pad * 3.2);
+    ctx.fillStyle = "rgba(244, 240, 232, 0.12)";
+    ctx.fillRect(width * 0.66, pad * 1.7, width * 0.26, height - pad * 3.2);
+  } else {
+    ctx.fillRect(pad, pad * 1.65, width * 0.68, height - pad * 3.15);
+  }
+  ctx.fillStyle = accent;
+  ctx.fillRect(pad, pad * 1.65, Math.max(7, fontSize * 0.15), height - pad * 3.15);
+  ctx.fillRect(pad, pad, Math.min(width * 0.3, badge.length * fontSize * 0.42 + pad * 1.4), fontSize * 0.9);
+  ctx.fillStyle = "#090b10";
+  ctx.font = `800 ${Math.max(12, fontSize * 0.32)}px Arial, Helvetica, sans-serif`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(badge.toUpperCase(), pad * 1.4, pad + fontSize * 0.45);
+  if (kicker) {
+    ctx.fillStyle = "rgba(244, 240, 232, 0.86)";
+    ctx.font = `700 ${Math.max(12, fontSize * 0.3)}px Arial, Helvetica, sans-serif`;
+    ctx.fillText(kicker.toUpperCase(), pad, height - pad * 1.15);
+  }
   ctx.restore();
 }
 
@@ -1844,6 +1933,10 @@ function applyBumpPreset(name) {
   formatInput.value = preset.format || "landscape";
   toneInput.value = preset.tone;
   tintStrength.value = String(preset.tintStrength);
+  productionStyle.value = preset.productionStyle || "standard";
+  productionAccent.value = preset.productionAccent || "auto";
+  productionBadge.value = preset.productionBadge || "DOINKTV";
+  productionKicker.value = preset.productionKicker || "";
   wallpaperShapes.value = preset.wallpaperShapes;
   wallpaperScheme.value = preset.wallpaperScheme;
   wallpaperSpacing.value = String(preset.wallpaperSpacing);
@@ -2050,7 +2143,7 @@ presetButtons.forEach((button) => {
 [...textLines.querySelectorAll(".text-line")].forEach(bindTextLine);
 updateLineLabels();
 
-[secondsPerLineInput, formatInput, toneInput, tintStrength, effectIntensity, ...effectToggles, creditPosition, creditFont, creditSize, ...document.querySelectorAll("input[name='placement'], input[name='alignment']")]
+[secondsPerLineInput, formatInput, toneInput, tintStrength, productionStyle, productionAccent, productionBadge, productionKicker, effectIntensity, ...effectToggles, creditPosition, creditFont, creditSize, ...document.querySelectorAll("input[name='placement'], input[name='alignment']")]
   .forEach((input) => input.addEventListener("input", () => {
     activePresetName = "custom";
     restartPreview();
