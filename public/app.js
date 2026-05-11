@@ -8,6 +8,7 @@ const stageBumpButton = document.querySelector("#showStageBumpButton");
 const viewerControls = document.querySelector(".viewer-controls");
 const streamPlayer = document.querySelector("#streamPlayer");
 const streamLoading = document.querySelector("#streamLoading");
+const streamLoadingLabel = streamLoading?.querySelector("span");
 const playOverlayButton = document.querySelector("#playOverlayButton");
 const liveBadge = document.querySelector("#liveBadge");
 const onlineBadge = document.querySelector("#onlineBadge");
@@ -415,6 +416,7 @@ let streamBlankSince = 0;
 let streamProgressSeenAt = Date.now();
 let lastStreamTime = 0;
 let hlsResetAt = 0;
+let nextProgramRefreshAt = 0;
 let captionsEnabled = localStorage.getItem("doink_captions_enabled") === "true";
 let captionProgramId = "";
 let captionRequestId = 0;
@@ -1171,7 +1173,7 @@ function youtubePlayerElement() {
 function loadHlsStream() {
   if (hlsLoaded || hlsLoading) return;
   hlsLoading = true;
-  scheduleStreamLoading();
+  scheduleStreamLoading("Tuning broadcast");
   waitForStreamManifest()
     .then(attachHlsStream)
     .catch(() => {
@@ -1181,13 +1183,22 @@ function loadHlsStream() {
     });
 }
 
-function scheduleStreamLoading() {
+function showStreamLoading(label = "Tuning broadcast") {
+  if (streamLoadingLabel) streamLoadingLabel.textContent = label;
+  streamLoading?.classList.remove("hidden");
+}
+
+function scheduleStreamLoading(label = "Tuning broadcast", delayMs = 800, { requireColdStart = true } = {}) {
   clearTimeout(streamLoadingTimer);
   streamLoadingTimer = setTimeout(() => {
-    if (currentProgram?.live && currentProgram.live.source.type !== "youtube" && !hasStreamStarted()) {
-      streamLoading?.classList.remove("hidden");
+    if (
+      currentProgram?.live &&
+      currentProgram.live.source.type !== "youtube" &&
+      (!requireColdStart || !hasStreamStarted())
+    ) {
+      showStreamLoading(label);
     }
-  }, 1000);
+  }, delayMs);
 }
 
 function hideStreamLoading() {
@@ -1261,10 +1272,10 @@ function markStreamProgress() {
   if (streamPlayer.readyState >= 2) hideStreamLoading();
 }
 
-function resetHlsStream() {
-  if (Date.now() - hlsResetAt < 1500) return;
+function resetHlsStream({ label = "Tuning next source", force = false } = {}) {
+  if (!force && Date.now() - hlsResetAt < 1500) return false;
   hlsResetAt = Date.now();
-  scheduleStreamLoading();
+  showStreamLoading(label);
   hlsPlayer?.destroy();
   hlsPlayer = null;
   hlsLoaded = false;
@@ -1273,7 +1284,8 @@ function resetHlsStream() {
   streamProgressSeenAt = Date.now();
   if (streamPlayer.src) streamPlayer.removeAttribute("src");
   streamPlayer.load();
-  setTimeout(loadHlsStream, 250);
+  setTimeout(loadHlsStream, 180);
+  return true;
 }
 
 function pauseHlsStream() {
@@ -1282,7 +1294,7 @@ function pauseHlsStream() {
 
 function resumeHlsStream() {
   loadHlsStream();
-  if (!hasStreamStarted()) scheduleStreamLoading();
+  if (!hasStreamStarted()) scheduleStreamLoading("Tuning broadcast");
   applyAvWarpToPlayers();
   playStreamPlayer();
 }
@@ -1491,8 +1503,16 @@ function keepBroadcastVisible() {
   if (Math.abs(currentTime - lastStreamTime) > 0.05) {
     markStreamProgress();
   } else if (Date.now() - streamProgressSeenAt > 8000) {
-    resetHlsStream();
+    resetHlsStream({ label: "Recovering signal" });
   }
+}
+
+function refreshProgramSoon(label = "Rolling next source") {
+  const now = Date.now();
+  if (now < nextProgramRefreshAt) return;
+  nextProgramRefreshAt = now + 1800;
+  showStreamLoading(label);
+  api("/api/program").then(syncProgram).catch(() => {});
 }
 
 function syncYouTube(live, { force = false, fromGesture = false } = {}) {
@@ -1577,7 +1597,7 @@ function enterYouTubeMode(live) {
   checkYouTubeBlocked();
 }
 
-function enterStreamMode() {
+function enterStreamMode({ resume = true } = {}) {
   setMode("stream");
   youtubeLink.classList.add("hidden");
   youtubeLink.href = "#";
@@ -1587,7 +1607,21 @@ function enterStreamMode() {
   youtubeSyncTimer = 0;
   if (youtubeReady && currentProgram?.live?.source?.type !== "youtube") youtubePlayer.stopVideo?.();
   setPlayOverlay(false);
-  resumeHlsStream();
+  if (resume) resumeHlsStream();
+}
+
+function enterStandbyMode() {
+  setMode("");
+  pauseHlsStream();
+  hideStreamLoading();
+  youtubeLink.classList.add("hidden");
+  youtubeLink.href = "#";
+  crtBrand.classList.remove("hidden");
+  loadedYouTubeProgramId = "";
+  clearInterval(youtubeSyncTimer);
+  youtubeSyncTimer = 0;
+  if (youtubeReady) youtubePlayer.stopVideo?.();
+  setPlayOverlay(false);
 }
 
 function setPeaceMode(enabled, { persist = true } = {}) {
@@ -3593,6 +3627,8 @@ function renderFxOverlay(fx) {
 
 function syncProgram(program) {
   if (!program) return;
+  const previousProgramId = currentProgramId;
+  const previousSourceType = currentProgram?.live?.source?.type || "";
   currentProgram = program;
   clockDelta = program.serverTime - Date.now();
   updateAudienceBadge(program.audience);
@@ -3602,6 +3638,11 @@ function syncProgram(program) {
   const live = program.live;
   const next = program.next;
   const liveChanged = live?.id !== currentProgramId;
+  const streamProgramChanged = Boolean(
+    liveChanged &&
+    previousProgramId &&
+    live?.source?.type !== "youtube"
+  );
 
   setProgramBlock(nextBlock, next?.weeklyBlockName, next?.blockIdentity);
   setProgramTitle(nextTitle, next ? `${programDisplayTitle(next)} at ${new Date(next.startAt).toLocaleTimeString()}` : "Unscheduled");
@@ -3620,7 +3661,7 @@ function syncProgram(program) {
     liveBadge.textContent = "Waiting";
     liveBadge.classList.add("off");
     hideStreamLoading();
-    enterStreamMode();
+    enterStandbyMode();
     refreshTitleMarquees();
     return;
   }
@@ -3638,8 +3679,13 @@ function syncProgram(program) {
       if (currentProgram?.live?.source?.type === "youtube") syncYouTube(currentProgram.live);
     }, 2500);
   } else {
-    enterStreamMode();
-    if (liveChanged && currentProgramId && hlsLoaded) resetHlsStream();
+    if (streamProgramChanged) {
+      resetHlsStream({
+        label: previousSourceType === "youtube" ? "Tuning broadcast" : "Rolling next source",
+        force: true
+      });
+    }
+    enterStreamMode({ resume: !streamProgramChanged });
   }
 
   if (liveChanged) syncCaptions(live);
@@ -3722,6 +3768,9 @@ function tickProgress() {
   if (currentProgram.live.source.type === "youtube") {
     syncYouTube(currentProgram.live);
   } else {
+    if (offset >= currentProgram.live.duration - 1.25) {
+      refreshProgramSoon("Rolling next source");
+    }
     enforcePlayback();
   }
 }
@@ -5683,7 +5732,10 @@ window.addEventListener("message", async (event) => {
 });
 
 streamPlayer.addEventListener("pause", () => setTimeout(enforcePlayback, 100));
-streamPlayer.addEventListener("stalled", () => setTimeout(enforcePlayback, 500));
+streamPlayer.addEventListener("stalled", () => {
+  scheduleStreamLoading("Buffering signal", 700, { requireColdStart: false });
+  setTimeout(enforcePlayback, 500);
+});
 streamPlayer.addEventListener("timeupdate", markStreamProgress);
 streamPlayer.addEventListener("playing", markStreamProgress);
 streamPlayer.addEventListener("canplay", markStreamProgress);
@@ -5694,9 +5746,16 @@ streamPlayer.addEventListener("loadedmetadata", () => {
   if (playbackUnlocked) playStreamPlayer();
 });
 streamPlayer.addEventListener("loadeddata", markStreamProgress);
-streamPlayer.addEventListener("waiting", () => setTimeout(keepBroadcastVisible, 1000));
+streamPlayer.addEventListener("waiting", () => {
+  scheduleStreamLoading("Buffering signal", 700, { requireColdStart: false });
+  setTimeout(keepBroadcastVisible, 1000);
+});
+streamPlayer.addEventListener("ended", () => {
+  refreshProgramSoon("Rolling next source");
+  resetHlsStream({ label: "Rolling next source", force: true });
+});
 streamPlayer.addEventListener("error", () => {
-  resetHlsStream();
+  resetHlsStream({ label: "Recovering signal", force: true });
 });
 setInterval(tickProgress, 1000);
 setTheme(currentTheme);
