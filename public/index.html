@@ -79,7 +79,7 @@
             <span></span>
             <span></span>
           </div>
-          <div id="emptyState" class="empty-state">
+          <div class="empty-state">
             <h1>Stand by</h1>
             <p>The broadcast schedule is empty. The next source will appear here automatically.</p>
           </div>
@@ -142,7 +142,7 @@
           </div>
           <button id="chatToggle" class="ghost-button compact" type="button" aria-expanded="true">Minimize</button>
         </div>
-        <div id="chatBody" class="chat-body">
+        <div class="chat-body">
           <div id="chatMessages" class="chat-messages"></div>
           <form id="chatForm" class="chat-form">
             <input id="chatInput" name="text" maxlength="280" autocomplete="off" placeholder="Log in to chat" disabled>
@@ -286,7 +286,7 @@
             <button type="button" data-admin-task="system">System</button>
           </nav>
 
-          <section id="stationHealthPanel" class="stack compact-stack station-health-panel cockpit-surface" data-admin-surface="system">
+          <section class="stack compact-stack station-health-panel cockpit-surface" data-admin-surface="system">
             <div class="station-health-top">
               <h3>Station health</h3>
               <span id="stationHealthStatus" class="station-health-status" data-status="checking">Checking</span>
@@ -295,7 +295,7 @@
             <ul id="stationHealthWarnings" class="station-health-warnings"></ul>
           </section>
 
-          <section id="projectAuditPanel" class="stack compact-stack project-audit-panel cockpit-surface" data-admin-surface="system">
+          <section class="stack compact-stack project-audit-panel cockpit-surface" data-admin-surface="system">
             <div class="project-audit-top">
               <h3>Mission control</h3>
               <span id="projectAuditStamp">Audit pending</span>
@@ -826,7 +826,7 @@
             <h3>Format Crimes</h3>
             <button data-fx="color-bars" data-fx-mode="toggle">Color bars</button>
             <button data-fx="aspect-bad" data-fx-mode="toggle">Wrong aspect</button>
-            <button data-fx="crop-bad" data-fx-mode="toggle">Fake crop issue</button>
+            <button data-fx="crop-bad" data-fx-mode="toggle">Bad crop</button>
             <button data-fx="pixelate" data-fx-mode="toggle">Pixelate</button>
             <button data-fx="glass" data-fx-mode="toggle">Glass block</button>
             <button data-fx="melt">Melt</button>
