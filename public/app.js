@@ -4005,7 +4005,8 @@ function renderStationHealth(health = {}) {
     ["Long gaps", checks.longGapsNext24h],
     ["Missing refs", checks.missingSourceRefs],
     ["Ingest issues", checks.ingestIssues],
-    ["HLS", checks.hlsStatus || "idle"]
+    ["HLS", checks.hlsStatus || "idle"],
+    ["State", checks.stateStorage || "default"]
   ];
   stationHealthChecks.innerHTML = checkItems
     .map(([name, value]) => `

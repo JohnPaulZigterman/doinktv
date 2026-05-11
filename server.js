@@ -95,6 +95,7 @@ const BUMP_GENERATOR_DIR = process.env.BUMP_GENERATOR_DIR
   || (existsSync(VENDORED_BUMP_GENERATOR_DIR) ? VENDORED_BUMP_GENERATOR_DIR : path.join(__dirname, "..", "BumpGenerator"));
 const STARTER_STATE_PATH = path.join(DATA_DIR, "state.json");
 const STATE_PATH = process.env.DOINK_STATE_PATH || path.join(DATA_DIR, "runtime", "state.json");
+const STATE_PATH_CONFIGURED = Boolean(process.env.DOINK_STATE_PATH || process.env.DOINK_DATA_DIR);
 const HLS_HANDOFF_LEAD_MS = 2400;
 const AUTO_BUMP_INTERVAL_MS = 1000 * 60 * 3;
 const AUTO_BUMP_DURATION = 20;
@@ -1364,6 +1365,7 @@ function stationHealthSummary() {
   if (gaps.length) warnings.push(`${gaps.length} schedule gap${gaps.length === 1 ? "" : "s"} over 10 minutes in the next 24 hours.`);
   if (hlsPlayout.status === "error") warnings.push(`HLS playout error: ${hlsPlayout.error || "unknown"}.`);
   if (defaultAdminCredentialsActive()) warnings.push("Default local admin credentials are active; set ADMIN_USER and ADMIN_PASSWORD before public deployment.");
+  if (IS_PRODUCTION && !STATE_PATH_CONFIGURED) warnings.push("Production runtime state is using the default repo-local path; mount persistent storage and set DOINK_DATA_DIR or DOINK_STATE_PATH.");
   return {
     status: warnings.length ? (missingRefs.length || hlsPlayout.status === "error" ? "critical" : "attention") : "good",
     generatedAt: now,
@@ -1375,7 +1377,8 @@ function stationHealthSummary() {
       longGapsNext24h: gaps.length,
       missingSourceRefs: missingRefs.length,
       ingestIssues: ingestIssues.length,
-      hlsStatus: hlsPlayout.status
+      hlsStatus: hlsPlayout.status,
+      stateStorage: STATE_PATH_CONFIGURED ? "configured" : "default"
     },
     gaps: gaps.slice(0, 5)
   };

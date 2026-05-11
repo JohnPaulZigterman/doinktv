@@ -17,6 +17,7 @@ The app reads `process.env.PORT`, which Render provides automatically. The Docke
 3. Keep the root directory as the repository root.
 4. Deploy and open the generated `onrender.com` URL.
 5. Check `/api/health` and `/api/program` after deploy.
+6. Run through `docs/OPERATOR_CHECKLIST.md` before sharing the URL publicly.
 
 ## Notes
 
