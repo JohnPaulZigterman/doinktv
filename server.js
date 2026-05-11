@@ -5902,6 +5902,21 @@ async function handleApi(req, res, pathname) {
       return;
     }
 
+    if (req.method === "GET" && pathname === "/api/internet-archive-debug") {
+      if (!requireAdmin(req, res)) return;
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const blockId = String(url.searchParams.get("blockId") || "").trim();
+      const block = (state.weeklyBlocks || []).find((item) => item.id === blockId) || {};
+      sendJson(res, 200, {
+        block: block.id ? { id: block.id, name: block.name || block.id } : null,
+        results: await mediaDiscovery.auditInternetArchiveSearch(url.searchParams.get("q"), {
+          rows: url.searchParams.get("rows"),
+          block
+        })
+      });
+      return;
+    }
+
     if (req.method === "GET" && pathname === "/api/events") {
       res.writeHead(200, {
         "content-type": "text/event-stream; charset=utf-8",

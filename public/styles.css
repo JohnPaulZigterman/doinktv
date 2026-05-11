@@ -4947,6 +4947,72 @@ body.peace-mode .fx-audio-layer {
   color: var(--danger);
 }
 
+.media-debug-results {
+  display: grid;
+  gap: 8px;
+}
+
+.media-debug-card {
+  display: grid;
+  gap: 6px;
+  padding: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-left: 4px solid var(--danger);
+  border-radius: 3px;
+  background: rgba(6, 8, 10, 0.72);
+}
+
+.media-debug-card[data-status="accepted"] {
+  border-left-color: var(--success);
+}
+
+.media-debug-head {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.media-debug-head strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.media-debug-head span,
+.media-debug-chips span {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  padding: 3px 6px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.media-debug-card[data-status="accepted"] .media-debug-head span {
+  color: var(--success);
+}
+
+.media-debug-card[data-status="rejected"] .media-debug-head span {
+  color: var(--danger);
+}
+
+.media-debug-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.media-debug-card ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .performance-cue-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

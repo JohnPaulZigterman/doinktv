@@ -336,6 +336,19 @@
             <div id="sourceSearchResults" class="search-results"></div>
           </form>
 
+          <form id="mediaDebugForm" class="stack compact-stack media-debug cockpit-surface" data-admin-surface="find-media">
+            <h3>Discovery debug</h3>
+            <div class="inline-form">
+              <input name="query" placeholder="Audit an Archive search">
+              <select name="blockId">
+                <option value="">General station fit</option>
+              </select>
+              <button type="submit">Audit</button>
+            </div>
+            <p id="mediaDebugMessage" class="message"></p>
+            <div id="mediaDebugResults" class="media-debug-results"></div>
+          </form>
+
           <form id="archiveImportForm" class="stack compact-stack cockpit-surface" data-admin-surface="find-media">
             <h3>Import Internet Archive collection</h3>
             <input name="url" placeholder="Archive collection or item URL" required>

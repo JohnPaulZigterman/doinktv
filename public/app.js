@@ -200,6 +200,7 @@ const loreTypeFilter = document.querySelector("#loreTypeFilter");
 const loreStats = document.querySelector("#loreStats");
 const loreEntries = document.querySelector("#loreEntries");
 const sourceSearchForm = document.querySelector("#sourceSearchForm");
+const mediaDebugForm = document.querySelector("#mediaDebugForm");
 const sourceForm = document.querySelector("#sourceForm");
 const scheduleForm = document.querySelector("#scheduleForm");
 const scheduledModeButton = document.querySelector("#scheduledModeButton");
@@ -213,6 +214,8 @@ const playlistImportMessage = document.querySelector("#playlistImportMessage");
 const archiveImportMessage = document.querySelector("#archiveImportMessage");
 const sourceSearchMessage = document.querySelector("#sourceSearchMessage");
 const sourceSearchResults = document.querySelector("#sourceSearchResults");
+const mediaDebugMessage = document.querySelector("#mediaDebugMessage");
+const mediaDebugResults = document.querySelector("#mediaDebugResults");
 const sourceMessage = document.querySelector("#sourceMessage");
 const sourceIngestMessage = document.querySelector("#sourceIngestMessage");
 const scheduleMessage = document.querySelector("#scheduleMessage");
@@ -1080,6 +1083,67 @@ function renderSourceSearchResults(results = []) {
         </article>`)
         .join("")
     : "";
+}
+
+function renderMediaDebugResults(results = [], block = null) {
+  if (!mediaDebugResults) return;
+  mediaDebugResults.innerHTML = results.length
+    ? results.map((result) => {
+        const decision = result.decision || {};
+        const quality = decision.quality || result.quality || {};
+        const status = decision.accepted ? "accepted" : "rejected";
+        const reasons = Array.isArray(decision.reasons) ? decision.reasons : [];
+        const language = decision.language || {};
+        const duration = decision.duration || {};
+        return `
+          <article class="media-debug-card" data-status="${status}">
+            <div class="media-debug-head">
+              <strong>${escapeHtml(result.title || result.fileTitle || "Archive result")}</strong>
+              <span>${decision.accepted ? "Accepted" : "Rejected"}</span>
+            </div>
+            <small>${escapeHtml(result.archiveId || "")}${result.archiveFile ? ` / ${escapeHtml(result.archiveFile)}` : ""}</small>
+            <div class="media-debug-chips">
+              <span>Quality ${Number(quality.score || 0)} ${escapeHtml(quality.label || "")}</span>
+              <span>${escapeHtml(formatDuration(duration.seconds || result.duration || 0))}</span>
+              <span>${escapeHtml(language.reason || "language unchecked")}</span>
+              ${block?.name ? `<span>${escapeHtml(block.name)}</span>` : ""}
+            </div>
+            <ul>
+              ${reasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}
+            </ul>
+            <div class="edit-actions">
+              <a class="secondary compact button-link" href="${escapeHtml(result.url)}" target="_blank" rel="noopener noreferrer">Open</a>
+            </div>
+          </article>`;
+      }).join("")
+    : "";
+}
+
+async function auditInternetArchiveDiscovery() {
+  const query = mediaDebugForm.elements.query.value.trim();
+  if (!query || query.length < 3) {
+    setMessage(mediaDebugMessage, "Type at least 3 characters to audit.");
+    mediaDebugResults.innerHTML = "";
+    return;
+  }
+  const params = new URLSearchParams({
+    q: query,
+    rows: "8",
+    blockId: mediaDebugForm.elements.blockId.value || ""
+  });
+  setMessage(mediaDebugMessage, "Auditing Archive candidates...");
+  try {
+    const data = await api(`/api/internet-archive-debug?${params}`);
+    const results = data.results || [];
+    const accepted = results.filter((result) => result.decision?.accepted).length;
+    renderMediaDebugResults(results, data.block);
+    setMessage(mediaDebugMessage, results.length
+      ? `${accepted}/${results.length} candidate${results.length === 1 ? "" : "s"} pass current discovery policy.`
+      : "No playable Archive candidates found for that audit.");
+  } catch (error) {
+    mediaDebugResults.innerHTML = "";
+    setMessage(mediaDebugMessage, error.message, true);
+  }
 }
 
 function archiveSourceBody(result) {
@@ -4225,6 +4289,7 @@ function renderAdmin(data) {
 
   renderTimingSourcePicker(data);
   renderOverlaySourcePicker(data);
+  renderMediaDebugBlockPicker(data.weeklyBlocks || []);
   if (seedWeeklyScheduleButton) {
     seedWeeklyScheduleButton.title = weeklyBlockSummary(data.weeklyBlocks || []);
   }
@@ -4359,6 +4424,19 @@ function renderAdmin(data) {
         })
         .join("")
     : `<p class="message">Queue is empty${pendingQueueCount ? ", but queued items currently conflict with protected scheduled programming." : "."}</p>`;
+}
+
+function renderMediaDebugBlockPicker(blocks = []) {
+  const select = mediaDebugForm?.elements?.blockId;
+  if (!select) return;
+  const current = select.value;
+  select.innerHTML = [
+    `<option value="">General station fit</option>`,
+    ...blocks
+      .filter((block) => block.enabled !== false)
+      .map((block) => `<option value="${escapeHtml(block.id)}">${escapeHtml(block.name || block.id)}</option>`)
+  ].join("");
+  select.value = [...select.options].some((option) => option.value === current) ? current : "";
 }
 
 function queueTimelineEntries(data = adminDataCache, now = Date.now()) {
@@ -5142,6 +5220,11 @@ sourceSearchForm.addEventListener("submit", (event) => {
 sourceSearchForm.elements.query.addEventListener("input", () => {
   clearTimeout(sourceSearchTimer);
   sourceSearchTimer = setTimeout(() => searchInternetArchiveSources(), 500);
+});
+
+mediaDebugForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  auditInternetArchiveDiscovery();
 });
 
 sourceSearchResults.addEventListener("click", (event) => {
