@@ -86,6 +86,7 @@ test("language policy allows English or original language, but rejects mismatch 
   assert.equal(archiveLanguageFit(animeBlock, { title: "Classic Anime OVA Japanese Audio", duration: 1200 }).ok, true);
   assert.equal(archiveLanguageFit(animeBlock, { title: "Classic Anime OVA English Dub", duration: 1200 }).ok, true);
   assert.equal(archiveLanguageFit(animeBlock, { title: "Classic Anime OVA French Dub", duration: 1200 }).ok, false);
+  assert.equal(archiveLanguageFit(animeBlock, { title: "Classic Anime OVA Polish Lektor", duration: 1200 }).ok, false);
   assert.equal(weeklyArchiveCandidateFitsBlock(animeBlock, { title: "Classic Anime OVA French Dub", duration: 1200 }), false);
 
   const mexicanShow = { title: "Mexican television special Espanol", duration: 1200 };

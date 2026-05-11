@@ -3754,6 +3754,7 @@ function syncProgram(program) {
 
   if (liveChanged) syncCaptions(live);
   currentProgramId = live.id;
+  tickProgress();
   refreshTitleMarquees();
 }
 
