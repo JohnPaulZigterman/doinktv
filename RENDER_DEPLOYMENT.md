@@ -7,6 +7,7 @@ DoinkTV is a single Docker web service. Render should build it from `Dockerfile`
 - Docker context: `.`
 - Health check path: `/api/health`
 - Node version: `22.16.0`
+- Public integration origins: `PUBLIC_API_ORIGINS=https://chillnet.me,https://www.chillnet.me`
 
 The app reads `process.env.PORT`, which Render provides automatically. The Docker image installs FFmpeg for `/stream/live.m3u8` generation.
 
@@ -18,6 +19,7 @@ The app reads `process.env.PORT`, which Render provides automatically. The Docke
 4. Deploy and open the generated `onrender.com` URL.
 5. Check `/api/health` and `/api/program` after deploy.
 6. Run through `docs/OPERATOR_CHECKLIST.md` before sharing the URL publicly.
+7. Share `docs/CHILLNET_INTEGRATION.md` with the Chillnet collaborator.
 
 ## Notes
 

@@ -96,6 +96,10 @@ const BUMP_GENERATOR_DIR = process.env.BUMP_GENERATOR_DIR
 const STARTER_STATE_PATH = path.join(DATA_DIR, "state.json");
 const STATE_PATH = process.env.DOINK_STATE_PATH || path.join(DATA_DIR, "runtime", "state.json");
 const STATE_PATH_CONFIGURED = Boolean(process.env.DOINK_STATE_PATH || process.env.DOINK_DATA_DIR);
+const PUBLIC_API_ORIGINS = new Set(String(process.env.PUBLIC_API_ORIGINS || "https://chillnet.me,https://www.chillnet.me")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean));
 const HLS_HANDOFF_LEAD_MS = 2400;
 const AUTO_BUMP_INTERVAL_MS = 1000 * 60 * 3;
 const AUTO_BUMP_DURATION = 20;
@@ -1194,6 +1198,23 @@ function sendJson(res, status, body) {
     "content-length": Buffer.byteLength(json)
   });
   res.end(json);
+}
+
+function publicCorsHeaders(req) {
+  const origin = req.headers.origin;
+  if (!origin || !PUBLIC_API_ORIGINS.has(origin)) return {};
+  return {
+    "access-control-allow-origin": origin,
+    "access-control-allow-methods": "GET, OPTIONS",
+    "access-control-allow-headers": "content-type",
+    "vary": "Origin"
+  };
+}
+
+function applyPublicCors(req, res) {
+  const headers = publicCorsHeaders(req);
+  Object.entries(headers).forEach(([name, value]) => res.setHeader(name, value));
+  return headers;
 }
 
 function requestIsSecure(req) {
@@ -5873,6 +5894,7 @@ async function serveFile(req, res, baseDir, urlPrefix = "") {
     const ext = path.extname(filePath).toLowerCase();
     res.writeHead(200, {
       "content-type": mimeTypes[ext] || "application/octet-stream",
+      ...(baseDir === HLS_DIR ? publicCorsHeaders(req) : {}),
       ...(baseDir === HLS_DIR || [".html", ".js", ".css"].includes(ext)
         ? { "cache-control": "no-cache, no-store, must-revalidate" }
         : {})
@@ -5892,7 +5914,15 @@ async function serveFile(req, res, baseDir, urlPrefix = "") {
 
 async function handleApi(req, res, pathname) {
   try {
+    if (req.method === "OPTIONS" && ["/api/health", "/api/program"].includes(pathname)) {
+      const corsHeaders = publicCorsHeaders(req);
+      res.writeHead(corsHeaders["access-control-allow-origin"] ? 204 : 403, corsHeaders);
+      res.end();
+      return;
+    }
+
     if (req.method === "GET" && pathname === "/api/health") {
+      applyPublicCors(req, res);
       const programming = programmingDomainView(state);
       sendJson(res, 200, {
         ok: true,
@@ -5916,6 +5946,7 @@ async function handleApi(req, res, pathname) {
     }
 
     if (req.method === "GET" && pathname === "/api/program") {
+      applyPublicCors(req, res);
       sendJson(res, 200, publicProgram());
       return;
     }
