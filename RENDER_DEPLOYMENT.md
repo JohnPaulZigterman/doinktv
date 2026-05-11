@@ -21,7 +21,7 @@ The app reads `process.env.PORT`, which Render provides automatically. The Docke
 ## Notes
 
 - `media/bump-music` is committed for the live test, so schedule bump music is available immediately.
-- `data/state.json` is committed as starter state. Without a Render disk, edits made in admin mode can reset on redeploy or service restart.
-- For a longer-running test, add a Render persistent disk and set `DOINK_DATA_DIR` to the mounted data directory.
+- `data/state.json` is committed as starter state. Runtime edits should live in ignored persistent storage; see `docs/STATE_POLICY.md`.
+- For a longer-running test, add a Render persistent disk and set `DOINK_DATA_DIR` to the mounted data directory. Set `ADMIN_USER` and `ADMIN_PASSWORD` before public deployment.
 - The BumpGenerator is vendored in `vendor/BumpGenerator` so `/bumpgenerator` works on Render without needing the sibling project directory.
 - Viewers consume a single HLS feed at `/stream/live.m3u8`. YouTube sources must be ingested as server media before they can appear in that shared feed.
