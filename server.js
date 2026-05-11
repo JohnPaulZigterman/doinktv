@@ -113,7 +113,9 @@ const GAP_FILLER_PROMO_DURATION = 30;
 const GAP_FILLER_PROMO_LINEUP_COUNT = 4;
 const GAP_FILLER_MAX_ENTRIES = 48;
 const GAP_FILLER_BLOCK_NAME = "STATION BREAK";
-const GAP_FILLER_VERSION = 9;
+const BLOCK_PROMO_AD_DURATION = 34;
+const BLOCK_PROMO_AD_VERSION = 1;
+const GAP_FILLER_VERSION = 10;
 const FADE_BREAK_MIN_SECONDS = 60 * 5.5;
 const FADE_BREAK_MIN_SOURCE_DURATION = 60 * 12;
 const FADE_BREAK_MIN_REMAINING_SECONDS = 60 * 4;
@@ -1885,6 +1887,7 @@ function isBumpSource(source) {
 
 function maintainScheduledGapFillers() {
   const now = Date.now();
+  let changed = ensureWeeklyBlockPromoAds(now);
   const plan = plannedGapFillWindow(state.schedule, {
     now,
     version: GAP_FILLER_VERSION,
@@ -1892,7 +1895,7 @@ function maintainScheduledGapFillers() {
     minGapSeconds: GAP_FILLER_MIN_GAP_SECONDS
   });
   state.schedule = plan.schedule;
-  let changed = plan.changed;
+  changed = plan.changed || changed;
   if (!plan.shouldFill) {
     if (changed) pruneUnusedBumpSources();
     return changed;
@@ -1959,10 +1962,13 @@ function createGapFillerSourceEntry(cursor, nextReal, candidates = [], index = 0
 }
 
 function createGapFillerBumpEntry(cursor, nextReal, index = 0, remaining = GAP_FILLER_BUMP_DURATION) {
-  const promo = Boolean(nextReal?.sourceId) && index % 3 === 1;
-  const targetDuration = promo ? GAP_FILLER_PROMO_DURATION : GAP_FILLER_BUMP_DURATION;
+  const blockAd = index % 4 === 0;
+  const promo = blockAd || (Boolean(nextReal?.sourceId) && index % 3 === 1);
+  const targetDuration = blockAd ? BLOCK_PROMO_AD_DURATION : promo ? GAP_FILLER_PROMO_DURATION : GAP_FILLER_BUMP_DURATION;
   const duration = Math.max(GAP_FILLER_MIN_GAP_SECONDS, Math.min(targetDuration, Math.floor(remaining)));
-  const bumpSource = promo
+  const bumpSource = blockAd
+    ? createScheduledBlockAdBumpSource(cursor, index, duration)
+    : promo
     ? createGapFillerPromoBumpSource(nextReal, cursor, index, duration)
     : createGapFillerBumpSource(nextReal, cursor, index, duration);
   state.sources.push(bumpSource);
@@ -1979,6 +1985,164 @@ function createGapFillerBumpEntry(cursor, nextReal, index = 0, remaining = GAP_F
     weeklyBlockId: "station-break",
     weeklyBlockName: GAP_FILLER_BLOCK_NAME
   };
+}
+
+function ensureWeeklyBlockPromoAds(now = Date.now()) {
+  const blocks = weeklyBlockTemplates();
+  if (!blocks.length) return false;
+  let changed = false;
+  for (const block of blocks) {
+    const existing = state.sources.find((source) => (
+      source.type === "bump"
+      && source.bump?.kind === "weekly-block-ad-bump"
+      && source.weeklyBlockId === block.id
+      && source.blockPromoAdVersion === BLOCK_PROMO_AD_VERSION
+    ));
+    if (existing) continue;
+    state.sources = state.sources.filter((source) => !(
+      source.type === "bump"
+      && source.bump?.kind === "weekly-block-ad-bump"
+      && source.weeklyBlockId === block.id
+    ));
+    state.sources.push(createWeeklyBlockAdBumpSource(block, now));
+    changed = true;
+  }
+  return changed;
+}
+
+function scheduledBlockAdSources(now = Date.now()) {
+  const upcomingBlockIds = state.schedule
+    .filter((entry) => Number(entry.startAt || 0) >= now - 1000 * 60 * 60 * 2)
+    .map((entry) => entry.weeklyBlockId)
+    .filter(Boolean);
+  const scheduledBlockIds = new Set(upcomingBlockIds);
+  return state.sources
+    .filter((source) => (
+      source.type === "bump"
+      && source.bump?.kind === "weekly-block-ad-bump"
+    ))
+    .sort((a, b) => {
+      const aUpcoming = scheduledBlockIds.has(a.weeklyBlockId) ? 0 : 1;
+      const bUpcoming = scheduledBlockIds.has(b.weeklyBlockId) ? 0 : 1;
+      return aUpcoming - bUpcoming || String(a.weeklyBlockId || "").localeCompare(String(b.weeklyBlockId || ""));
+    });
+}
+
+function createScheduledBlockAdBumpSource(cursor = Date.now(), index = 0, duration = BLOCK_PROMO_AD_DURATION) {
+  const ads = scheduledBlockAdSources(cursor);
+  if (!ads.length) return createGapFillerPromoBumpSource({}, cursor, index, duration);
+  const seed = Math.abs(hashString(`block-ad-rotation:${cursor}:${index}`));
+  const template = ads[seed % ads.length];
+  const music = randomBumpMusic(duration);
+  return {
+    ...template,
+    id: crypto.randomUUID(),
+    duration,
+    title: `${template.bump?.blockName || template.title}: station ad`,
+    generatedAt: Date.now(),
+    bump: {
+      ...template.bump,
+      duration,
+      audio: music.path,
+      audioStart: music.start,
+      creditText: music.creditText
+    }
+  };
+}
+
+function createWeeklyBlockAdBumpSource(block = {}, now = Date.now()) {
+  const identity = weeklyBlockIdentity(block);
+  const seed = Math.abs(hashString(`weekly-block-ad:${block.id}:${BLOCK_PROMO_AD_VERSION}`)) % 100000;
+  const duration = BLOCK_PROMO_AD_DURATION;
+  const music = randomBumpMusic(duration);
+  const upcoming = upcomingEntriesForBlock(block.id, now, GAP_FILLER_PROMO_LINEUP_COUNT);
+  const firstStart = upcoming[0]?.startAt || nextWeeklyBlockStart(block, now);
+  const when = firstStart ? formatEstTime(firstStart) : String(block.time || "soon");
+  const titles = upcoming
+    .map((entry) => promoProgramTitle(entry, sourceForEntry(entry)))
+    .filter(Boolean)
+    .slice(0, GAP_FILLER_PROMO_LINEUP_COUNT);
+  const lines = [
+    sample(identity.taglines || []),
+    ...(titles.length ? titles.map((title, index) => `${index + 1}. ${title}`) : block.queries?.slice(0, 3) || []),
+    `Next transmission ${when} ET`
+  ].filter(Boolean).slice(0, 6);
+  const preview = bumpPreviewBackgroundForEntry(upcoming[seed % Math.max(1, upcoming.length)] || {}, duration, seed);
+  return {
+    id: crypto.randomUUID(),
+    type: "bump",
+    title: `${identity.heading}: block ad`,
+    duration,
+    randomEligible: false,
+    weeklyBlockId: block.id,
+    blockPromoAdVersion: BLOCK_PROMO_AD_VERSION,
+    bump: {
+      kind: "weekly-block-ad-bump",
+      blockId: block.id,
+      blockName: identity.heading,
+      blockStyleId: identity.styleId || block.id,
+      bumpClass: "block-promo-bump",
+      heading: identity.heading,
+      lines,
+      secondsPerLine: Math.max(3.3, Math.round((duration / Math.max(1, lines.length)) * 10) / 10),
+      fontSize: Math.max(44, Number(identity.fontSize || 56) + 4),
+      alignment: identity.alignment || sample(["left", "center"]),
+      placement: identity.placement || "middle",
+      tone: identity.tone || "caption",
+      tintStrength: preview ? 44 : 24,
+      creditText: music.creditText,
+      creditSize: 21,
+      creditPosition: "bottom-right",
+      wallpaper: {
+        shapes: identity.shapes || sample(["lines", "checkerboard", "starburst", "mondrian"]),
+        scheme: identity.scheme || sample(["broadcast", "blueprint", "miami", "arcade"]),
+        spacing: 70 + (seed % 72),
+        seed
+      },
+      effects: sampleMany(identity.effects?.length ? identity.effects : BUMP_CLEAN_EFFECTS, 2),
+      effectIntensity: preview ? 12 : 20,
+      intentionalGlitch: false,
+      presentation: generatedBumpPresentation(false),
+      productionStyle: preview ? "split-card" : "promo-card",
+      productionAccent: identity.scheme === "warning" ? "hot" : "signal",
+      productionBadge: "BLOCK AD",
+      productionKicker: `airs ${block.days?.length ? weeklyDaysLabel(block.days) : "weekly"} at ${block.time || when} ET`,
+      format: "landscape",
+      audio: music.path,
+      audioStart: music.start,
+      ...(preview || {})
+    },
+    generatedAt: Date.now()
+  };
+}
+
+function upcomingEntriesForBlock(blockId = "", now = Date.now(), count = 4) {
+  const seen = new Set();
+  const entries = [];
+  for (const entry of state.schedule
+    .filter((item) => item.weeklyBlockId === blockId && !item.gapFiller && !item.autoBump)
+    .filter((item) => Number(item.startAt || 0) >= now - 1000 * 60 * 10)
+    .sort((a, b) => Number(a.startAt || 0) - Number(b.startAt || 0))) {
+    const source = sourceForEntry(entry);
+    if (!source || isBumpSource(source)) continue;
+    const key = sourceEpisodeKey(source);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    entries.push({ ...entry, source });
+    if (entries.length >= count) break;
+  }
+  return entries;
+}
+
+function nextWeeklyBlockStart(block = {}, now = Date.now()) {
+  return domainWeeklyBlockStarts(block, { now, lookaheadDays: WEEKLY_SCHEDULE_LOOKAHEAD_DAYS })
+    .filter((startAt) => startAt >= now - 1000 * 60 * 10)
+    .sort((a, b) => a - b)[0] || 0;
+}
+
+function weeklyDaysLabel(days = []) {
+  const labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  return days.map((day) => labels[day]).filter(Boolean).join("/") || "weekly";
 }
 
 function createGapFillerBumpSource(nextReal = {}, cursor = Date.now(), index = 0, duration = GAP_FILLER_BUMP_DURATION) {
@@ -3515,7 +3679,11 @@ function stripQueueSource(entry) {
 
 function pruneUnusedBumpSources() {
   const queuedSourceIds = new Set([...state.liveQueue, ...state.schedule].map((entry) => entry.sourceId));
-  state.sources = state.sources.filter((source) => !isBumpSource(source) || queuedSourceIds.has(source.id));
+  state.sources = state.sources.filter((source) => (
+    !isBumpSource(source)
+    || queuedSourceIds.has(source.id)
+    || source.bump?.kind === "weekly-block-ad-bump"
+  ));
 }
 
 function entryEnd(entry) {
@@ -6136,6 +6304,7 @@ async function handleApi(req, res, pathname) {
 assertPublicAuthReadiness();
 await ensureState();
 await refreshBumpMusic();
+if (ensureWeeklyBlockPromoAds()) await saveState();
 if (ensureAutoBumpAudioStarts()) await saveState();
 if (await ensureWeatherBumps()) await saveState();
 queueAutoIngestForLiveQueue("server startup");
