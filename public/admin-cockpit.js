@@ -17,7 +17,8 @@
         submitSuggestion: ({ title, note }) => request("/api/community-suggestions", { method: "POST", body: jsonBody({ title, note }) }),
         updateSettings: (settings) => request("/api/admin/community", { method: "POST", body: jsonBody(settings) }),
         updateSuggestion: (payload) => request("/api/admin/community-suggestion", { method: "POST", body: jsonBody(payload) }),
-        updateSupporterTier: (payload) => request("/api/admin/supporter-tier", { method: "POST", body: jsonBody(payload) })
+        updateSupporterTier: (payload) => request("/api/admin/supporter-tier", { method: "POST", body: jsonBody(payload) }),
+        updateUserAccount: (payload) => request("/api/admin/user-account", { method: "POST", body: jsonBody(payload) })
       },
       lore: {
         upsertEntry: (entry) => request("/api/admin/lore-entry", { method: "POST", body: jsonBody(entry) }),

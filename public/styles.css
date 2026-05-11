@@ -4107,7 +4107,7 @@ body.peace-mode .fx-audio-layer {
 
 .community-member {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.74fr);
+  grid-template-columns: minmax(0, 1fr) minmax(112px, 0.54fr);
   gap: 8px;
   align-items: center;
   padding: 7px;
@@ -4116,8 +4116,24 @@ body.peace-mode .fx-audio-layer {
   background: rgba(255, 255, 255, 0.035);
 }
 
+.community-member[data-status="disabled"] {
+  border-color: color-mix(in srgb, var(--danger) 40%, rgba(255, 255, 255, 0.1));
+  background: rgba(255, 80, 80, 0.06);
+}
+
 .community-member div,
 .community-member strong {
+  min-width: 0;
+}
+
+.account-actions {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.account-actions input {
   min-width: 0;
 }
 

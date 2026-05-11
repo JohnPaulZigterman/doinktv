@@ -4131,14 +4131,20 @@ function renderCommunityAdmin(community = {}) {
   if (communityMemberList) {
     communityMemberList.innerHTML = members.length
       ? members.map((member) => `
-          <article class="community-member">
+          <article class="community-member" data-status="${escapeHtml(member.status || "active")}">
             <div>
               <strong>${escapeHtml(member.username)}</strong>
-              <small>${escapeHtml(member.supporterLabel || member.supporterTier || "Viewer")}</small>
+              <small>${escapeHtml(member.email || "")}</small>
+              <small>${escapeHtml(member.supporterLabel || member.supporterTier || "Viewer")} / ${escapeHtml(member.status || "active")}</small>
             </div>
             <select data-supporter-tier-user="${escapeHtml(member.id)}" aria-label="Supporter tier for ${escapeHtml(member.username)}">
               ${tiers.map((tier) => `<option value="${escapeHtml(tier.id)}"${tier.id === member.supporterTier ? " selected" : ""}>${escapeHtml(tier.label)}</option>`).join("")}
             </select>
+            <div class="account-actions">
+              <button class="secondary compact" data-account-status-user="${escapeHtml(member.id)}" data-account-status="${member.status === "disabled" ? "active" : "disabled"}" type="button">${member.status === "disabled" ? "Restore" : "Disable"}</button>
+              <input data-account-password-user="${escapeHtml(member.id)}" type="password" placeholder="Reset password">
+              <button class="secondary compact" data-account-reset-user="${escapeHtml(member.id)}" type="button">Reset</button>
+            </div>
           </article>`)
           .join("")
       : `<p class="message">No registered viewers yet.</p>`;
@@ -5044,6 +5050,34 @@ communityMemberList?.addEventListener("change", async (event) => {
     const community = await adminCockpitApi.community.updateSupporterTier({ userId: select.dataset.supporterTierUser, supporterTier: select.value });
     renderCommunityAdmin(community);
     setMessage(communityAdminMessage, "Supporter tier updated.");
+  } catch (error) {
+    setMessage(communityAdminMessage, error.message, true);
+    await loadAdmin().catch(() => {});
+  }
+});
+
+communityMemberList?.addEventListener("click", async (event) => {
+  const statusButton = event.target.closest("[data-account-status-user]");
+  const resetButton = event.target.closest("[data-account-reset-user]");
+  if (!statusButton && !resetButton) return;
+  try {
+    if (statusButton) {
+      const community = await adminCockpitApi.community.updateUserAccount({
+        userId: statusButton.dataset.accountStatusUser,
+        status: statusButton.dataset.accountStatus
+      });
+      renderCommunityAdmin(community);
+      setMessage(communityAdminMessage, statusButton.dataset.accountStatus === "disabled" ? "Account disabled." : "Account restored.");
+      return;
+    }
+    const input = communityMemberList.querySelector(`[data-account-password-user="${CSS.escape(resetButton.dataset.accountResetUser)}"]`);
+    const password = String(input?.value || "");
+    const community = await adminCockpitApi.community.updateUserAccount({
+      userId: resetButton.dataset.accountResetUser,
+      password
+    });
+    renderCommunityAdmin(community);
+    setMessage(communityAdminMessage, "Password reset.");
   } catch (error) {
     setMessage(communityAdminMessage, error.message, true);
     await loadAdmin().catch(() => {});

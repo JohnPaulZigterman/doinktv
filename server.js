@@ -1240,6 +1240,15 @@ function getSession(req) {
     if (token) sessions.delete(token);
     return null;
   }
+  if (session.userId) {
+    const user = state.users.find((item) => item.id === session.userId);
+    if (!user || user.status === "disabled") {
+      sessions.delete(token);
+      return null;
+    }
+    session.username = user.username;
+    session.role = user.role;
+  }
   session.expiresAt = Date.now() + SESSION_TTL_MS;
   return session;
 }
@@ -1279,9 +1288,11 @@ function verifyPassword(password, passwordHash) {
 function publicUser(session) {
   if (!session) return null;
   const tier = sessionSupporterTier(session);
+  const account = session.userId ? state.users.find((user) => user.id === session.userId) : null;
   return {
     username: session.username,
     role: session.role,
+    status: account?.status || "active",
     supporterTier: tier.id,
     supporterLabel: tier.label,
     supporterBadge: tier.badge,
@@ -1392,6 +1403,7 @@ async function projectAuditSummary() {
       weeklyBlocks: (state.weeklyBlocks || []).length,
       activeFx: activeBroadcastFx().length,
       users: (state.users || []).length,
+      disabledUsers: (state.users || []).filter((user) => user.status === "disabled").length,
       communitySuggestions: state.community?.suggestions?.length || 0,
       loreEntries: state.lore?.entries?.length || 0,
       continuityEvents: (state.continuityLog || []).length,
@@ -1455,6 +1467,7 @@ async function registerUser(body) {
     username,
     passwordHash: hashPassword(password),
     role: "user",
+    status: "active",
     supporterTier: "viewer",
     createdAt: Date.now()
   };
@@ -4458,6 +4471,46 @@ async function updateSupporterTier(body = {}) {
   return domainUpdateSupporterTier({ state, body, saveState, broadcastChat });
 }
 
+async function updateUserAccount(body = {}, actor = null) {
+  const userId = String(body.userId || "").trim();
+  const user = state.users.find((item) => item.id === userId);
+  if (!user) throw new Error("User account not found.");
+
+  const changes = [];
+  const nextStatus = String(body.status || "").trim();
+  if (["active", "disabled"].includes(nextStatus) && nextStatus !== user.status) {
+    user.status = nextStatus;
+    changes.push(nextStatus === "disabled" ? "disabled account" : "restored account");
+    if (nextStatus === "disabled") {
+      for (const [token, session] of sessions.entries()) {
+        if (session.userId === user.id) sessions.delete(token);
+      }
+    }
+  }
+
+  const password = String(body.password || "");
+  if (password) {
+    if (password.length < 8) throw new Error("Reset passwords must be at least 8 characters.");
+    user.passwordHash = hashPassword(password);
+    user.passwordResetAt = Date.now();
+    changes.push("reset password");
+    for (const [token, session] of sessions.entries()) {
+      if (session.userId === user.id) sessions.delete(token);
+    }
+  }
+
+  if (!changes.length) return publicCommunity({ admin: true });
+  user.updatedAt = Date.now();
+  recordContinuityEvent({
+    type: "account",
+    title: `Account ${user.username} updated`,
+    detail: `${changes.join(", ")} by ${actor?.username || "admin"}.`,
+    severity: user.status === "disabled" ? "warning" : "info"
+  });
+  await saveState();
+  return publicCommunity({ admin: true });
+}
+
 function cleanSchedule() {
   const cutoff = Date.now() - 1000 * 60 * 60 * 12;
   const gapCutoff = Date.now() - 1000 * 60 * 5;
@@ -5996,6 +6049,10 @@ async function handleApi(req, res, pathname) {
         sendJson(res, 401, { error: "Invalid username, email, or password." });
         return;
       }
+      if (user.status === "disabled") {
+        sendJson(res, 403, { error: "That account is disabled." });
+        return;
+      }
       createSession(req, res, { username: user.username, role: user.role, userId: user.id });
       sendJson(res, 200, { ok: true, user: publicUser({ username: user.username, role: user.role, userId: user.id }) });
       return;
@@ -6105,6 +6162,12 @@ async function handleApi(req, res, pathname) {
     if (req.method === "POST" && pathname === "/api/admin/supporter-tier") {
       if (!requireAdmin(req, res)) return;
       sendJson(res, 200, await updateSupporterTier(await readJson(req)));
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/admin/user-account") {
+      if (!requireAdmin(req, res)) return;
+      sendJson(res, 200, await updateUserAccount(await readJson(req), getSession(req)));
       return;
     }
 
