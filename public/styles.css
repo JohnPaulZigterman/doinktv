@@ -6004,6 +6004,54 @@ button:disabled {
   gap: 6px;
 }
 
+.admin-task-strip {
+  position: sticky;
+  top: 31px;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 3px;
+  margin: 0 0 6px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, rgba(18, 22, 24, 0.94), rgba(7, 9, 10, 0.92)),
+    rgba(0, 0, 0, 0.44);
+  backdrop-filter: blur(12px);
+}
+
+.admin-task-strip button {
+  min-height: 25px;
+  padding: 0 4px;
+  border-radius: 4px;
+  color: rgba(245, 247, 250, 0.68);
+  font-size: 8px;
+  font-weight: 1000;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-task-strip button.active {
+  color: var(--text);
+  border-color: rgba(104, 195, 183, 0.46);
+  background:
+    linear-gradient(180deg, rgba(104, 195, 183, 0.16), rgba(0, 0, 0, 0.12)),
+    rgba(255, 255, 255, 0.045);
+  box-shadow: inset 0 -2px 0 rgba(104, 195, 183, 0.44);
+}
+
+.cockpit-surface {
+  scroll-margin-top: 72px;
+}
+
+.cockpit-surface.surface-focus {
+  border-color: rgba(104, 195, 183, 0.32) !important;
+  box-shadow:
+    inset 3px 0 0 rgba(104, 195, 183, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.065) !important;
+}
+
 .host-macro-panel {
   border-color: rgba(104, 195, 183, 0.26) !important;
   background:

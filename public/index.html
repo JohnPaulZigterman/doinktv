@@ -233,14 +233,14 @@
         </div>
         <div class="panel-top">
           <div>
-            <h2>Broadcast Control</h2>
+            <h2>Cast Cockpit</h2>
             <p id="adminIdentity">Signed in as DoinkWizard</p>
           </div>
           <button id="logoutButton" class="ghost-button" title="Log out">Log out</button>
         </div>
 
         <div id="adminTools" class="admin-tools hidden">
-          <section id="hostMacroPanel" class="stack compact-stack host-macro-panel" aria-label="Host macros">
+          <section id="hostMacroPanel" class="stack compact-stack host-macro-panel cockpit-surface" data-admin-surface="on-air" aria-label="Host macros">
             <div class="host-macro-top">
               <div>
                 <h3>Host macros</h3>
@@ -277,7 +277,16 @@
             </div>
           </section>
 
-          <section id="stationHealthPanel" class="stack compact-stack station-health-panel">
+          <nav class="admin-task-strip" aria-label="Cast cockpit tasks">
+            <button type="button" data-admin-task="on-air">On Air</button>
+            <button type="button" data-admin-task="find-media">Find</button>
+            <button type="button" data-admin-task="schedule-media">Route</button>
+            <button type="button" data-admin-task="library">Lib</button>
+            <button type="button" data-admin-task="community">Crew</button>
+            <button type="button" data-admin-task="system">System</button>
+          </nav>
+
+          <section id="stationHealthPanel" class="stack compact-stack station-health-panel cockpit-surface" data-admin-surface="system">
             <div class="station-health-top">
               <h3>Station health</h3>
               <span id="stationHealthStatus" class="station-health-status" data-status="checking">Checking</span>
@@ -286,7 +295,7 @@
             <ul id="stationHealthWarnings" class="station-health-warnings"></ul>
           </section>
 
-          <section id="projectAuditPanel" class="stack compact-stack project-audit-panel">
+          <section id="projectAuditPanel" class="stack compact-stack project-audit-panel cockpit-surface" data-admin-surface="system">
             <div class="project-audit-top">
               <h3>Mission control</h3>
               <span id="projectAuditStamp">Audit pending</span>
@@ -300,7 +309,7 @@
             <div id="projectAuditFindings" class="project-audit-findings"></div>
           </section>
 
-          <form id="communityAdminForm" class="stack compact-stack community-admin">
+          <form id="communityAdminForm" class="stack compact-stack community-admin cockpit-surface" data-admin-surface="community">
             <h3>Station community</h3>
             <select name="stationMode">
               <option value="open-signal">Open signal</option>
@@ -317,7 +326,7 @@
             <div id="communitySuggestionList" class="community-suggestion-list"></div>
           </form>
 
-          <form id="sourceSearchForm" class="stack compact-stack source-search">
+          <form id="sourceSearchForm" class="stack compact-stack source-search cockpit-surface" data-admin-surface="find-media">
             <h3>Find Internet Archive media</h3>
             <div class="inline-form">
               <input name="query" placeholder="Search playable Archive media" autocomplete="off">
@@ -327,7 +336,7 @@
             <div id="sourceSearchResults" class="search-results"></div>
           </form>
 
-          <form id="archiveImportForm" class="stack compact-stack">
+          <form id="archiveImportForm" class="stack compact-stack cockpit-surface" data-admin-surface="find-media">
             <h3>Import Internet Archive collection</h3>
             <input name="url" placeholder="Archive collection or item URL" required>
             <input name="folderName" placeholder="Folder name (optional)">
@@ -336,7 +345,7 @@
             <p id="archiveImportMessage" class="message"></p>
           </form>
 
-          <form id="sourceFolderForm" class="stack compact-stack">
+          <form id="sourceFolderForm" class="stack compact-stack cockpit-surface" data-admin-surface="library">
             <h3>Source folders</h3>
             <div class="inline-form">
               <input name="name" placeholder="New folder name" required>
@@ -345,7 +354,7 @@
             <p id="sourceFolderMessage" class="message"></p>
           </form>
 
-          <form id="playlistImportForm" class="stack compact-stack">
+          <form id="playlistImportForm" class="stack compact-stack cockpit-surface" data-admin-surface="find-media">
             <h3>Import YouTube playlist</h3>
             <input name="url" placeholder="YouTube playlist URL" required>
             <input name="folderName" placeholder="Folder name (optional)">
@@ -353,7 +362,7 @@
             <p id="playlistImportMessage" class="message"></p>
           </form>
 
-          <form id="sourceForm" class="stack">
+          <form id="sourceForm" class="stack cockpit-surface" data-admin-surface="find-media">
             <h3>Add source</h3>
             <select name="type">
               <option value="internet-archive">Internet Archive</option>
@@ -382,7 +391,7 @@
             <p id="sourceMessage" class="message"></p>
           </form>
 
-          <form id="scheduleForm" class="stack">
+          <form id="scheduleForm" class="stack cockpit-surface" data-admin-surface="schedule-media">
             <h3>Broadcast timing</h3>
             <div class="mode-toggle" role="group" aria-label="Broadcast priority">
               <button id="scheduledModeButton" class="auth-tab active" type="button">Scheduled</button>
@@ -403,7 +412,7 @@
             <p id="scheduleMessage" class="message"></p>
           </form>
 
-          <div class="lists">
+          <div class="lists cockpit-surface" data-admin-surface="library">
             <section>
               <div class="section-heading">
                 <h3>Sources</h3>

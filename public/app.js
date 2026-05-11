@@ -170,6 +170,8 @@ const logoutButton = document.querySelector("#logoutButton");
 const adminIdentity = document.querySelector("#adminIdentity");
 const adminTools = document.querySelector("#adminTools");
 const hostMacroPanel = document.querySelector("#hostMacroPanel");
+const adminTaskButtons = document.querySelectorAll("[data-admin-task]");
+const adminTaskSurfaces = document.querySelectorAll("[data-admin-surface]");
 const stationHealthStatus = document.querySelector("#stationHealthStatus");
 const stationHealthChecks = document.querySelector("#stationHealthChecks");
 const stationHealthWarnings = document.querySelector("#stationHealthWarnings");
@@ -842,6 +844,7 @@ function setChatCollapsed(isCollapsed) {
 function setAdminRailView(view) {
   if (adminCockpitRail) {
     adminRailView = adminCockpitRail.setView(view);
+    if (adminRailView === "broadcast") setAdminTask("on-air", { scroll: false });
     return;
   }
   adminRailView = ["broadcast", "schedule", "queue", "soundboard", "fx", "lore", "chat"].includes(view) ? view : "broadcast";
@@ -868,6 +871,15 @@ function setAdminRailView(view) {
   showLorePanelButtons.forEach((button) => button.classList.toggle("active", showingLore));
   showChatPanelButtons.forEach((button) => button.classList.toggle("active", adminRailView === "chat"));
   applyStoredRailWidth();
+}
+
+function setAdminTask(task, { scroll = true } = {}) {
+  const target = String(task || "on-air");
+  adminTaskButtons.forEach((button) => button.classList.toggle("active", button.dataset.adminTask === target));
+  adminTaskSurfaces.forEach((surface) => surface.classList.toggle("surface-focus", surface.dataset.adminSurface === target));
+  if (!scroll) return;
+  const surface = [...adminTaskSurfaces].find((item) => item.dataset.adminSurface === target);
+  surface?.scrollIntoView({ block: "start", behavior: "smooth" });
 }
 
 function setBroadcastModeUI(mode) {
@@ -4741,6 +4753,7 @@ if (adminCockpitRail) {
   showLorePanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("lore")));
   showChatPanelButtons.forEach((button) => button.addEventListener("click", () => setAdminRailView("chat")));
 }
+adminTaskButtons.forEach((button) => button.addEventListener("click", () => setAdminTask(button.dataset.adminTask)));
 hostMacroPanel?.addEventListener("click", async (event) => {
   const jump = event.target.closest("[data-host-jump]");
   if (jump) {
