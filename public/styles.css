@@ -972,6 +972,8 @@ body[data-theme="mall-kiosk"] .brand {
 }
 
 .theme-picker {
+  grid-column: 1;
+  justify-self: start;
   display: inline-grid;
   grid-template-columns: auto minmax(118px, 156px);
   align-items: center;
