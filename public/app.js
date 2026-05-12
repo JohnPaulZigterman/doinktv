@@ -4839,6 +4839,20 @@ async function refreshSession() {
   setUserState(data.user);
 }
 
+async function consumeChillnetLinkToken() {
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get("chillnet_link");
+  if (!token) return false;
+  url.searchParams.delete("chillnet_link");
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  const result = await api("/api/chillnet-link", {
+    method: "POST",
+    body: JSON.stringify({ token })
+  });
+  setUserState(result.user);
+  return true;
+}
+
 function reconnectProgramEvents() {
   programEvents?.close();
   programEvents = new EventSource("/api/events");
@@ -5898,4 +5912,9 @@ loadHlsStream();
 setSchedulePickMode(schedulePickMode);
 syncSourceFields();
 updateSourceDurationDisplay();
-refreshSession().catch(() => setUserState(null));
+consumeChillnetLinkToken()
+  .then((linked) => {
+    if (!linked) return refreshSession();
+    return null;
+  })
+  .catch(() => refreshSession().catch(() => setUserState(null)));

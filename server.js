@@ -100,6 +100,10 @@ const PUBLIC_API_ORIGINS = new Set(String(process.env.PUBLIC_API_ORIGINS || "htt
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean));
+const CHILLNET_LINK_SECRET = String(process.env.DOINKTV_CHILLNET_LINK_SECRET || "").trim();
+const CHILLNET_LINK_DEV_SECRET = "dev-chillnet-doinktv-link-secret";
+const CHILLNET_LINK_AUDIENCE = "doinktv";
+const CHILLNET_LINK_ISSUER = "chillnet";
 const HLS_HANDOFF_LEAD_MS = 2400;
 const AUTO_BUMP_INTERVAL_MS = 1000 * 60 * 3;
 const AUTO_BUMP_DURATION = 20;
@@ -1307,18 +1311,124 @@ function verifyPassword(password, passwordHash) {
   return crypto.timingSafeEqual(Buffer.from(candidate, "hex"), Buffer.from(passwordHash.hash, "hex"));
 }
 
+function chillnetLinkSecret() {
+  if (CHILLNET_LINK_SECRET) return CHILLNET_LINK_SECRET;
+  if (!IS_PRODUCTION) return CHILLNET_LINK_DEV_SECRET;
+  throw new Error("ChillNet account linking is not configured.");
+}
+
+function decodeBase64UrlJson(value) {
+  const padded = `${value}${"=".repeat((4 - (value.length % 4)) % 4)}`;
+  return JSON.parse(Buffer.from(padded, "base64url").toString("utf8"));
+}
+
+function verifyChillnetLinkToken(token) {
+  const parts = String(token || "").split(".");
+  if (parts.length !== 3) throw new Error("Invalid ChillNet link token.");
+  const [encodedHeader, encodedPayload, encodedSignature] = parts;
+  const header = decodeBase64UrlJson(encodedHeader);
+  if (header.alg !== "HS256" || header.typ !== "JWT") {
+    throw new Error("Unsupported ChillNet link token.");
+  }
+  const signingInput = `${encodedHeader}.${encodedPayload}`;
+  const expected = crypto
+    .createHmac("sha256", chillnetLinkSecret())
+    .update(signingInput)
+    .digest("base64url");
+  if (!safeEqualString(encodedSignature, expected)) {
+    throw new Error("Invalid ChillNet link signature.");
+  }
+  const payload = decodeBase64UrlJson(encodedPayload);
+  const now = Math.floor(Date.now() / 1000);
+  if (payload.iss !== CHILLNET_LINK_ISSUER || payload.aud !== CHILLNET_LINK_AUDIENCE) {
+    throw new Error("Invalid ChillNet link audience.");
+  }
+  if (!payload.sub || !payload.exp || Number(payload.exp) < now) {
+    throw new Error("Expired ChillNet link token.");
+  }
+  return payload;
+}
+
+function sanitizeLinkedUsername(value, fallback) {
+  const cleaned = String(value || "")
+    .replace(/[^A-Za-z0-9_]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 24);
+  const candidate = cleaned.length >= 3 ? cleaned : fallback;
+  return /^[A-Za-z0-9_]{3,24}$/.test(candidate) ? candidate : "chillnet_viewer";
+}
+
+function uniqueLinkedUsername(preferred, chillnetUserId, existingUserId = "") {
+  const base = sanitizeLinkedUsername(preferred, `cn_${String(chillnetUserId).replace(/[^A-Za-z0-9]/g, "").slice(0, 10)}`);
+  const taken = (username) => state.users.some((user) => (
+    user.id !== existingUserId
+    && String(user.username || "").toLowerCase() === username.toLowerCase()
+  ));
+  if (!taken(base)) return base;
+  const suffix = String(chillnetUserId).replace(/[^A-Za-z0-9]/g, "").slice(0, 6) || crypto.randomUUID().slice(0, 6);
+  const trimmedBase = base.slice(0, Math.max(3, 24 - suffix.length - 1));
+  const candidate = `${trimmedBase}_${suffix}`;
+  if (!taken(candidate)) return candidate;
+  for (let index = 2; index < 100; index += 1) {
+    const numbered = `${trimmedBase.slice(0, Math.max(3, 24 - String(index).length - 1))}_${index}`;
+    if (!taken(numbered)) return numbered;
+  }
+  return `cn_${crypto.randomUUID().replace(/-/g, "").slice(0, 21)}`;
+}
+
+async function upsertChillnetLinkedUser(payload) {
+  const chillnetUserId = String(payload.sub || "").trim();
+  if (!chillnetUserId) throw new Error("ChillNet user id is required.");
+  const now = Date.now();
+  let user = state.users.find((item) => item.chillnetUserId === chillnetUserId);
+  const nextUsername = uniqueLinkedUsername(payload.username, chillnetUserId, user?.id || "");
+  const entitlements = payload.entitlements && typeof payload.entitlements === "object" ? payload.entitlements : {};
+  if (!user) {
+    user = {
+      id: crypto.randomUUID(),
+      email: String(payload.email || `chillnet-${chillnetUserId}@chillnet.local`).toLowerCase(),
+      username: nextUsername,
+      passwordHash: hashPassword(crypto.randomBytes(24).toString("hex")),
+      role: "user",
+      supporterTier: "viewer",
+      status: "active",
+      source: "chillnet",
+      chillnetUserId,
+      createdAt: now
+    };
+    state.users.push(user);
+  }
+  user.username = nextUsername;
+  user.email = String(payload.email || user.email || `chillnet-${chillnetUserId}@chillnet.local`).toLowerCase();
+  user.displayName = String(payload.display_name || payload.username || user.displayName || "").slice(0, 255);
+  user.avatarUrl = String(payload.avatar_url || user.avatarUrl || "").slice(0, 2048);
+  user.source = "chillnet";
+  user.chillnetUserId = chillnetUserId;
+  user.chillnetEntitlements = entitlements;
+  user.chillnetLinkedAt = user.chillnetLinkedAt || now;
+  user.chillnetLastSyncedAt = now;
+  user.updatedAt = now;
+  await saveState();
+  return user;
+}
+
 function publicUser(session) {
   if (!session) return null;
   const tier = sessionSupporterTier(session);
   const account = session.userId ? state.users.find((user) => user.id === session.userId) : null;
   return {
+    id: account?.id || session.userId || null,
     username: session.username,
     role: session.role,
     status: account?.status || "active",
     supporterTier: tier.id,
     supporterLabel: tier.label,
     supporterBadge: tier.badge,
-    voteWeight: tier.weight
+    voteWeight: tier.weight,
+    source: account?.source || "doinktv",
+    chillnetUserId: account?.chillnetUserId || null,
+    chillnetEntitlements: account?.chillnetEntitlements || null
   };
 }
 
@@ -6096,6 +6206,15 @@ async function handleApi(req, res, pathname) {
       const user = await registerUser(await readJson(req));
       createSession(req, res, { username: user.username, role: user.role, userId: user.id });
       sendJson(res, 201, { ok: true, user: publicUser({ username: user.username, role: user.role, userId: user.id }) });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/chillnet-link") {
+      const body = await readJson(req);
+      const payload = verifyChillnetLinkToken(body.token);
+      const user = await upsertChillnetLinkedUser(payload);
+      createSession(req, res, { username: user.username, role: user.role, userId: user.id });
+      sendJson(res, 200, { ok: true, user: publicUser({ username: user.username, role: user.role, userId: user.id }) });
       return;
     }
 
